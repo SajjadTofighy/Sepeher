@@ -199,6 +199,9 @@ from .routers import stations
 from .routers import schedules
 from .routers import field_safety
 from .routers import offline
+from .routers import field_comms
+app.include_router(field_comms.upload_router)
+app.include_router(field_comms.router)
 app.include_router(stations.router)
 app.include_router(schedules.router)
 app.include_router(field_safety.router)

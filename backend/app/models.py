@@ -75,7 +75,48 @@ class HeatProfile(BaseModel):
         return value
 
 
+class MediaRetention(BaseModel):
+    security: int = Field(default=365, ge=1, le=3650)
+    safety_hse: int = Field(default=365, ge=1, le=3650)
+    operations: int = Field(default=180, ge=1, le=3650)
+    damage: int = Field(default=730, ge=1, le=3650)
+    uxo: int = Field(default=730, ge=1, le=3650)
+    drone_sighting: int = Field(default=730, ge=1, le=3650)
+    other: int = Field(default=90, ge=1, le=3650)
+
+
+def _audiences(*values):
+    return Field(default_factory=lambda: list(values), min_length=1, max_length=3)
+
+
+class ReportRouting(BaseModel):
+    security: list[Literal['security', 'hse', 'operations']] = _audiences('security')
+    safety_hse: list[Literal['security', 'hse', 'operations']] = _audiences('security', 'hse', 'operations')
+    operations: list[Literal['security', 'hse', 'operations']] = _audiences('security', 'operations')
+    damage: list[Literal['security', 'hse', 'operations']] = _audiences('security')
+    uxo: list[Literal['security', 'hse', 'operations']] = _audiences('security', 'hse')
+    drone_sighting: list[Literal['security', 'hse', 'operations']] = _audiences('security')
+    other: list[Literal['security', 'hse', 'operations']] = _audiences('security')
+
+    @model_validator(mode='after')
+    def security_always(self):
+        for values in self.model_dump().values():
+            if 'security' not in values or len(set(values)) != len(values):
+                raise ValueError('حراست باید مخاطب هر دسته گزارش باشد و مخاطب تکراری مجاز نیست')
+        return self
+
+
 class RuntimeSettings(BaseModel):
+    media_chunk_bytes: int = Field(default=262144, ge=16384, le=4194304)
+    media_single_upload_max_bytes: int = Field(default=1048576, ge=1024, le=8388608)
+    media_max_bytes: int = Field(default=104857600, ge=65536, le=1073741824)
+    media_video_max_seconds: int = Field(default=60, ge=5, le=1800)
+    media_audio_max_seconds: int = Field(default=180, ge=5, le=3600)
+    media_video_bitrate_kbps: int = Field(default=1000, ge=64, le=8000)
+    media_audio_bitrate_kbps: int = Field(default=64, ge=16, le=320)
+    media_retention_days: MediaRetention = Field(default_factory=MediaRetention)
+    report_routing: ReportRouting = Field(default_factory=ReportRouting)
+    message_urgent_escalation_seconds: int = Field(default=120, ge=10, le=3600)
     field_location_max_accuracy_m: float = Field(default=100, gt=0, le=1000)
     field_location_max_speed_kmh: float = Field(default=180, gt=0, le=500)
     field_clock_skew_seconds: int = Field(default=120, ge=1, le=3600)
@@ -386,6 +427,8 @@ class Asset(BaseModel):
     capabilities: list[str]
     track: list[TrackPoint]
     patrol_base: list[float] | None = None
+    device_profile: str = "generic_data"
+    sms_password_set: bool = False
 
     @field_validator("patrol_base")
     @classmethod
@@ -633,6 +676,10 @@ class Command(BaseModel):
     timeout_seconds: int
     actor: str
     mock: bool
+    device_profile: str = "generic_data"
+    sms_destination: str | None = None
+    sms_text: str | None = None
+    gateway: Literal["none"] = "none"
 
 
 class PolicyTestResult(BaseModel):
@@ -905,10 +952,32 @@ class ZoneInput(BaseModel):
 
 
 class AssetSettings(BaseModel):
-    carrier: Literal["همراه اول", "ایرانسل"]
+    carrier: Literal["همراه اول", "ایرانسل", "رایتل"]
     sim: str = Field(min_length=4, max_length=30)
     report_interval: int = Field(ge=5, le=3600)
     data_package: Literal["active", "expiring", "expired"] = "active"
+    device_profile: Literal["generic_data", "concox_gt06", "coban_tk103", "teltonika_fmb"] | None = None
+    # Write-only device SMS credentials; never returned and never stored in command records.
+    sms_password: str | None = Field(default=None, max_length=32, pattern=r"^[0-9A-Za-z]*$")
+    sms_login: str | None = Field(default=None, max_length=32, pattern=r"^[0-9A-Za-z]*$")
+
+
+class DeviceProfile(BaseModel):
+    id: str
+    label: str
+    family: str
+    sms_commands: list[str]
+    note: str
+
+
+class CommandPreview(BaseModel):
+    asset_id: str
+    device_profile: str
+    channel: Literal["data", "sms"]
+    sms_destination: str | None
+    sms_text: str | None
+    gateway: Literal["none"] = "none"
+    note: str
 
 
 class Camera(BaseModel):
@@ -987,7 +1056,7 @@ class PositionInput(BaseModel):
 
 
 class SignedQueueRecord(BaseModel):
-    kind: Literal['sos', 'duress', 'man_down', 'scan', 'position']
+    kind: Literal['sos', 'duress', 'man_down', 'scan', 'position', 'report']
     device_id: str = Field(min_length=1, max_length=100)
     client_id: str = Field(min_length=1, max_length=100)
     captured_at: str = Field(min_length=20, max_length=40)
@@ -1293,23 +1362,76 @@ class TagRecord(TagInput):
     key_version: int
 
 
+REPORT_CATEGORIES = ('security', 'safety_hse', 'operations', 'damage', 'uxo', 'drone_sighting', 'other')
+RESTRICTED_REPORT_CATEGORIES = ('damage', 'uxo', 'drone_sighting')
+ReportCategory = Literal['security', 'safety_hse', 'operations', 'damage', 'uxo', 'drone_sighting', 'other']
+ReportAudience = Literal['security', 'hse', 'operations']
+MEDIA_CONTENT_TYPES = {
+    'image': ('image/jpeg', 'image/png', 'image/webp'),
+    'audio': ('audio/webm', 'audio/ogg', 'audio/mp4'),
+    'video': ('video/webm', 'video/mp4'),
+}
+
+
+class MessageAudience(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    guard_id: str | None = Field(default=None, min_length=1, max_length=100)
+    broadcast_zone: str | None = Field(default=None, min_length=1, max_length=100)
+    contractor_id: str | None = Field(default=None, min_length=1, max_length=100)
+
+    @model_validator(mode='after')
+    def one_target(self):
+        if (self.guard_id is None) == (self.broadcast_zone is None):
+            raise ValueError('مخاطب پیام باید یک نگهبان یا یک محوطه باشد')
+        if self.guard_id is not None and self.contractor_id is not None:
+            raise ValueError('پیمانکار فقط برای اعلان محوطه تعیین می‌شود')
+        return self
+
+
 class FieldMessageInput(BaseModel):
-    tour_id: str = Field(min_length=1, max_length=100)
+    model_config = ConfigDict(extra='forbid')
+    tour_id: str | None = Field(default=None, min_length=1, max_length=100)
     text: str = Field(min_length=1, max_length=2000)
+    priority: Literal['normal', 'urgent'] = 'normal'
+    audience: MessageAudience | None = None
 
 
-class FieldMessage(FieldMessageInput, ScopedInput):
-    id: str
-    owner_sub: str
+class MessageRecipient(BaseModel):
     guard_id: str
+    owner_sub: str
+    acknowledged_at: str | None = None
+
+
+class FieldMessage(ScopedInput):
+    id: str
+    tour_id: str | None
+    text: str
+    priority: Literal['normal', 'urgent']
+    direction: Literal['to_center', 'to_guard', 'broadcast']
+    owner_sub: str
+    sender_sub: str
+    guard_id: str | None
     created_at: str
+    recipients: list[MessageRecipient]
+    center_ack_at: str | None = None
+    center_ack_sub: str | None = None
+    escalation: Literal['operator', 'shift_supervisor', 'security_officer'] = 'operator'
 
 
 class FieldMediaInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     tour_id: str = Field(min_length=1, max_length=100)
     caption: str = Field(min_length=1, max_length=500)
-    # Phase zero stores metadata only; binary capture/storage is a later phase.
     media_type: Literal["image", "audio", "video"]
+    report_id: str | None = Field(default=None, min_length=1, max_length=100)
+
+
+class MediaWatermark(BaseModel):
+    captured_at_jalali: str
+    guard_code: str
+    station_code: str
+    viewer: str
+    viewed_at_jalali: str
 
 
 class FieldMedia(FieldMediaInput, ScopedInput):
@@ -1317,6 +1439,132 @@ class FieldMedia(FieldMediaInput, ScopedInput):
     owner_sub: str
     guard_id: str
     created_at: str
+    status: Literal['metadata', 'stored', 'purged'] = 'metadata'
+    device_id: str | None = None
+    station_id: str | None = None
+    category: ReportCategory | None = None
+    content_type: str | None = None
+    size: int | None = None
+    sha256: str | None = None
+    server_received_at: str | None = None
+    legal_hold: bool = False
+    incident_id: str | None = None
+    retention_until: str | None = None
+    purged_at: str | None = None
+    exportable: bool = True
+    watermark: MediaWatermark | None = None
+
+
+class MediaUploadInput(FieldMediaInput):
+    sha256: str = Field(pattern=r'^[0-9a-f]{64}$')
+    size: int = Field(gt=0)
+    content_type: str = Field(min_length=3, max_length=100)
+    client_id: str = Field(min_length=1, max_length=100)
+
+    @model_validator(mode='after')
+    def matching_type(self):
+        if self.content_type not in MEDIA_CONTENT_TYPES[self.media_type]:
+            raise ValueError('نوع محتوا با نوع رسانه سازگار یا مجاز نیست')
+        return self
+
+
+class CapturePolicy(BaseModel):
+    tour_id: str
+    image_video_allowed: bool
+    audio_allowed: Literal[True] = True
+    station_id: str | None
+    video_max_seconds: int
+    audio_max_seconds: int
+    video_bitrate_kbps: int
+    audio_bitrate_kbps: int
+    chunk_bytes: int
+    single_upload_max_bytes: int
+    max_bytes: int
+
+
+class MediaUpload(BaseModel):
+    id: str
+    tour_id: str
+    media_type: Literal['image', 'audio', 'video']
+    content_type: str
+    size: int
+    sha256: str
+    received_bytes: int
+    chunk_bytes: int
+    status: Literal['open', 'complete', 'failed']
+    media_id: str | None = None
+    created_at: str
+    updated_at: str
+
+
+class MediaUploadResult(BaseModel):
+    upload: MediaUpload
+    media: FieldMedia
+    purge_local_copy: bool
+
+
+class MediaAttachInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    incident_id: str = Field(min_length=1, max_length=100)
+
+
+class LegalHoldInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    hold: bool
+    reason: str = Field(min_length=3, max_length=500)
+
+
+class FieldReportInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    tour_id: str = Field(min_length=1, max_length=100)
+    category: ReportCategory
+    text: str = Field(min_length=3, max_length=4000)
+    client_id: str = Field(min_length=1, max_length=100)
+    lon: float | None = Field(default=None, ge=-180, le=180, allow_inf_nan=False)
+    lat: float | None = Field(default=None, ge=-85, le=85, allow_inf_nan=False)
+    safety_acknowledged: bool = False
+
+    @model_validator(mode='after')
+    def restricted_safety(self):
+        if (self.lon is None) != (self.lat is None):
+            raise ValueError('طول و عرض جغرافیایی باید با هم ارسال شوند')
+        if self.category in RESTRICTED_REPORT_CATEGORIES and not self.safety_acknowledged:
+            raise ValueError('دستور ایمنی «نزدیک نشو، از فاصله امن گزارش کن» باید تأیید شود')
+        return self
+
+
+class ReportAcknowledgement(BaseModel):
+    audience: ReportAudience
+    sub: str
+    at: str
+
+
+class ReportAckInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    audience: ReportAudience
+
+
+class FieldReport(ScopedInput):
+    id: str
+    tour_id: str
+    guard_id: str
+    owner_sub: str
+    device_id: str
+    category: ReportCategory
+    text: str
+    lon: float | None
+    lat: float | None
+    created_at: str
+    audiences: list[ReportAudience]
+    acknowledgements: list[ReportAcknowledgement]
+    restricted: bool
+    safety_instruction: str | None
+    purge_local_media: bool
+    media_ids: list[str]
+    auth_expired: bool = False
+    clock_regressed: bool = False
+    offline_too_long: bool = False
+    can_execute: Literal[False] = False
 
 
 class ApprovalInput(BaseModel):
@@ -1343,6 +1591,7 @@ class ApprovalRecord(ApprovalInput):
 
 class ExportInput(BaseModel):
     name: str = Field(min_length=1, max_length=150)
+    media_id: str | None = Field(default=None, min_length=1, max_length=100)
 
 
 class ExportAuthorization(BaseModel):

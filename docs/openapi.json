@@ -780,6 +780,116 @@
         }
       }
     },
+    "/api/v1/device-profiles": {
+      "get": {
+        "tags": [
+          "commands"
+        ],
+        "summary": "Profiles",
+        "operationId": "profiles_api_v1_device_profiles_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceProfile"
+                  },
+                  "type": "array",
+                  "title": "Response Profiles Api V1 Device Profiles Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/commands/preview": {
+      "get": {
+        "tags": [
+          "commands"
+        ],
+        "summary": "Preview",
+        "operationId": "preview_api_v1_commands_preview_get",
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "command",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "enum": [
+                "position",
+                "ping",
+                "interval",
+                "restart",
+                "beacon",
+                "diagnostics"
+              ],
+              "type": "string",
+              "title": "Command"
+            }
+          },
+          {
+            "name": "channel",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "data",
+                "sms"
+              ],
+              "type": "string",
+              "default": "sms",
+              "title": "Channel"
+            }
+          },
+          {
+            "name": "interval_seconds",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 3600,
+              "minimum": 5,
+              "default": 30,
+              "title": "Interval Seconds"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandPreview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/policies": {
       "post": {
         "tags": [
@@ -2160,6 +2270,1707 @@
             }
           }
         }
+      }
+    },
+    "/api/v1/media/uploads/{id}": {
+      "put": {
+        "tags": [
+          "field-comms"
+        ],
+        "summary": "Upload Chunk",
+        "operationId": "upload_chunk_api_v1_media_uploads__id__put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaUpload"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "field-comms"
+        ],
+        "summary": "Upload Status",
+        "operationId": "upload_status_api_v1_media_uploads__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaUpload"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/media/{id}/content": {
+      "put": {
+        "tags": [
+          "field-comms"
+        ],
+        "summary": "Upload Single",
+        "operationId": "upload_single_api_v1_media__id__content_put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "sha256",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Sha256"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldMedia"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "field-comms"
+        ],
+        "summary": "Media Content",
+        "operationId": "media_content_api_v1_media__id__content_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/messages": {
+      "get": {
+        "tags": [
+          "field-comms"
+        ],
+        "summary": "Messages",
+        "operationId": "messages_api_v1_messages_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FieldMessage"
+                  },
+                  "type": "array",
+                  "title": "Response Messages Api V1 Messages Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "field-comms"
+        ],
+        "summary": "Send Message",
+        "operationId": "send_message_api_v1_messages_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FieldMessageInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/messages/{id}/ack": {
+      "post": {
+        "tags": [
+          "field-comms"
+        ],
+        "summary": "Acknowledge Message",
+        "operationId": "acknowledge_message_api_v1_messages__id__ack_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/tour/reports": {
+      "get": {
+        "tags": [
+          "field-comms"
+        ],
+        "summary": "Reports",
+        "operationId": "reports_api_v1_tour_reports_get",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "name": "audience",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Audience"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FieldReport"
+                  },
+                  "title": "Response Reports Api V1 Tour Reports Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "field-comms"
+        ],
+        "summary": "Submit Report",
+        "operationId": "submit_report_api_v1_tour_reports_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FieldReportInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/tour/reports/{id}/ack": {
+      "post": {
+        "tags": [
+          "field-comms"
+        ],
+        "summary": "Acknowledge Report",
+        "operationId": "acknowledge_report_api_v1_tour_reports__id__ack_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportAckInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/media": {
+      "get": {
+        "tags": [
+          "field-comms"
+        ],
+        "summary": "Media",
+        "operationId": "media_api_v1_media_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FieldMedia"
+                  },
+                  "type": "array",
+                  "title": "Response Media Api V1 Media Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "field-comms"
+        ],
+        "summary": "Create Media",
+        "operationId": "create_media_api_v1_media_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FieldMediaInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldMedia"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/media/capture-policy": {
+      "get": {
+        "tags": [
+          "field-comms"
+        ],
+        "summary": "Capture Policy",
+        "operationId": "capture_policy_api_v1_media_capture_policy_get",
+        "parameters": [
+          {
+            "name": "tour_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tour Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapturePolicy"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/media/uploads": {
+      "post": {
+        "tags": [
+          "field-comms"
+        ],
+        "summary": "Start Upload",
+        "operationId": "start_upload_api_v1_media_uploads_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MediaUploadInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaUpload"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/media/uploads/{id}/complete": {
+      "post": {
+        "tags": [
+          "field-comms"
+        ],
+        "summary": "Complete Upload",
+        "operationId": "complete_upload_api_v1_media_uploads__id__complete_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaUploadResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/media/{id}/attach": {
+      "post": {
+        "tags": [
+          "field-comms"
+        ],
+        "summary": "Attach Media",
+        "operationId": "attach_media_api_v1_media__id__attach_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MediaAttachInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldMedia"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/media/{id}/legal-hold": {
+      "post": {
+        "tags": [
+          "field-comms"
+        ],
+        "summary": "Legal Hold",
+        "operationId": "legal_hold_api_v1_media__id__legal_hold_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LegalHoldInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldMedia"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/tour/zones": {
@@ -6638,6 +8449,102 @@
         ]
       }
     },
+    "/api/v1/tour/offline/reports": {
+      "post": {
+        "tags": [
+          "offline"
+        ],
+        "summary": "Submit Report",
+        "operationId": "submit_report_api_v1_tour_offline_reports_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignedQueueRecord"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/tour/offline/emergency": {
       "post": {
         "tags": [
@@ -8532,354 +10439,6 @@
         ]
       }
     },
-    "/api/v1/messages": {
-      "get": {
-        "tags": [
-          "field"
-        ],
-        "summary": "Messages",
-        "operationId": "messages_api_v1_messages_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/FieldMessage"
-                  },
-                  "type": "array",
-                  "title": "Response Messages Api V1 Messages Get"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessError"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessError"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessError"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Too Many Requests",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessError"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Service Unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "field"
-        ],
-        "summary": "Send Message",
-        "operationId": "send_message_api_v1_messages_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FieldMessageInput"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FieldMessage"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessError"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessError"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessError"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Too Many Requests",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessError"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Service Unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessError"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/media": {
-      "get": {
-        "tags": [
-          "field"
-        ],
-        "summary": "Media",
-        "operationId": "media_api_v1_media_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/FieldMedia"
-                  },
-                  "type": "array",
-                  "title": "Response Media Api V1 Media Get"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessError"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessError"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessError"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Too Many Requests",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessError"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Service Unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "field"
-        ],
-        "summary": "Create Media",
-        "operationId": "create_media_api_v1_media_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FieldMediaInput"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FieldMedia"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessError"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessError"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessError"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Too Many Requests",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessError"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Service Unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessError"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
     "/api/v1/reports/tour": {
       "get": {
         "tags": [
@@ -10202,6 +11761,16 @@
               }
             ],
             "title": "Patrol Base"
+          },
+          "device_profile": {
+            "type": "string",
+            "title": "Device Profile",
+            "default": "generic_data"
+          },
+          "sms_password_set": {
+            "type": "boolean",
+            "title": "Sms Password Set",
+            "default": false
           }
         },
         "type": "object",
@@ -10233,7 +11802,8 @@
             "type": "string",
             "enum": [
               "همراه اول",
-              "ایرانسل"
+              "ایرانسل",
+              "رایتل"
             ],
             "title": "Carrier"
           },
@@ -10258,6 +11828,49 @@
             ],
             "title": "Data Package",
             "default": "active"
+          },
+          "device_profile": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "generic_data",
+                  "concox_gt06",
+                  "coban_tk103",
+                  "teltonika_fmb"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Profile"
+          },
+          "sms_password": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 32,
+                "pattern": "^[0-9A-Za-z]*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sms Password"
+          },
+          "sms_login": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 32,
+                "pattern": "^[0-9A-Za-z]*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sms Login"
           }
         },
         "type": "object",
@@ -10651,6 +12264,77 @@
         "title": "CameraEventInput",
         "description": "Legacy adapter requires real plate fields; old demo-only payloads are rejected."
       },
+      "CapturePolicy": {
+        "properties": {
+          "tour_id": {
+            "type": "string",
+            "title": "Tour Id"
+          },
+          "image_video_allowed": {
+            "type": "boolean",
+            "title": "Image Video Allowed"
+          },
+          "audio_allowed": {
+            "type": "boolean",
+            "const": true,
+            "title": "Audio Allowed",
+            "default": true
+          },
+          "station_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Station Id"
+          },
+          "video_max_seconds": {
+            "type": "integer",
+            "title": "Video Max Seconds"
+          },
+          "audio_max_seconds": {
+            "type": "integer",
+            "title": "Audio Max Seconds"
+          },
+          "video_bitrate_kbps": {
+            "type": "integer",
+            "title": "Video Bitrate Kbps"
+          },
+          "audio_bitrate_kbps": {
+            "type": "integer",
+            "title": "Audio Bitrate Kbps"
+          },
+          "chunk_bytes": {
+            "type": "integer",
+            "title": "Chunk Bytes"
+          },
+          "single_upload_max_bytes": {
+            "type": "integer",
+            "title": "Single Upload Max Bytes"
+          },
+          "max_bytes": {
+            "type": "integer",
+            "title": "Max Bytes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tour_id",
+          "image_video_allowed",
+          "station_id",
+          "video_max_seconds",
+          "audio_max_seconds",
+          "video_bitrate_kbps",
+          "audio_bitrate_kbps",
+          "chunk_bytes",
+          "single_upload_max_bytes",
+          "max_bytes"
+        ],
+        "title": "CapturePolicy"
+      },
       "CheckInInput": {
         "properties": {
           "pin": {
@@ -10928,6 +12612,39 @@
           "mock": {
             "type": "boolean",
             "title": "Mock"
+          },
+          "device_profile": {
+            "type": "string",
+            "title": "Device Profile",
+            "default": "generic_data"
+          },
+          "sms_destination": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sms Destination"
+          },
+          "sms_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sms Text"
+          },
+          "gateway": {
+            "type": "string",
+            "const": "none",
+            "title": "Gateway",
+            "default": "none"
           }
         },
         "type": "object",
@@ -10996,6 +12713,68 @@
           "request_id"
         ],
         "title": "CommandInput"
+      },
+      "CommandPreview": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "device_profile": {
+            "type": "string",
+            "title": "Device Profile"
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "data",
+              "sms"
+            ],
+            "title": "Channel"
+          },
+          "sms_destination": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sms Destination"
+          },
+          "sms_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sms Text"
+          },
+          "gateway": {
+            "type": "string",
+            "const": "none",
+            "title": "Gateway",
+            "default": "none"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "device_profile",
+          "channel",
+          "sms_destination",
+          "sms_text",
+          "note"
+        ],
+        "title": "CommandPreview"
       },
       "Coverage": {
         "properties": {
@@ -11265,6 +13044,42 @@
           "incidents"
         ],
         "title": "DeviceEventResult"
+      },
+      "DeviceProfile": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "family": {
+            "type": "string",
+            "title": "Family"
+          },
+          "sms_commands": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sms Commands"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "family",
+          "sms_commands",
+          "note"
+        ],
+        "title": "DeviceProfile"
       },
       "DeviceRecord": {
         "properties": {
@@ -11547,6 +13362,19 @@
             "maxLength": 150,
             "minLength": 1,
             "title": "Name"
+          },
+          "media_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media Id"
           }
         },
         "type": "object",
@@ -11771,6 +13599,19 @@
             ],
             "title": "Media Type"
           },
+          "report_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Id"
+          },
           "id": {
             "type": "string",
             "title": "Id"
@@ -11786,8 +13627,158 @@
           "created_at": {
             "type": "string",
             "title": "Created At"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "metadata",
+              "stored",
+              "purged"
+            ],
+            "title": "Status",
+            "default": "metadata"
+          },
+          "device_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          },
+          "station_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Station Id"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "security",
+                  "safety_hse",
+                  "operations",
+                  "damage",
+                  "uxo",
+                  "drone_sighting",
+                  "other"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "content_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Type"
+          },
+          "size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size"
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sha256"
+          },
+          "server_received_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Server Received At"
+          },
+          "legal_hold": {
+            "type": "boolean",
+            "title": "Legal Hold",
+            "default": false
+          },
+          "incident_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Incident Id"
+          },
+          "retention_until": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retention Until"
+          },
+          "purged_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purged At"
+          },
+          "exportable": {
+            "type": "boolean",
+            "title": "Exportable",
+            "default": true
+          },
+          "watermark": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MediaWatermark"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "zone_id",
@@ -11824,8 +13815,22 @@
               "video"
             ],
             "title": "Media Type"
+          },
+          "report_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Id"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "tour_id",
@@ -11848,54 +13853,135 @@
             "minLength": 1,
             "title": "Contractor Id"
           },
-          "tour_id": {
+          "id": {
             "type": "string",
-            "maxLength": 100,
-            "minLength": 1,
+            "title": "Id"
+          },
+          "tour_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Tour Id"
           },
           "text": {
             "type": "string",
-            "maxLength": 2000,
-            "minLength": 1,
             "title": "Text"
           },
-          "id": {
+          "priority": {
             "type": "string",
-            "title": "Id"
+            "enum": [
+              "normal",
+              "urgent"
+            ],
+            "title": "Priority"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "to_center",
+              "to_guard",
+              "broadcast"
+            ],
+            "title": "Direction"
           },
           "owner_sub": {
             "type": "string",
             "title": "Owner Sub"
           },
-          "guard_id": {
+          "sender_sub": {
             "type": "string",
+            "title": "Sender Sub"
+          },
+          "guard_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Guard Id"
           },
           "created_at": {
             "type": "string",
             "title": "Created At"
+          },
+          "recipients": {
+            "items": {
+              "$ref": "#/components/schemas/MessageRecipient"
+            },
+            "type": "array",
+            "title": "Recipients"
+          },
+          "center_ack_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Center Ack At"
+          },
+          "center_ack_sub": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Center Ack Sub"
+          },
+          "escalation": {
+            "type": "string",
+            "enum": [
+              "operator",
+              "shift_supervisor",
+              "security_officer"
+            ],
+            "title": "Escalation",
+            "default": "operator"
           }
         },
         "type": "object",
         "required": [
           "zone_id",
           "contractor_id",
+          "id",
           "tour_id",
           "text",
-          "id",
+          "priority",
+          "direction",
           "owner_sub",
+          "sender_sub",
           "guard_id",
-          "created_at"
+          "created_at",
+          "recipients"
         ],
         "title": "FieldMessage"
       },
       "FieldMessageInput": {
         "properties": {
           "tour_id": {
-            "type": "string",
-            "maxLength": 100,
-            "minLength": 1,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Tour Id"
           },
           "text": {
@@ -11903,11 +13989,30 @@
             "maxLength": 2000,
             "minLength": 1,
             "title": "Text"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "urgent"
+            ],
+            "title": "Priority",
+            "default": "normal"
+          },
+          "audience": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MessageAudience"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
-          "tour_id",
           "text"
         ],
         "title": "FieldMessageInput"
@@ -11934,6 +14039,248 @@
           "coverage"
         ],
         "title": "FieldMetric"
+      },
+      "FieldReport": {
+        "properties": {
+          "zone_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Zone Id"
+          },
+          "contractor_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Contractor Id"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "tour_id": {
+            "type": "string",
+            "title": "Tour Id"
+          },
+          "guard_id": {
+            "type": "string",
+            "title": "Guard Id"
+          },
+          "owner_sub": {
+            "type": "string",
+            "title": "Owner Sub"
+          },
+          "device_id": {
+            "type": "string",
+            "title": "Device Id"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "security",
+              "safety_hse",
+              "operations",
+              "damage",
+              "uxo",
+              "drone_sighting",
+              "other"
+            ],
+            "title": "Category"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "lon": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lon"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "audiences": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "security",
+                "hse",
+                "operations"
+              ]
+            },
+            "type": "array",
+            "title": "Audiences"
+          },
+          "acknowledgements": {
+            "items": {
+              "$ref": "#/components/schemas/ReportAcknowledgement"
+            },
+            "type": "array",
+            "title": "Acknowledgements"
+          },
+          "restricted": {
+            "type": "boolean",
+            "title": "Restricted"
+          },
+          "safety_instruction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Safety Instruction"
+          },
+          "purge_local_media": {
+            "type": "boolean",
+            "title": "Purge Local Media"
+          },
+          "media_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Media Ids"
+          },
+          "auth_expired": {
+            "type": "boolean",
+            "title": "Auth Expired",
+            "default": false
+          },
+          "clock_regressed": {
+            "type": "boolean",
+            "title": "Clock Regressed",
+            "default": false
+          },
+          "offline_too_long": {
+            "type": "boolean",
+            "title": "Offline Too Long",
+            "default": false
+          },
+          "can_execute": {
+            "type": "boolean",
+            "const": false,
+            "title": "Can Execute",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "zone_id",
+          "contractor_id",
+          "id",
+          "tour_id",
+          "guard_id",
+          "owner_sub",
+          "device_id",
+          "category",
+          "text",
+          "lon",
+          "lat",
+          "created_at",
+          "audiences",
+          "acknowledgements",
+          "restricted",
+          "safety_instruction",
+          "purge_local_media",
+          "media_ids"
+        ],
+        "title": "FieldReport"
+      },
+      "FieldReportInput": {
+        "properties": {
+          "tour_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Tour Id"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "security",
+              "safety_hse",
+              "operations",
+              "damage",
+              "uxo",
+              "drone_sighting",
+              "other"
+            ],
+            "title": "Category"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 3,
+            "title": "Text"
+          },
+          "client_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Client Id"
+          },
+          "lon": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 180.0,
+                "minimum": -180.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lon"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 85.0,
+                "minimum": -85.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "safety_acknowledged": {
+            "type": "boolean",
+            "title": "Safety Acknowledged",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tour_id",
+          "category",
+          "text",
+          "client_id"
+        ],
+        "title": "FieldReportInput"
       },
       "FieldSafetyAlert": {
         "properties": {
@@ -13091,6 +15438,27 @@
         ],
         "title": "LayerProperties"
       },
+      "LegalHoldInput": {
+        "properties": {
+          "hold": {
+            "type": "boolean",
+            "title": "Hold"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "hold",
+          "reason"
+        ],
+        "title": "LegalHoldInput"
+      },
       "LineFeature": {
         "properties": {
           "type": {
@@ -13304,6 +15672,362 @@
           "reason"
         ],
         "title": "ManualScanInput"
+      },
+      "MediaAttachInput": {
+        "properties": {
+          "incident_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Incident Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "incident_id"
+        ],
+        "title": "MediaAttachInput"
+      },
+      "MediaRetention": {
+        "properties": {
+          "security": {
+            "type": "integer",
+            "maximum": 3650.0,
+            "minimum": 1.0,
+            "title": "Security",
+            "default": 365
+          },
+          "safety_hse": {
+            "type": "integer",
+            "maximum": 3650.0,
+            "minimum": 1.0,
+            "title": "Safety Hse",
+            "default": 365
+          },
+          "operations": {
+            "type": "integer",
+            "maximum": 3650.0,
+            "minimum": 1.0,
+            "title": "Operations",
+            "default": 180
+          },
+          "damage": {
+            "type": "integer",
+            "maximum": 3650.0,
+            "minimum": 1.0,
+            "title": "Damage",
+            "default": 730
+          },
+          "uxo": {
+            "type": "integer",
+            "maximum": 3650.0,
+            "minimum": 1.0,
+            "title": "Uxo",
+            "default": 730
+          },
+          "drone_sighting": {
+            "type": "integer",
+            "maximum": 3650.0,
+            "minimum": 1.0,
+            "title": "Drone Sighting",
+            "default": 730
+          },
+          "other": {
+            "type": "integer",
+            "maximum": 3650.0,
+            "minimum": 1.0,
+            "title": "Other",
+            "default": 90
+          }
+        },
+        "type": "object",
+        "title": "MediaRetention"
+      },
+      "MediaUpload": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "tour_id": {
+            "type": "string",
+            "title": "Tour Id"
+          },
+          "media_type": {
+            "type": "string",
+            "enum": [
+              "image",
+              "audio",
+              "video"
+            ],
+            "title": "Media Type"
+          },
+          "content_type": {
+            "type": "string",
+            "title": "Content Type"
+          },
+          "size": {
+            "type": "integer",
+            "title": "Size"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "received_bytes": {
+            "type": "integer",
+            "title": "Received Bytes"
+          },
+          "chunk_bytes": {
+            "type": "integer",
+            "title": "Chunk Bytes"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "complete",
+              "failed"
+            ],
+            "title": "Status"
+          },
+          "media_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media Id"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tour_id",
+          "media_type",
+          "content_type",
+          "size",
+          "sha256",
+          "received_bytes",
+          "chunk_bytes",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "MediaUpload"
+      },
+      "MediaUploadInput": {
+        "properties": {
+          "tour_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Tour Id"
+          },
+          "caption": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Caption"
+          },
+          "media_type": {
+            "type": "string",
+            "enum": [
+              "image",
+              "audio",
+              "video"
+            ],
+            "title": "Media Type"
+          },
+          "report_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Id"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Sha256"
+          },
+          "size": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Size"
+          },
+          "content_type": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 3,
+            "title": "Content Type"
+          },
+          "client_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Client Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tour_id",
+          "caption",
+          "media_type",
+          "sha256",
+          "size",
+          "content_type",
+          "client_id"
+        ],
+        "title": "MediaUploadInput"
+      },
+      "MediaUploadResult": {
+        "properties": {
+          "upload": {
+            "$ref": "#/components/schemas/MediaUpload"
+          },
+          "media": {
+            "$ref": "#/components/schemas/FieldMedia"
+          },
+          "purge_local_copy": {
+            "type": "boolean",
+            "title": "Purge Local Copy"
+          }
+        },
+        "type": "object",
+        "required": [
+          "upload",
+          "media",
+          "purge_local_copy"
+        ],
+        "title": "MediaUploadResult"
+      },
+      "MediaWatermark": {
+        "properties": {
+          "captured_at_jalali": {
+            "type": "string",
+            "title": "Captured At Jalali"
+          },
+          "guard_code": {
+            "type": "string",
+            "title": "Guard Code"
+          },
+          "station_code": {
+            "type": "string",
+            "title": "Station Code"
+          },
+          "viewer": {
+            "type": "string",
+            "title": "Viewer"
+          },
+          "viewed_at_jalali": {
+            "type": "string",
+            "title": "Viewed At Jalali"
+          }
+        },
+        "type": "object",
+        "required": [
+          "captured_at_jalali",
+          "guard_code",
+          "station_code",
+          "viewer",
+          "viewed_at_jalali"
+        ],
+        "title": "MediaWatermark"
+      },
+      "MessageAudience": {
+        "properties": {
+          "guard_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guard Id"
+          },
+          "broadcast_zone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Broadcast Zone"
+          },
+          "contractor_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contractor Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "MessageAudience"
+      },
+      "MessageRecipient": {
+        "properties": {
+          "guard_id": {
+            "type": "string",
+            "title": "Guard Id"
+          },
+          "owner_sub": {
+            "type": "string",
+            "title": "Owner Sub"
+          },
+          "acknowledged_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acknowledged At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "guard_id",
+          "owner_sub"
+        ],
+        "title": "MessageRecipient"
       },
       "Mission": {
         "properties": {
@@ -14823,6 +17547,157 @@
         ],
         "title": "Question"
       },
+      "ReportAckInput": {
+        "properties": {
+          "audience": {
+            "type": "string",
+            "enum": [
+              "security",
+              "hse",
+              "operations"
+            ],
+            "title": "Audience"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "audience"
+        ],
+        "title": "ReportAckInput"
+      },
+      "ReportAcknowledgement": {
+        "properties": {
+          "audience": {
+            "type": "string",
+            "enum": [
+              "security",
+              "hse",
+              "operations"
+            ],
+            "title": "Audience"
+          },
+          "sub": {
+            "type": "string",
+            "title": "Sub"
+          },
+          "at": {
+            "type": "string",
+            "title": "At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "audience",
+          "sub",
+          "at"
+        ],
+        "title": "ReportAcknowledgement"
+      },
+      "ReportRouting": {
+        "properties": {
+          "security": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "security",
+                "hse",
+                "operations"
+              ]
+            },
+            "type": "array",
+            "maxItems": 3,
+            "minItems": 1,
+            "title": "Security"
+          },
+          "safety_hse": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "security",
+                "hse",
+                "operations"
+              ]
+            },
+            "type": "array",
+            "maxItems": 3,
+            "minItems": 1,
+            "title": "Safety Hse"
+          },
+          "operations": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "security",
+                "hse",
+                "operations"
+              ]
+            },
+            "type": "array",
+            "maxItems": 3,
+            "minItems": 1,
+            "title": "Operations"
+          },
+          "damage": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "security",
+                "hse",
+                "operations"
+              ]
+            },
+            "type": "array",
+            "maxItems": 3,
+            "minItems": 1,
+            "title": "Damage"
+          },
+          "uxo": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "security",
+                "hse",
+                "operations"
+              ]
+            },
+            "type": "array",
+            "maxItems": 3,
+            "minItems": 1,
+            "title": "Uxo"
+          },
+          "drone_sighting": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "security",
+                "hse",
+                "operations"
+              ]
+            },
+            "type": "array",
+            "maxItems": 3,
+            "minItems": 1,
+            "title": "Drone Sighting"
+          },
+          "other": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "security",
+                "hse",
+                "operations"
+              ]
+            },
+            "type": "array",
+            "maxItems": 3,
+            "minItems": 1,
+            "title": "Other"
+          }
+        },
+        "type": "object",
+        "title": "ReportRouting"
+      },
       "RiskFactor": {
         "properties": {
           "factor": {
@@ -15017,6 +17892,68 @@
       },
       "RuntimeSettings": {
         "properties": {
+          "media_chunk_bytes": {
+            "type": "integer",
+            "maximum": 4194304.0,
+            "minimum": 16384.0,
+            "title": "Media Chunk Bytes",
+            "default": 262144
+          },
+          "media_single_upload_max_bytes": {
+            "type": "integer",
+            "maximum": 8388608.0,
+            "minimum": 1024.0,
+            "title": "Media Single Upload Max Bytes",
+            "default": 1048576
+          },
+          "media_max_bytes": {
+            "type": "integer",
+            "maximum": 1073741824.0,
+            "minimum": 65536.0,
+            "title": "Media Max Bytes",
+            "default": 104857600
+          },
+          "media_video_max_seconds": {
+            "type": "integer",
+            "maximum": 1800.0,
+            "minimum": 5.0,
+            "title": "Media Video Max Seconds",
+            "default": 60
+          },
+          "media_audio_max_seconds": {
+            "type": "integer",
+            "maximum": 3600.0,
+            "minimum": 5.0,
+            "title": "Media Audio Max Seconds",
+            "default": 180
+          },
+          "media_video_bitrate_kbps": {
+            "type": "integer",
+            "maximum": 8000.0,
+            "minimum": 64.0,
+            "title": "Media Video Bitrate Kbps",
+            "default": 1000
+          },
+          "media_audio_bitrate_kbps": {
+            "type": "integer",
+            "maximum": 320.0,
+            "minimum": 16.0,
+            "title": "Media Audio Bitrate Kbps",
+            "default": 64
+          },
+          "media_retention_days": {
+            "$ref": "#/components/schemas/MediaRetention"
+          },
+          "report_routing": {
+            "$ref": "#/components/schemas/ReportRouting"
+          },
+          "message_urgent_escalation_seconds": {
+            "type": "integer",
+            "maximum": 3600.0,
+            "minimum": 10.0,
+            "title": "Message Urgent Escalation Seconds",
+            "default": 120
+          },
           "field_location_max_accuracy_m": {
             "type": "number",
             "maximum": 1000.0,
@@ -16527,7 +19464,8 @@
               "duress",
               "man_down",
               "scan",
-              "position"
+              "position",
+              "report"
             ],
             "title": "Kind"
           },

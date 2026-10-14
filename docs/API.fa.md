@@ -50,6 +50,8 @@ OpenAPI کامل در `openapi.json` و Swagger در `/docs` موجود است. 
 فرمان‌ها: `position`, `ping`, `interval`, `restart`, `beacon`, `diagnostics`.
 کانال‌ها: `data`, `sms`.
 
+پروفایل پیامکی هر تجهیز (`Asset.device_profile`) از `GET /device-profiles` انتخاب و با `PATCH /assets/{id}/settings` ثبت می‌شود: `concox_gt06` (مثلاً `WHERE#`، `TIMER,30#`، `RESET#`)، `coban_tk103` (مثلاً `fix030s***n<رمز>`، فاصله تا ۲۵۵ ثانیه یا مضرب دقیقه)، `teltonika_fmb` (`<login> <password> getgps` با دو فاصله در اعتبارنامه خالی؛ فاصله ارسال از پیامک پشتیبانی نمی‌شود) و `generic_data` بدون فرمان پیامکی. این‌ها خانواده‌های پروتکل رایج ردیاب‌های بازار ایران‌اند، نه فهرست تأییدشده برند؛ الگو باید با دفترچه سازنده و firmware نصب‌شده تطبیق داده شود. اپراتورهای مجاز سیم‌کارت: همراه اول، ایرانسل و رایتل. `sms_password` و `sms_login` فقط نوشتنی‌اند؛ پاسخ فقط `sms_password_set` دارد. `GET /commands/preview?asset_id=&command=&interval_seconds=` متن دقیق پیامک و شماره مقصد را با رمز پوشیده (`••••`) برمی‌گرداند. در `channel=sms` فرمان پشتیبانی‌نشده پروفایل یا فاصله خارج از بازه پروتکل 422 است و `Command` فیلدهای `device_profile`، `sms_destination`، `sms_text` پوشیده و `gateway=none` را دارد. درگاه پیامک متصل نیست؛ رمز واقعی در هیچ فرمان، audit یا پاسخی ذخیره نمی‌شود و تحویل همچنان شبیه‌سازی است.
+
 پاسخ اولیه `201` و `status=sent` دارد. با گذر زمان، تجهیز برخط به delivered و executed می‌رسد. تجهیز قطع به timed_out می‌رسد. فرمان اینترنت همراه مهلت ۱۰ ثانیه و پیامک مهلت ۲۰ ثانیه در دمو دارد. تکرار request_id با payload یکسان همان فرمان را برمی‌گرداند؛ payload متفاوت با همان شناسه، خطای 409 است. ارسال مجدد باید request_id تازه داشته باشد.
 
 ## چرخه حادثه
@@ -258,7 +260,7 @@ camera_id باید در فهرست دوربین‌های ثبت‌شده باش�
 | GET / POST | `/tour/{id}` و `/tour/{id}/complete` | خواندن در حوزه؛ پایان فقط مالک |
 | POST | `/tour/{id}/check-in` | مالک و دستگاه؛ tag_id و pin؛ PIN اضطرار پاسخ عادی یکسان دارد |
 | GET / POST | `/tour/tags/list` و `/tour/tags` | خواندن بدون کلید؛ ساخت scoped برای کارکنان مجاز |
-| GET / POST | `/messages` و `/media` | حوزه و مالک tour؛ پیام داخلی و metadata رسانه پایدار |
+| GET / POST | `/messages` و `/media` | حوزه و مالک tour؛ قرارداد کامل پیام و رسانه در بخش فاز پنج |
 | GET | `/reports/tour` | نقش export مجاز؛ داده scoped و audit |
 | GET / POST | `/approvals` | صف و درخواست اقدام حساس |
 | POST | `/approvals/{id}/approve` یا `/reject` | نقش مجاز و sub متفاوت؛ target دست‌نخورده |
@@ -299,7 +301,7 @@ camera_id باید در فهرست دوربین‌های ثبت‌شده باش�
 
 Station افزوده‌های sensitivity، hazards، min_dwell_seconds، two_person_required، media_capture_allowed، tag_mode، tag_status و tag_revision دارد. sensitivity باید در RuntimeSettings.station_sensitivity_labels باشد؛ فهرست از PUT settings با admin قابل تغییر و پایدار است. مقدار غایب/null رسانه از محوطه به ارث می‌رسد. NFC نیازمند tag_uid هگز ۱۴ نویسه و یکتا است. statusهای planned/installed/damaged/revoked به فرایند سرور محدودند.
 
-StationTask ورودی number با min/max/unit، choice با options، seal با expected_value و audio بدون پیکربندی اضافی دارد. فقط پیکربندی همان kind پذیرفته می‌شود. پاسخ number عدد واقعی محدود به بازه شامل دو انتها است؛ رشته عددی یا boolean پذیرفته نمی‌شود. پاسخ choice عضو options است. seal رشته مشاهده‌شده را با مقدار snapshot مقایسه و در عدم تطابق anomaly=true ثبت می‌کند. audio به media_id صوتی متعلق به همان مالک و گشت اشاره می‌کند؛ باینری رسانه از این API منتقل نمی‌شود. پاسخ ثبت‌شده بازنویسی نمی‌شود.
+StationTask ورودی number با min/max/unit، choice با options، seal با expected_value و audio بدون پیکربندی اضافی دارد. فقط پیکربندی همان kind پذیرفته می‌شود. پاسخ number عدد واقعی محدود به بازه شامل دو انتها است؛ رشته عددی یا boolean پذیرفته نمی‌شود. پاسخ choice عضو options است. seal رشته مشاهده‌شده را با مقدار snapshot مقایسه و در عدم تطابق anomaly=true ثبت می‌کند. audio به media_id صوتی متعلق به همان مالک و گشت اشاره می‌کند؛ باینری رسانه از مسیرهای فاز پنج منتقل می‌شود. پاسخ ثبت‌شده بازنویسی نمی‌شود.
 
 payload حالت qr_hmac/code برابر `SPH2:<kid>:<station_id>:<rev>:<hmac>` است؛ hmac هگز ۳۲ نویسه از HMAC-SHA256 کوتاه‌شده است. SUN URL شخصی‌سازی شامل `tag=<SPH2...>&picc=<32hex>&cmac=<16hex>` با همین ترتیب و ASCII بدون percent encoding است. offsetهای SUN بر حسب بایت از ابتدای فایل NDEF شامل NLEN هستند؛ MACInput از tag= تا قبل از مقدار cmac است. nfc_counter URL با tag/uid/counter می‌پذیرد، counter شش هگز عددی است و assurance همیشه «ضعیف» است. QR/code assurance «ایستا» و SUN «قوی» دارند؛ این مقدار در بازدید و گزارش نیز می‌آید.
 
@@ -363,4 +365,30 @@ revision قدیمی `tag_revision_stale`، کلید غیرفعال `tag_key_inac
 
 امضای نامعتبر و دستگاه باطل‌شده با 403 رد و audit می‌شوند. پاسخ API دارای `Cache-Control: no-store` است. اسکن با فاصله بیش از `RuntimeSettings.max_offline_minutes` از زمان ثبت دستگاه، `offline_flags=[offline_too_long]` می‌گیرد و trust نهایی آن حداکثر medium است. اگر `device_time` از `previous_device_time` عقب‌تر باشد، `clock_regressed` در offline_flags و شاهد clock=regressed ثبت می‌شود. `FieldSafetyAlert` نیز `auth_expired` و `clock_regressed` را برای مرکز دارد. سه تنظیم دیگر `offline_pbkdf2_iterations` و `offline_shift_grace_minutes` برای کلاینت و `max_offline_minutes` برای سرورند؛ مقدارشان از `/settings` خوانده شود.
 
-Cache Storage پوسته، IndexedDB رمز‌شده با AES-GCM/PBKDF2، نگهداری CryptoKey، پاک‌سازی خروج/ابطال، backoff/jitter، ترتیب اولویت و هشدار کمبود فضا کار کلاینت مستقل است؛ قرارداد و معیار پذیرش در `docs/UI-HANDOFF.fa.md` آمده است. ارسال report/media از صف تا قرارداد فاز پنج پشتیبانی نمی‌شود. پذیرش اضطرار بدون Bearer فقط برای مسیر ویژه بالا و فقط پس از HMAC دستگاه فعال است؛ مسیرهای دیگر احراز هویت پیشین را حفظ می‌کنند.
+Cache Storage پوسته، IndexedDB رمز‌شده با AES-GCM/PBKDF2، نگهداری CryptoKey، پاک‌سازی خروج/ابطال، backoff/jitter، ترتیب اولویت و هشدار کمبود فضا کار کلاینت مستقل است؛ قرارداد و معیار پذیرش در `docs/UI-HANDOFF.fa.md` آمده است. گزارش از صف با `POST /tour/offline/reports` و رسانه با آپلود قطعه‌ای قابل ازسرگیری فاز پنج ارسال می‌شود. پذیرش اضطرار بدون Bearer فقط برای مسیر ویژه بالا و فقط پس از HMAC دستگاه فعال است؛ مسیرهای دیگر احراز هویت پیشین را حفظ می‌کنند.
+
+## فاز پنج: پیام، رسانه و گزارش‌های میدانی
+
+پیشوند `/api/v1`؛ همه مسیرها اجباری‌اند و نگهبان Bearer و `X-Device-Id` می‌فرستد. هیچ مسیری پرونده نمی‌سازد، اعزام نمی‌کند یا به سامانه بیرونی ارسال نمی‌کند.
+
+| Method | Path | قرارداد و مجوز |
+|---|---|---|
+| GET / POST | `/messages` | نگهبان با `tour_id` گشت خود به مرکز می‌فرستد (`direction=to_center`). مرکز (`manage`) با `audience` دقیقاً یکی از `guard_id` (نگهبان پیوندخورده) یا `broadcast_zone` (به‌علاوه `contractor_id` اختیاری) می‌فرستد. اعلان محوطه به نگهبانان دارای گشت فعال همان محوطه و پیمانکار می‌رسد. `priority=normal|urgent`. نگهبان فقط پیام خود یا پیامی که گیرنده آن است را می‌بیند و در `recipients` فقط خودش دیده می‌شود. |
+| POST | `/messages/{id}/ack` | گیرنده نگهبان «دریافت شد» صریح ثبت می‌کند؛ مرکز برای پیام نگهبان `center_ack_at` ثبت می‌کند. پیام فوری بی‌رسید پس از `message_urgent_escalation_seconds` به `shift_supervisor` و پس از دو برابر آن به `security_officer` تشدید و audit می‌شود؛ تکرار هشدار تا رسید کار کلاینت است. |
+| GET / POST | `/tour/reports` | `category=security|safety_hse|operations|damage|uxo|drone_sighting|other`، `text`، `client_id` و مختصات اختیاری؛ فقط گشت فعال خود نگهبان. `client_id` تکراری با بدنه یکسان همان گزارش را برمی‌گرداند و بدنه متفاوت 409 است. `audiences` از `RuntimeSettings.report_routing` (حراست همیشه مخاطب است). damage/uxo/drone_sighting بدون `safety_acknowledged=true` رد می‌شوند، `safety_instruction` ثابت «نزدیک نشو، از فاصله امن گزارش کن» و `purge_local_media=true` دارند. فیلتر `category` و `audience` اختیاری است. |
+| POST | `/tour/reports/{id}/ack` | `manage` در حوزه؛ رسید یک واحد مخاطب (`security|hse|operations`) یک‌بار ثبت و audit می‌شود. |
+| POST | `/tour/offline/reports` | رکورد امضاشده `kind=report` با payload `FieldReportInput`؛ `client_id` پوش و payload برابر. پرچم‌های `offline_too_long` و `clock_regressed` روی گزارش ثبت می‌شوند. |
+| GET | `/media/capture-policy?tour_id=` | برای نگهبان گشت فعال: `image_video_allowed` از محوطه و بازدید باز ایستگاه، صوت همیشه مجاز، سقف مدت و bitrate، اندازه قطعه و سقف‌ها. |
+| POST | `/media` | ثبت فراداده (`status=metadata`) با `report_id` اختیاری؛ سپس `PUT /media/{id}/content?sha256=` با بدنه خام تا `media_single_upload_max_bytes` (بیش از آن 413). `Content-Type` باید از فهرست مجاز همان `media_type` باشد (415)؛ هش ناسازگار 422 `hash_mismatch`. |
+| POST | `/media/uploads` | `{tour_id, caption, media_type, content_type, sha256, size, client_id, report_id?}` → `MediaUpload` با `id`، `received_bytes` و `chunk_bytes`. تکرار `client_id` با بدنه یکسان همان آپلود را برمی‌گرداند. حجم بیش از `media_max_bytes` 413. |
+| PUT | `/media/uploads/{id}?offset=` | بدنه خام یک قطعه تا `media_chunk_bytes` (بیش از آن 413 `chunk_too_large`). `offset` باید دقیقاً `received_bytes` باشد؛ در غیر این صورت 409 `upload_offset_mismatch`. |
+| GET | `/media/uploads/{id}` | وضعیت برای ازسرگیری؛ فقط مالک. |
+| POST | `/media/uploads/{id}/complete` | فقط پس از دریافت کامل؛ sha256 کل فایل بررسی می‌شود. ناسازگاری: 422 `hash_mismatch`، آپلود `failed` و audit. موفق: `MediaUploadResult` با رسانه `stored`، `server_received_at`، دستگاه و ثبت‌کننده؛ `purge_local_copy=true` برای دسته‌های محدود. |
+| GET | `/media` | نگهبان رسانه خود؛ مرکز در حوزه. رسانه damage/uxo/drone_sighting فقط برای `security_manager` و `admin` فهرست می‌شود. هر رکورد `watermark` محاسبه‌شده برای همان بیننده (تاریخ شمسی تهران، کد نگهبان، کد ایستگاه، نام بیننده) و `retention_until` و `exportable` دارد. |
+| GET | `/media/{id}/content` | محتوای اصلی دست‌نخورده با `Cache-Control: no-store`، `X-Content-SHA256` و audit هر مشاهده؛ بدون URL عمومی. نگهبان پس از ارسال، رسانه محدود را دوباره دریافت نمی‌کند (403 `media_access_denied`). نشان‌آب هنگام نمایش و خروجی در کلاینت رسم می‌شود. |
+| POST | `/media/{id}/attach` | `manage`؛ پیوست به پرونده موجود و `legal_hold=true` خودکار. |
+| POST | `/media/{id}/legal-hold` | `security_manager` یا `admin` با دلیل؛ رفع نگهداری رسانه پیوست پرونده 409. |
+| POST | `/exports` | با `media_id` برای رسانه محدود 403 `media_export_denied` و audit. |
+
+نگهداری: `RuntimeSettings.media_retention_days` به تفکیک دسته (رسانه بدون دسته: `other`). job worker پس از پایان دوره فایل را حذف، `status=purged` و audit می‌کند؛ رسانه `legal_hold` حذف نمی‌شود و API حذف دستی وجود ندارد. آپلود باز بی‌تحرک بیش از ۲۴ ساعت بسته می‌شود. ضبط تصویر و ویدئو در محوطه یا ایستگاه بدون `media_capture_allowed` با 403 `media_capture_denied` رد می‌شود؛ متن و صوت همیشه مجازند (تصمیم ۱۳). فایل‌ها خارج از SQLite در `SEPEHR_MEDIA_DIR` یا پوشه `media` کنار پایگاه میدانی ذخیره می‌شوند.
+

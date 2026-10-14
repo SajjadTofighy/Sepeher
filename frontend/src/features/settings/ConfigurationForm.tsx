@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Database, Network, Shield, Users } from "lucide-react";
 import { useEffect, useState } from "react";
-import { api } from "../../api";
+import { api, labels } from "../../api";
 import type { Act } from "../../shared/lib/actions";
 import { PanelTitle } from "../../shared/ui/primitives";
 import type { RuntimeSettings } from "../../types";
@@ -402,6 +402,33 @@ export default function ConfigurationForm({
                 onChange={(e) => set("retention_days", +e.target.value)}
               />
             </label>
+            <h3>رسانه و پیام میدانی (فاز ۵)</h3>
+            <div className="form-grid">
+              {([
+                ["media_chunk_bytes", "اندازه قطعه آپلود (بایت)", 16384, 4194304],
+                ["media_single_upload_max_bytes", "سقف آپلود یکجا (بایت)", 1024, 8388608],
+                ["media_max_bytes", "سقف حجم هر رسانه (بایت)", 65536, 1073741824],
+                ["media_video_max_seconds", "سقف مدت ویدئو (ثانیه)", 5, 1800],
+                ["media_audio_max_seconds", "سقف مدت صوت (ثانیه)", 5, 3600],
+                ["media_video_bitrate_kbps", "bitrate ویدئو (kbps)", 64, 8000],
+                ["media_audio_bitrate_kbps", "bitrate صوت (kbps)", 16, 320],
+                ["message_urgent_escalation_seconds", "تشدید پیام فوری بی‌رسید (ثانیه)", 10, 3600],
+              ] as const).map(([key, label, min, max]) => (
+                <label className="field" key={key}>{label}
+                  <input type="number" min={min} max={max} value={draft[key] ?? ""} onChange={(e) => set(key, +e.target.value)} />
+                </label>
+              ))}
+            </div>
+            <h3>نگهداری رسانه به تفکیک دسته (روز)</h3>
+            <div className="form-grid">
+              {draft.media_retention_days && (Object.keys(draft.media_retention_days) as (keyof NonNullable<RuntimeSettings["media_retention_days"]>)[]).map((key) => (
+                <label className="field" key={key}>{labels[key] || key}
+                  <input type="number" min={1} max={3650} value={draft.media_retention_days![key]}
+                    onChange={(e) => set("media_retention_days", { ...draft.media_retention_days!, [key]: +e.target.value })} />
+                </label>
+              ))}
+            </div>
+            <p className="muted">رسانه پیوست پرونده یا دارای نگهداری قانونی هرگز با پایان دوره حذف نمی‌شود؛ حذف فقط با job نگهداری و ثبت ممیزی است.</p>
             <div className="privacy-principles">
               <p>
                 <Check size={16} />

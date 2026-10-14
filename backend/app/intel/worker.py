@@ -5,7 +5,7 @@ import logging
 import os
 from contextlib import asynccontextmanager, suppress
 
-from .. import field_safety, store
+from .. import field_media, field_safety, store
 from ..models import RuntimeSettings
 from . import coverage, safety, hazard
 from . import shift_report
@@ -21,6 +21,7 @@ def tick(now):
         for capability in capabilities:
             capability.tick(now)
         field_safety.tick(now)
+        field_media.tick(now)
         store.evaluate_policies(now, coverage_ready=True)
         shift_report.tick(now)
 

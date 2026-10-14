@@ -1,9 +1,10 @@
-import { Battery, Car, History, Send, Signal } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Battery, Car, History, MessageSquareText, Send, Signal } from "lucide-react";
 import { useState } from "react";
 import { api, fa, labels, timeFa } from "../../api";
 import type { Act } from "../../shared/lib/actions";
 import { Badge, Modal } from "../../shared/ui/primitives";
-import type { Asset, Data } from "../../types";
+import type { Asset, CommandPreview, Data, DeviceProfile } from "../../types";
 import AssetSettingsForm from "./AssetSettingsForm";
 const flow = [
   "detected",
@@ -32,6 +33,14 @@ export default function AssetPanel({
     [channel, setChannel] = useState("data"),
     [interval, setIntervalValue] = useState(30),
     [confirm, setConfirm] = useState(false);
+  const profiles = useQuery({ queryKey: ["device-profiles"], queryFn: () => api<DeviceProfile[]>("/device-profiles"), staleTime: Infinity });
+  const profile = profiles.data?.find((p) => p.id === a.device_profile);
+  const preview = useQuery({
+    queryKey: ["command-preview", a.id, a.device_profile, a.sms_password_set, cmd, interval],
+    queryFn: () => api<CommandPreview>(`/commands/preview?asset_id=${a.id}&command=${cmd}&channel=sms&interval_seconds=${interval}`),
+    enabled: channel === "sms" && interval >= 5 && interval <= 3600,
+    retry: false,
+  });
   const recent = data.commands
     .filter((c) => c.asset_id === a.id)
     .slice(-3)
@@ -67,6 +76,8 @@ export default function AssetPanel({
         <b dir="ltr">{a.sim}</b>
         <span>اپراتور</span>
         <b>{a.carrier}</b>
+        <span>پروفایل پیامکی</span>
+        <b>{profile?.label || a.device_profile}{a.sms_password_set ? " · رمز ثبت‌شده" : ""}</b>
         <span>نسخه دستگاه</span>
         <b>{a.firmware}</b>
         <span>آخرین ارتباط</span>
@@ -136,6 +147,18 @@ export default function AssetPanel({
             />
           </label>
         )}
+        {channel === "sms" && (
+          <div className="sms-preview">
+            <MessageSquareText size={16} />
+            {preview.isError ? <p className="flag">{(preview.error as Error).message}</p> : preview.data ? (
+              <div>
+                <small>متن دقیق پیامک به {preview.data.sms_destination} (رمز دستگاه پوشیده):</small>
+                <code dir="ltr">{preview.data.sms_text?.replace(/ /g, "␣")}</code>
+                <small className="muted">{preview.data.note}. درگاه پیامک متصل نیست؛ تحویل نمایشی است.</small>
+              </div>
+            ) : <small>در حال ساخت پیش‌نمایش…</small>}
+          </div>
+        )}
         {confirm ? (
           <div className="confirm-box">
             <p>
@@ -144,7 +167,7 @@ export default function AssetPanel({
             <div>
               <button
                 className="primary"
-                disabled={busy || interval < 5 || interval > 3600}
+                disabled={busy || interval < 5 || interval > 3600 || (channel === "sms" && !preview.data)}
                 onClick={async () => {
                   const r = await act(
                     () =>

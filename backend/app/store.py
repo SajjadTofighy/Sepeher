@@ -240,7 +240,7 @@ def restore_field_state():
             existing["keycloak_sub"] = links.get(asset["id"])
             asset.update({key: existing.get(key) for key in ("keycloak_sub", "zone_id", "contractor_id")})
             field.save("guards", existing)
-    for kind in ("guards", "tour", "routes", "tags", "messages", "media", "checkins", "approvals", "stations", "station_tasks", "station_visits", "station_results", "field_zones", "seal_changes", "shift_patterns", "tour_schedules", "scheduled_tours", "shift_handovers", "emergency_modes", "field_safety_events", "musters", "scan_reviews"):
+    for kind in ("guards", "tour", "routes", "tags", "messages", "media", "checkins", "approvals", "stations", "station_tasks", "station_visits", "station_results", "field_zones", "seal_changes", "shift_patterns", "tour_schedules", "scheduled_tours", "shift_handovers", "emergency_modes", "field_safety_events", "musters", "scan_reviews", "field_reports", "media_uploads"):
         state["field_" + kind] = field.records(kind)
     setting = field.get("settings", "classification")
     if setting:

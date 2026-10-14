@@ -156,7 +156,7 @@ def response_metadata(path):
         parsed = urlsplit(os.environ.get("SEPEHR_OIDC_ISSUER", ""))
         origins = [f"{parsed.scheme}://{parsed.netloc}"] if parsed.netloc else []
         origins.extend(x.strip() for x in os.environ.get("SEPEHR_GIS_ORIGINS", "").split(",") if x.strip())
-        headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; connect-src 'self'" + (" " + " ".join(origins) if origins else "")
+        headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; connect-src 'self'" + (" " + " ".join(origins) if origins else "")
     if auth_mode() == "demo":
         headers["X-Sepehr-Demo"] = "1"
     return headers

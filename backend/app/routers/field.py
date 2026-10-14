@@ -20,7 +20,7 @@ from ..models import (
     AccessError, ApprovalInput, ApprovalRecord, AuthConfiguration, CheckInInput, CheckInRecord,
     DeviceCertificationInput, DeviceEnrollmentInput, DeviceRecord, EnrolledDevice,
     EnrollmentCode, EnrollmentCodeInput, ExportAuthorization, ExportInput,
-    FieldMedia, FieldMediaInput, FieldMessage, FieldMessageInput, GuardCredentialInput,
+    GuardCredentialInput,
     GuardRecord, IdentityInput, PermissionMatrix, Principal, RoleChangeEvent, ScopedInput,
     PinUnlockInput, PinUnlockResult, TagInput, TagRecord, TourInput, TourRecord, TourReport, TourRoute, TourRouteInput,
 )
@@ -32,13 +32,18 @@ class FieldRoute(store.StateRoute):
         original = endpoint
         @wraps(original)
         def endpoint(*args, **kw):
-            try:
-                with store.field.transaction():
-                    field_identity(Request(auth.current_scope.get()))
-                    return original(*args, **kw)
-            finally:
-                store.restore_field_state()
+            return run_field(original, *args, **kw)
         super().__init__(path, endpoint, **kwargs)
+
+
+def run_field(function, *args, **kwargs):
+    """Identity check, device binding and one durable transaction for a field operation."""
+    try:
+        with store.field.transaction():
+            field_identity(Request(auth.current_scope.get()))
+            return function(*args, **kwargs)
+    finally:
+        store.restore_field_state()
 
 
 def field_identity(request: Request):
@@ -402,50 +407,6 @@ def create_tag(payload: TagInput):
     return item
 
 
-@router.get("/api/v1/messages", response_model=list[FieldMessage])
-def messages():
-    return filtered("messages")
-
-
-@router.post("/api/v1/messages", response_model=FieldMessage, status_code=201)
-def send_message(payload: FieldMessageInput, request: Request):
-    principal = authz.require("read")
-    tour = record("tour", payload.tour_id)
-    if principal.sub != tour["owner_sub"]:
-        auth.fail("permission_denied", 403)
-    device_for(request, principal)
-    item = dict(**payload.model_dump(), id=new_id("MSG"), owner_sub=principal.sub, guard_id=tour["guard_id"],
-                zone_id=tour["zone_id"], contractor_id=tour["contractor_id"], created_at=store.now())
-    store.field.save("messages", item)
-    store.audit("ثبت پیام میدانی", item["id"])
-    return item
-
-
-@router.get("/api/v1/media", response_model=list[FieldMedia])
-def media():
-    return filtered("media")
-
-
-@router.post("/api/v1/media", response_model=FieldMedia, status_code=201)
-def create_media(payload: FieldMediaInput, request: Request):
-    principal = authz.require("read")
-    tour = record("tour", payload.tour_id)
-    if principal.sub != tour["owner_sub"]:
-        auth.fail("permission_denied", 403)
-    device_for(request, principal)
-    for visit in store.field.records("station_visits"):
-        if visit["tour_id"] == tour["id"] and visit["owner_sub"] == principal.sub and not visit["completed_at"]:
-            station = store.field.get("stations", visit["station_id"])
-            if not visit["media_capture_allowed"] or not station["media_capture_allowed"]:
-                from ..tour_tags import denied
-                denied("media_capture_denied", "ضبط رسانه در ایستگاه مجاز نیست")
-    item = dict(**payload.model_dump(), id=new_id("MEDIA"), owner_sub=principal.sub, guard_id=tour["guard_id"],
-                zone_id=tour["zone_id"], contractor_id=tour["contractor_id"], created_at=store.now())
-    store.field.save("media", item)
-    store.audit("ثبت فراداده رسانه میدانی", item["id"])
-    return item
-
-
 @router.get("/api/v1/reports/tour", response_model=TourReport)
 def tour_report():
     authz.require("export")
@@ -547,7 +508,15 @@ def decide(id, accepted):
 
 @auth_router.post("/api/v1/exports", response_model=ExportAuthorization)
 def authorize_export(payload: ExportInput):
-    authz.require("export")
+    principal = authz.require("export")
+    if payload.media_id is not None:
+        from .. import field_media
+        media = store.field.get("media", payload.media_id)
+        if media is None or not field_media.may_view(principal, media):
+            raise HTTPException(404, "رسانه پیدا نشد")
+        if field_media.restricted(media):
+            store.audit("رد خروجی رسانه محدود", media["id"], media["category"])
+            raise HTTPException(403, {"code": "media_export_denied", "message": "رسانه خسارت، مهمات و پهپاد قابل خروجی نیست"})
     item = store.audit("مجوز خروجی طبقه‌بندی‌شده", payload.name)
     return dict(classification_label=store.state["settings"]["classification_label"], audit_id=item["id"], generated_at=item["time"])
 

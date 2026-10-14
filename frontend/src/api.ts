@@ -7,18 +7,40 @@ export async function api<T = unknown>(
   const response = await fetch("/api/v1" + path, {
     method,
     signal,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...sessionHeaders() },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
+  return parseResponse<T>(response);
+}
+export async function parseResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     let message = "خطا در ارتباط با سرویس";
+    let code = "";
     try {
       const e = await response.json();
-      message = typeof e.detail === "string" ? e.detail : "ورودی نامعتبر است";
+      code = typeof e.detail === "object" && e.detail?.code ? e.detail.code : "";
+      message =
+        typeof e.detail === "string"
+          ? e.detail
+          : typeof e.detail?.message === "string"
+            ? e.detail.message
+            : "ورودی نامعتبر است";
     } catch {}
-    throw new Error(message);
+    throw Object.assign(new Error(message), { status: response.status, code });
   }
   return response.json();
+}
+// In-memory field session only; tokens never touch localStorage or sessionStorage.
+const session: { token?: string; deviceId?: string } = {};
+export function setSession(token?: string, deviceId?: string) {
+  session.token = token;
+  session.deviceId = deviceId;
+}
+export function sessionHeaders(): Record<string, string> {
+  return {
+    ...(session.token ? { Authorization: "Bearer " + session.token } : {}),
+    ...(session.deviceId ? { "X-Device-Id": session.deviceId } : {}),
+  };
 }
 export const fa = (n: number | string) => Number(n).toLocaleString("fa-IR");
 export const timeFa = (s: string) =>
@@ -63,6 +85,28 @@ export const labels: Record<string, string> = {
   completed: "تکمیل‌شده",
   check_pending: "در انتظار تأیید سلامت",
   escalated: "نیازمند رسیدگی فوری",
+  urgent: "فوری",
+  normal: "عادی",
+  to_center: "نگهبان ← مرکز",
+  to_guard: "مرکز ← نگهبان",
+  broadcast: "اعلان محوطه",
+  operator: "اپراتور",
+  shift_supervisor: "سرپرست شیفت",
+  security_officer: "مسئول حراست",
+  security: "حراست",
+  safety_hse: "ایمنی و HSE",
+  operations: "بهره‌برداری",
+  damage: "خسارت",
+  uxo: "مهمات عمل‌نکرده",
+  drone_sighting: "مشاهده پهپاد",
+  other: "سایر",
+  hse: "HSE",
+  metadata: "فقط فراداده",
+  stored: "ثبت‌شده",
+  purged: "حذف پس از نگهداری",
+  image: "تصویر",
+  audio: "صوت",
+  video: "ویدئو",
 };
 
 export const policyConditions = [

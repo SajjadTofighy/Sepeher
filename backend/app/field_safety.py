@@ -83,10 +83,15 @@ def report(tour, device, payload, stamp, *, auth_expired=False, clock_regressed=
 
 
 def escalation(row, now=None):
-    if row.get('operator_ack_at'):
+    return escalation_level(row['created_at'], bool(row.get('operator_ack_at')),
+                            store.state['settings']['field_sos_escalation_seconds'], now)
+
+
+def escalation_level(created_at, acknowledged, threshold, now=None):
+    """Shared timed chain for unacknowledged SOS alerts and urgent messages."""
+    if acknowledged:
         return 'operator'
-    elapsed = (parse_timestamp(now or store.now()) - parse_timestamp(row['created_at'])).total_seconds()
-    threshold = store.state['settings']['field_sos_escalation_seconds']
+    elapsed = (parse_timestamp(now or store.now()) - parse_timestamp(created_at)).total_seconds()
     if elapsed >= threshold * 2:
         return 'security_officer'
     if elapsed >= threshold:

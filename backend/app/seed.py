@@ -53,6 +53,8 @@ def seed():
                 sim=f"09•• ••• {4100 + i}",
                 carrier="همراه اول" if i % 2 == 0 else "ایرانسل",
                 firmware="2.4.1",
+                # Schematic protocol families only; no real device inventory.
+                device_profile=["concox_gt06", "coban_tk103", "teltonika_fmb"][i % 3] if i < 8 else "generic_data",
                 last_seen=ago(18 if i == 5 else 0),
                 capabilities=[
                     "position",

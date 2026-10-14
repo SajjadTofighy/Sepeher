@@ -21,6 +21,8 @@ import {
   Route,
   Settings,
   ShieldCheck,
+  Smartphone,
+  MessagesSquare,
   SlidersHorizontal,
   Sparkles,
   Sun,
@@ -44,6 +46,8 @@ import MissionsPage from "./features/missions/MissionsPage";
 import PoliciesPage from "./features/policies/PoliciesPage";
 import PolicyModal from "./features/policies/PolicyModal";
 import ConfigurationForm from "./features/settings/ConfigurationForm";
+import FieldApp from "./features/field-comms/FieldApp";
+import FieldCommsPage from "./features/field-comms/FieldCommsPage";
 import SettingsPage from "./features/settings/SettingsPage";
 import { useOperations } from "./shared/api/useOperations";
 import { download } from "./shared/lib/download";
@@ -60,6 +64,8 @@ const nav = [
   { id: "policies", name: "سیاست‌های حراست", icon: SlidersHorizontal },
   { id: "replay", name: "تاریخچه و بازپخش", icon: History },
   { id: "analytics", name: "داشبورد مدیریتی", icon: LayoutDashboard },
+  { id: "field-comms", name: "پیام، رسانه و گزارش میدانی", icon: MessagesSquare },
+  { id: "field", name: "اپ میدانی نگهبان", icon: Smartphone },
   { id: "audit", name: "گزارش‌ها و پایش", icon: ClipboardList },
   { id: "settings", name: "تنظیمات سامانه", icon: Settings },
 ];
@@ -70,7 +76,7 @@ export default function App() {
   const data = operations.data;
   const connected = operations.isSuccess;
   const error = operations.error?.message || "";
-  const [page, setPage] = useState(location.hash.slice(1) || "command"),
+  const [page, setPage] = useState(location.pathname === "/auth/callback" ? "field" : location.hash.slice(1) || "command"),
     [toast, setToast] = useState(""),
     [busy, setBusy] = useState(false),
     [search, setSearch] = useState(""),
@@ -579,6 +585,8 @@ export default function App() {
               />
             </Suspense>
           )}
+          {page === "field-comms" && <FieldCommsPage data={data} act={act} busy={busy} />}
+          {page === "field" && <FieldApp />}
           {page === "audit" && (
             <AuditPage data={data} act={act} setToast={setToast} />
           )}

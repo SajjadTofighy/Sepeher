@@ -220,7 +220,8 @@ def test_matching_seal_and_media_policy(client,token_factory):
     visit,headers=start_visit(client,token_factory,station)
     result=client.post(f"/api/v1/tour/station-visits/{visit['id']}/tasks/{task['id']}",headers=headers,json={'value':'OK'})
     assert result.json()['anomaly'] is False
-    assert client.post('/api/v1/media',headers=headers,json=dict(tour_id=visit['tour_id'],caption='ممنوع',media_type='audio')).status_code==403
+    assert client.post('/api/v1/media',headers=headers,json=dict(tour_id=visit['tour_id'],caption='ممنوع',media_type='image')).status_code==403
+    assert client.post('/api/v1/media',headers=headers,json=dict(tour_id=visit['tour_id'],caption='صوت مجاز',media_type='audio')).status_code==201
     assert client.post(f"/api/v1/tour/stations/{station['id']}/tasks/{task['id']}/seal",json={'expected_value':'NEW','reason':''}).status_code==422
 
 

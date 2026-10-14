@@ -34,6 +34,7 @@ export default function CommandTable({
                 <th>مقصد</th>
                 <th>فرمان</th>
                 <th>کانال</th>
+                <th>متن پیامک</th>
                 <th>مهلت نمونه</th>
                 <th>وضعیت</th>
                 <th>اقدام</th>
@@ -46,6 +47,7 @@ export default function CommandTable({
                   <td>{data.assets.find((a) => a.id === c.asset_id)?.name}</td>
                   <td>{labels[c.command]}</td>
                   <td>{c.channel === "sms" ? "پیامک" : "اینترنت همراه"}</td>
+                  <td dir="ltr" className="mono">{c.sms_text ? c.sms_text.replace(/ /g, "␣") : "—"}</td>
                   <td>{fa(c.timeout_seconds)} ثانیه</td>
                   <td>
                     <Badge value={c.status} />

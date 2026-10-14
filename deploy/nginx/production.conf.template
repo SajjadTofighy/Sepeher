@@ -14,7 +14,7 @@ server {
     ssl_certificate /etc/sepehr/tls/app/fullchain.pem;
     ssl_certificate_key /etc/sepehr/tls/app/privkey.pem;
     add_header Strict-Transport-Security "max-age=31536000" always;
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' ${SEPEHR_RESOURCE_ORIGINS}; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self' ${SEPEHR_RESOURCE_ORIGINS}; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'" always;
     add_header Referrer-Policy "no-referrer" always;
     add_header X-Content-Type-Options "nosniff" always;
     root /usr/share/nginx/html;
@@ -26,6 +26,8 @@ server {
         proxy_set_header X-Forwarded-Proto https;
         proxy_buffering off;
         proxy_read_timeout 60s;
+        # Upper bound of media_chunk_bytes and media_single_upload_max_bytes settings.
+        client_max_body_size 8m;
     }
     location = /docs {
         proxy_pass ${SEPEHR_API_UPSTREAM};

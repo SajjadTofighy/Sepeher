@@ -36,8 +36,13 @@ def edit_zone(id: str, p: ZoneInput):
 @router.patch("/api/v1/assets/{id}/settings", response_model=Asset)
 def asset_settings(id: str, p: AssetSettings):
     a = lookup("assets", id)
-    a.update(p.model_dump())
-    audit("ویرایش مشخصات تجهیز", id)
+    changes = p.model_dump(exclude={"sms_password", "sms_login"}, exclude_none=True)
+    a.update(changes)
+    for key in ("sms_password", "sms_login"):
+        if getattr(p, key) is not None:
+            a[key] = getattr(p, key)
+    a["sms_password_set"] = bool(a.get("sms_password"))
+    audit("ویرایش مشخصات تجهیز", id, a.get("device_profile", "generic_data"))
     return legacy_asset(a)
 
 
@@ -76,12 +81,15 @@ def save_settings(p: RuntimeSettings):
     if any(s["sensitivity"] not in p.station_sensitivity_labels for s in store.field.records("stations")):
         raise HTTPException(409, "برچسب مورد استفاده ایستگاه را نمی‌توان حذف کرد")
     store.field.save("settings", dict(id="station_sensitivity", station_sensitivity_labels=p.station_sensitivity_labels))
-    store.field.save('settings', dict(id='tour_phase_two', **{key: getattr(p, key).model_dump() if key == 'heat_profile' else getattr(p, key)
+    store.field.save('settings', dict(id='tour_phase_two', **{key: getattr(p, key).model_dump() if key in ('heat_profile', 'media_retention_days', 'report_routing') else getattr(p, key)
         for key in ('tour_schedule_max_days', 'tour_time_jitter_percent', 'queue_reveal', 'queue_reveal_count',
                     'handover_required', 'two_person_window_minutes', 'heat_profile',
                     'field_location_max_accuracy_m', 'field_location_max_speed_kmh', 'field_clock_skew_seconds',
                     'field_man_down_idle_seconds', 'field_man_down_countdown_seconds', 'field_sos_escalation_seconds',
-                    'offline_pbkdf2_iterations', 'offline_shift_grace_minutes', 'max_offline_minutes')}))
+                    'offline_pbkdf2_iterations', 'offline_shift_grace_minutes', 'max_offline_minutes',
+                    'media_chunk_bytes', 'media_single_upload_max_bytes', 'media_max_bytes', 'media_video_max_seconds',
+                    'media_audio_max_seconds', 'media_video_bitrate_kbps', 'media_audio_bitrate_kbps',
+                    'media_retention_days', 'report_routing', 'message_urgent_escalation_seconds')}))
     state["settings"] = p.model_dump()
     audit("ذخیره تنظیمات نمایشی", "SETTINGS")
     return p
