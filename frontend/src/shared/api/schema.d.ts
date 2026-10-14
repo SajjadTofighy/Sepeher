@@ -915,6 +915,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tour/exceptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Exception Board */
+        get: operations["exception_board_api_v1_tour_exceptions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tour/station-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Station Status */
+        get: operations["station_status_api_v1_tour_station_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/tour/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Patrol Report */
+        get: operations["patrol_report_api_v1_reports_tour_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/tour/guards/{guard_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Guard Detail */
+        get: operations["guard_detail_api_v1_reports_tour_guards__guard_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/media/uploads/{id}": {
         parameters: {
             query?: never;
@@ -2472,6 +2540,15 @@ export interface components {
             /** Can Execute */
             can_execute: boolean;
         };
+        /** AuditChainHealth */
+        AuditChainHealth: {
+            /** Valid */
+            valid: boolean;
+            /** Count */
+            count: number;
+            /** Scope */
+            scope: string;
+        };
         /** AuditRecord */
         AuditRecord: {
             /** Sub */
@@ -2793,6 +2870,44 @@ export interface components {
             /** Note */
             note: string;
         };
+        /** ComplianceTotals */
+        ComplianceTotals: {
+            /** Planned */
+            planned: number;
+            /** Visited */
+            visited: number;
+            /** Verified */
+            verified: number;
+            /** Verified Percent */
+            verified_percent: number | null;
+            /** Missed */
+            missed: number;
+            /** Pending */
+            pending: number;
+            /** Suspended */
+            suspended: number;
+        };
+        /** ContractorLine */
+        ContractorLine: {
+            /** Planned */
+            planned: number;
+            /** Visited */
+            visited: number;
+            /** Verified */
+            verified: number;
+            /** Verified Percent */
+            verified_percent: number | null;
+            /** Missed */
+            missed: number;
+            /** Pending */
+            pending: number;
+            /** Suspended */
+            suspended: number;
+            /** Contractor Id */
+            contractor_id: string;
+            /** Zone Id */
+            zone_id: string;
+        };
         /** Coverage */
         Coverage: {
             /** Items */
@@ -2936,6 +3051,17 @@ export interface components {
             /** Phone */
             phone: string;
         };
+        /** EmergencyLine */
+        EmergencyLine: {
+            /** Zone Id */
+            zone_id: string;
+            /** Active */
+            active: boolean;
+            /** Reason */
+            reason: string;
+            /** Changed At */
+            changed_at: string;
+        };
         /** EmergencyMode */
         EmergencyMode: {
             /** Zone Id */
@@ -3001,6 +3127,64 @@ export interface components {
             code: string;
             /** Message */
             message: string;
+        };
+        /** ExceptionBoard */
+        ExceptionBoard: {
+            /** Classification Label */
+            classification_label: string;
+            /** Generated At */
+            generated_at: string;
+            /** Generated At Jalali */
+            generated_at_jalali: string;
+            /** Items */
+            items: components["schemas"]["ExceptionItem"][];
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Suspended */
+            suspended: components["schemas"]["SuspendedTour"][];
+            /** Emergency Zone Ids */
+            emergency_zone_ids: string[];
+            /** Stations */
+            stations: components["schemas"]["StationStatus"][];
+        };
+        /** ExceptionItem */
+        ExceptionItem: {
+            /** Zone Id */
+            zone_id: string;
+            /** Contractor Id */
+            contractor_id: string;
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "station_missed" | "station_overdue" | "scan_low_trust" | "scan_pending_review" | "alarm_unacked" | "duress_unacked" | "man_down_unacked" | "device_silent" | "muster_open" | "message_urgent_unacked" | "integrity";
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "critical" | "high" | "medium" | "low";
+            /** Title */
+            title: string;
+            /** Detail */
+            detail: string;
+            /** Since */
+            since: string;
+            /** Guard Id */
+            guard_id?: string | null;
+            /** Station Id */
+            station_id?: string | null;
+            /** Source Ids */
+            source_ids: string[];
+            /**
+             * Can Execute
+             * @default false
+             * @constant
+             */
+            can_execute: false;
         };
         /** ExportAuthorization */
         ExportAuthorization: {
@@ -3482,12 +3666,57 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** GuardCheck */
+        GuardCheck: {
+            /** Scheduled Tour Id */
+            scheduled_tour_id: string;
+            /** Station Id */
+            station_id: string;
+            /** Due At */
+            due_at: string;
+            /** Ends At */
+            ends_at: string;
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "verified" | "visited_unverified" | "missed" | "pending" | "suspended";
+            /** Visit Id */
+            visit_id: string | null;
+            /** Trust Level */
+            trust_level: ("high" | "medium" | "low") | null;
+        };
         /** GuardCredentialInput */
         GuardCredentialInput: {
             /** Pin */
             pin: string;
             /** Duress Pin */
             duress_pin: string;
+        };
+        /** GuardDetailReport */
+        GuardDetailReport: {
+            /** Classification Label */
+            classification_label: string;
+            /** Generated At */
+            generated_at: string;
+            /** Viewer */
+            viewer: string;
+            /** Guard Id */
+            guard_id: string;
+            /** Guard Name */
+            guard_name: string;
+            /** Zone Id */
+            zone_id: string | null;
+            /** Contractor Id */
+            contractor_id: string | null;
+            period: components["schemas"]["ReportPeriod"];
+            /** Checks */
+            checks: components["schemas"]["GuardCheck"][];
+            /** Scans */
+            scans: components["schemas"]["ScanRecord"][];
+            totals: components["schemas"]["ComplianceTotals"];
+            /** Audit Id */
+            audit_id: string;
         };
         /** GuardRecord */
         GuardRecord: {
@@ -4094,6 +4323,35 @@ export interface components {
             /** Mandatory */
             mandatory: boolean;
         };
+        /** PatrolReport */
+        PatrolReport: {
+            /** Classification Label */
+            classification_label: string;
+            /** Generated At */
+            generated_at: string;
+            /** Generated At Jalali */
+            generated_at_jalali: string;
+            /** Viewer */
+            viewer: string;
+            period: components["schemas"]["ReportPeriod"];
+            totals: components["schemas"]["ComplianceTotals"];
+            trust: components["schemas"]["TrustSummary"];
+            /** Contractors */
+            contractors: components["schemas"]["ContractorLine"][];
+            /** Emergency */
+            emergency: components["schemas"]["EmergencyLine"][];
+            /** Integrity */
+            integrity: {
+                [key: string]: number;
+            };
+            /** Exceptions */
+            exceptions: {
+                [key: string]: number;
+            };
+            audit_chain: components["schemas"]["AuditChainHealth"];
+            /** Audit Id */
+            audit_id: string;
+        };
         /** PermissionMatrix */
         PermissionMatrix: {
             /** Permissions */
@@ -4470,6 +4728,17 @@ export interface components {
             /** At */
             at: string;
         };
+        /** ReportPeriod */
+        ReportPeriod: {
+            /** Window From */
+            window_from: string;
+            /** Window To */
+            window_to: string;
+            /** From Jalali */
+            from_jalali: string;
+            /** To Jalali */
+            to_jalali: string;
+        };
         /** ReportRouting */
         ReportRouting: {
             /** Security */
@@ -4572,6 +4841,42 @@ export interface components {
         };
         /** RuntimeSettings */
         RuntimeSettings: {
+            /**
+             * Integrity Mode
+             * @default shadow
+             * @enum {string}
+             */
+            integrity_mode: "shadow" | "active";
+            /**
+             * Integrity Window Hours
+             * @default 24
+             */
+            integrity_window_hours: number;
+            /**
+             * Integrity Short Dwell Count
+             * @default 3
+             */
+            integrity_short_dwell_count: number;
+            /**
+             * Integrity Offline Repeat Count
+             * @default 3
+             */
+            integrity_offline_repeat_count: number;
+            /**
+             * Integrity Pair Minutes
+             * @default 10
+             */
+            integrity_pair_minutes: number;
+            /**
+             * Integrity Pair Km
+             * @default 1
+             */
+            integrity_pair_km: number;
+            /**
+             * Exception Device Silence Minutes
+             * @default 10
+             */
+            exception_device_silence_minutes: number;
             /**
              * Media Chunk Bytes
              * @default 262144
@@ -5394,6 +5699,30 @@ export interface components {
             /** Previous Device Time */
             previous_device_time?: string | null;
         };
+        /** StationStatus */
+        StationStatus: {
+            /** Zone Id */
+            zone_id: string;
+            /** Contractor Id */
+            contractor_id: string;
+            /** Station Id */
+            station_id: string;
+            /** Name */
+            name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "unverified" | "never";
+            /** Last Scan Id */
+            last_scan_id: string | null;
+            /** Last Trust */
+            last_trust: ("high" | "medium" | "low") | null;
+            /** Last Scan At */
+            last_scan_at: string | null;
+            /** Tag Mode */
+            tag_mode: string;
+        };
         /** StationTagSheet */
         StationTagSheet: {
             /** Code */
@@ -5680,6 +6009,25 @@ export interface components {
             /** Mac Offset */
             mac_offset: number;
         };
+        /** SuspendedTour */
+        SuspendedTour: {
+            /** Zone Id */
+            zone_id: string;
+            /** Contractor Id */
+            contractor_id: string;
+            /** Scheduled Tour Id */
+            scheduled_tour_id: string;
+            /** Guard Id */
+            guard_id: string;
+            /** Due At */
+            due_at: string;
+            /** Ends At */
+            ends_at: string;
+            /** Station Count */
+            station_count: number;
+            /** Reason */
+            reason: string;
+        };
         /** TagInput */
         TagInput: {
             /** Zone Id */
@@ -5922,6 +6270,23 @@ export interface components {
              * @default
              */
             note: string;
+        };
+        /** TrustSummary */
+        TrustSummary: {
+            /** High */
+            high: number;
+            /** Medium */
+            medium: number;
+            /** Low */
+            low: number;
+            /** Manual */
+            manual: number;
+            /** Pending Review */
+            pending_review: number;
+            /** Weak Tag */
+            weak_tag: number;
+            /** Rejected Replay */
+            rejected_replay: number;
         };
         /** ValidationError */
         ValidationError: {
@@ -7618,6 +7983,294 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    exception_board_api_v1_tour_exceptions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExceptionBoard"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+        };
+    };
+    station_status_api_v1_tour_station_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StationStatus"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+        };
+    };
+    patrol_report_api_v1_reports_tour_summary_get: {
+        parameters: {
+            query?: {
+                window_from?: string | null;
+                window_to?: string | null;
+                format?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatrolReport"];
+                    "text/csv": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+        };
+    };
+    guard_detail_api_v1_reports_tour_guards__guard_id__get: {
+        parameters: {
+            query?: {
+                window_from?: string | null;
+                window_to?: string | null;
+            };
+            header?: never;
+            path: {
+                guard_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardDetailReport"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
                 };
             };
         };

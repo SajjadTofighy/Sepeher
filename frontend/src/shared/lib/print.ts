@@ -18,6 +18,8 @@ export function writePrintReport(
     generatedAt: string;
     body: string;
     footer: string;
+    // Viewer name and time, tiled behind the content on every printed page.
+    watermark?: string;
   },
 ) {
   w.document
@@ -31,7 +33,11 @@ h1{font-size:22px;margin:0}small,.muted{color:#5b6c78}
 .grid div{border:1px solid #d7e0e5;border-radius:6px;padding:10px}.grid b{display:block;font-size:15px}
 table{width:100%;border-collapse:collapse;font-size:13px}td,th{border-bottom:1px solid #e1e7eb;padding:8px;text-align:right}
 th{background:#f1f5f7}footer{margin-top:30px;font-size:11px;color:#6b7b86}
+.watermark{position:fixed;inset:0;display:flex;flex-wrap:wrap;align-content:space-around;justify-content:space-around;pointer-events:none;z-index:-1}
+.watermark span{transform:rotate(-25deg);color:#14212b14;font-size:20px;white-space:nowrap;padding:40px}
+.classification{text-align:center;font-weight:700;color:#9b1c1c;letter-spacing:1px}
 </style></head><body>
+${report.watermark ? `<div class="watermark">${Array.from({ length: 12 }, () => `<span>${escapePrintText(report.watermark!)}</span>`).join("")}</div>` : ""}
 <header><div>${report.header}</div><div class="muted">تولید: ${escapePrintText(tehranTime(report.generatedAt))}</div></header>
 ${report.body}
 <footer>${escapePrintText(report.footer)}</footer>

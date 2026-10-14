@@ -22,6 +22,7 @@ import {
   Settings,
   ShieldCheck,
   Smartphone,
+  ListChecks,
   MessagesSquare,
   SlidersHorizontal,
   Sparkles,
@@ -48,6 +49,7 @@ import PolicyModal from "./features/policies/PolicyModal";
 import ConfigurationForm from "./features/settings/ConfigurationForm";
 import FieldApp from "./features/field-comms/FieldApp";
 import FieldCommsPage from "./features/field-comms/FieldCommsPage";
+import SupervisionPage from "./features/supervision/SupervisionPage";
 import SettingsPage from "./features/settings/SettingsPage";
 import { useOperations } from "./shared/api/useOperations";
 import { download } from "./shared/lib/download";
@@ -64,6 +66,7 @@ const nav = [
   { id: "policies", name: "سیاست‌های حراست", icon: SlidersHorizontal },
   { id: "replay", name: "تاریخچه و بازپخش", icon: History },
   { id: "analytics", name: "داشبورد مدیریتی", icon: LayoutDashboard },
+  { id: "supervision", name: "نظارت استثنامحور گشت", icon: ListChecks },
   { id: "field-comms", name: "پیام، رسانه و گزارش میدانی", icon: MessagesSquare },
   { id: "field", name: "اپ میدانی نگهبان", icon: Smartphone },
   { id: "audit", name: "گزارش‌ها و پایش", icon: ClipboardList },
@@ -585,6 +588,7 @@ export default function App() {
               />
             </Suspense>
           )}
+          {page === "supervision" && <SupervisionPage />}
           {page === "field-comms" && <FieldCommsPage data={data} act={act} busy={busy} />}
           {page === "field" && <FieldApp />}
           {page === "audit" && (

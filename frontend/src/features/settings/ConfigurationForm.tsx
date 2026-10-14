@@ -419,6 +419,27 @@ export default function ConfigurationForm({
                 </label>
               ))}
             </div>
+            <h3>قواعد یکپارچگی و تابلوی استثنا (فاز ۶)</h3>
+            <div className="form-grid">
+              <label className="field">حالت قواعد یکپارچگی
+                <select value={draft.integrity_mode ?? "shadow"} onChange={(e) => set("integrity_mode", e.target.value as RuntimeSettings["integrity_mode"])}>
+                  <option value="shadow">سایه (پیش‌فرض)</option>
+                  <option value="active">فعال (بدون تشکیل پرونده خودکار)</option>
+                </select>
+              </label>
+              {([
+                ["integrity_window_hours", "پنجره بررسی و تابلو (ساعت)", 1, 720],
+                ["integrity_short_dwell_count", "تکرار توقف کوتاه", 2, 100],
+                ["integrity_offline_repeat_count", "تکرار ارسال آفلاین طولانی", 2, 100],
+                ["integrity_pair_minutes", "فاصله زمانی دو اسکن یک تگ (دقیقه)", 1, 240],
+                ["integrity_pair_km", "فاصله مکانی مشکوک دو اسکن (کیلومتر)", 0.1, 100],
+                ["exception_device_silence_minutes", "سکوت دستگاه در شیفت (دقیقه)", 1, 1440],
+              ] as const).map(([key, label, min, max]) => (
+                <label className="field" key={key}>{label}
+                  <input type="number" min={min} max={max} step="any" value={draft[key] ?? ""} onChange={(e) => set(key, +e.target.value)} />
+                </label>
+              ))}
+            </div>
             <h3>نگهداری رسانه به تفکیک دسته (روز)</h3>
             <div className="form-grid">
               {draft.media_retention_days && (Object.keys(draft.media_retention_days) as (keyof NonNullable<RuntimeSettings["media_retention_days"]>)[]).map((key) => (

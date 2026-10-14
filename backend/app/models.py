@@ -107,6 +107,13 @@ class ReportRouting(BaseModel):
 
 
 class RuntimeSettings(BaseModel):
+    integrity_mode: Literal['shadow', 'active'] = 'shadow'
+    integrity_window_hours: float = Field(default=24, gt=0, le=720, allow_inf_nan=False)
+    integrity_short_dwell_count: int = Field(default=3, ge=2, le=100)
+    integrity_offline_repeat_count: int = Field(default=3, ge=2, le=100)
+    integrity_pair_minutes: float = Field(default=10, gt=0, le=240, allow_inf_nan=False)
+    integrity_pair_km: float = Field(default=1, gt=0, le=100, allow_inf_nan=False)
+    exception_device_silence_minutes: int = Field(default=10, ge=1, le=1440)
     media_chunk_bytes: int = Field(default=262144, ge=16384, le=4194304)
     media_single_upload_max_bytes: int = Field(default=1048576, ge=1024, le=8388608)
     media_max_bytes: int = Field(default=104857600, ge=65536, le=1073741824)
@@ -1916,3 +1923,138 @@ class TourReport(BaseModel):
     checkins: list[CheckInRecord]
     station_visits: list[StationVisit]
     task_results: list[StationTaskResult]
+
+
+ExceptionKind = Literal['station_missed', 'station_overdue', 'scan_low_trust', 'scan_pending_review',
+                        'alarm_unacked', 'duress_unacked', 'man_down_unacked', 'device_silent',
+                        'muster_open', 'message_urgent_unacked', 'integrity']
+
+
+class ExceptionItem(ScopedInput):
+    id: str
+    kind: ExceptionKind
+    severity: Literal['critical', 'high', 'medium', 'low']
+    title: str
+    detail: str
+    since: str
+    guard_id: str | None = None
+    station_id: str | None = None
+    source_ids: list[str]
+    can_execute: Literal[False] = False
+
+
+class SuspendedTour(ScopedInput):
+    scheduled_tour_id: str
+    guard_id: str
+    due_at: str
+    ends_at: str
+    station_count: int
+    reason: str
+
+
+class StationStatus(ScopedInput):
+    station_id: str
+    name: str
+    status: Literal['ok', 'unverified', 'never']
+    last_scan_id: str | None
+    last_trust: Literal['high', 'medium', 'low'] | None
+    last_scan_at: str | None
+    tag_mode: str
+
+
+class ExceptionBoard(BaseModel):
+    classification_label: str
+    generated_at: str
+    generated_at_jalali: str
+    items: list[ExceptionItem]
+    counts: dict[str, int]
+    suspended: list[SuspendedTour]
+    emergency_zone_ids: list[str]
+    stations: list[StationStatus]
+
+
+class ReportPeriod(BaseModel):
+    window_from: str
+    window_to: str
+    from_jalali: str
+    to_jalali: str
+
+
+class ComplianceTotals(BaseModel):
+    planned: int
+    visited: int
+    verified: int
+    verified_percent: float | None
+    missed: int
+    pending: int
+    suspended: int
+
+
+class TrustSummary(BaseModel):
+    high: int
+    medium: int
+    low: int
+    manual: int
+    pending_review: int
+    weak_tag: int
+    rejected_replay: int
+
+
+class ContractorLine(ComplianceTotals):
+    contractor_id: str
+    zone_id: str
+
+
+class EmergencyLine(BaseModel):
+    zone_id: str
+    active: bool
+    reason: str
+    changed_at: str
+
+
+class AuditChainHealth(BaseModel):
+    valid: bool
+    count: int
+    scope: str
+
+
+class PatrolReport(BaseModel):
+    classification_label: str
+    generated_at: str
+    generated_at_jalali: str
+    viewer: str
+    period: ReportPeriod
+    totals: ComplianceTotals
+    trust: TrustSummary
+    contractors: list[ContractorLine]
+    emergency: list[EmergencyLine]
+    integrity: dict[str, int]
+    exceptions: dict[str, int]
+    audit_chain: AuditChainHealth
+    audit_id: str
+
+
+class GuardCheck(BaseModel):
+    scheduled_tour_id: str
+    station_id: str
+    due_at: str
+    ends_at: str
+    outcome: Literal['verified', 'visited_unverified', 'missed', 'pending', 'suspended']
+    visit_id: str | None
+    trust_level: Literal['high', 'medium', 'low'] | None
+
+
+class GuardDetailReport(BaseModel):
+    classification_label: str
+    generated_at: str
+    viewer: str
+    guard_id: str
+    guard_name: str
+    zone_id: str | None
+    contractor_id: str | None
+    period: ReportPeriod
+    checks: list[GuardCheck]
+    scans: list['ScanRecord']
+    totals: ComplianceTotals
+    audit_id: str
+

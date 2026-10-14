@@ -7,10 +7,10 @@ from contextlib import asynccontextmanager, suppress
 
 from .. import field_media, field_safety, store
 from ..models import RuntimeSettings
-from . import coverage, safety, hazard
+from . import coverage, safety, hazard, integrity
 from . import shift_report
 
-capabilities = [coverage, safety, hazard]
+capabilities = [coverage, safety, hazard, integrity]
 logger = logging.getLogger(__name__)
 
 

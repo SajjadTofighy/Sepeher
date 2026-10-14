@@ -392,3 +392,16 @@ Cache Storage پوسته، IndexedDB رمز‌شده با AES-GCM/PBKDF2، نگ�
 
 نگهداری: `RuntimeSettings.media_retention_days` به تفکیک دسته (رسانه بدون دسته: `other`). job worker پس از پایان دوره فایل را حذف، `status=purged` و audit می‌کند؛ رسانه `legal_hold` حذف نمی‌شود و API حذف دستی وجود ندارد. آپلود باز بی‌تحرک بیش از ۲۴ ساعت بسته می‌شود. ضبط تصویر و ویدئو در محوطه یا ایستگاه بدون `media_capture_allowed` با 403 `media_capture_denied` رد می‌شود؛ متن و صوت همیشه مجازند (تصمیم ۱۳). فایل‌ها خارج از SQLite در `SEPEHR_MEDIA_DIR` یا پوشه `media` کنار پایگاه میدانی ذخیره می‌شوند.
 
+## فاز شش: نظارت استثنامحور و گزارش گشت
+
+| Method | Path | قرارداد و مجوز |
+|---|---|---|
+| GET | `/tour/exceptions` | `manage` در حوزه؛ فهرست زنده `ExceptionItem` به ترتیب شدت: `station_missed`، `station_overdue`، `scan_low_trust`، `scan_pending_review`، `alarm_unacked`، `man_down_unacked`، `duress_unacked` (فقط نقش‌های امنیتی)، `device_silent` (دستگاه گشت فعال بی‌ارتباط بیش از `exception_device_silence_minutes`)، `muster_open`، `message_urgent_unacked` و `integrity`. بازه نگاه به عقب `integrity_window_hours` است. پاسخ `suspended` (دورهای excused یا تعلیق‌شده با اضطرار)، `emergency_zone_ids`، `counts` و وضعیت ایستگاه‌ها را جدا دارد. هر مشاهده audit می‌شود. |
+| GET | `/tour/station-status` | `manage`؛ `ok` فقط وقتی آخرین اسکن پذیرفته‌شده trust دست‌کم medium دارد؛ در غیر این صورت `unverified` و بدون اسکن `never`. |
+| GET | `/reports/tour/summary?window_from=&window_to=&format=json|csv` | `export` و نه نگهبان؛ پیش‌فرض ۲۴ ساعت اخیر، حداکثر ۹۳ روز. پایبندی (برنامه‌ریزی‌شده، انجام‌شده، تأییدشده با trust دست‌کم medium، درصد تأیید، ازدست‌رفته، باز، تعلیق اضطرار)، توزیع اعتماد (high/medium/low، دستی، در انتظار بازبینی، تگ ضعیف nfc_counter، تکرار ردشده)، تجمیع پیمانکار و پست بدون شناسه یا رتبه فردی، وضعیت اضطرار، شمار یافته‌های یکپارچگی و استثناها و سلامت زنجیره audit. تاریخ‌ها شمسی تهران. CSV با ماژول استاندارد `csv`، UTF-8 دارای BOM و سطر طبقه‌بندی در ابتدا و انتها است. هر ساخت و خروجی با `audit_id` ثبت می‌شود. |
+| GET | `/reports/tour/guards/{guard_id}` | فقط `shift_supervisor` با حوزه همان محوطه و پیمانکار، یا `auditor` در حوزه؛ سایر نقش‌ها 403 `individual_view_denied`. نتیجه هر ایستگاه برنامه‌ریزی‌شده و اسکن‌ها با شواهد؛ هر مشاهده audit می‌شود. |
+
+تعلیق اضطرار فقط برای دورهایی اعمال می‌شود که پنجره‌شان هنگام آغاز اضطرار هنوز باز بوده است؛ اضطرار بعدی ایستگاه ازدست‌رفته را پاک نمی‌کند. وضعیت اضطرار فقط حالت جاری ذخیره می‌شود و تاریخچه آغاز/پایان چندباره را نگه نمی‌دارد.
+
+قواعد یکپارچگی (`intel.integrity.*`) در worker با پنجره `integrity_window_hours` اجرا می‌شوند و برای هر موضوع یک Finding دارای شواهد و `can_execute=false` می‌سازند و با رفع شرط بسته می‌شوند: `short_dwell` (لغو بازدید پیش از حداقل توقف، دست‌کم `integrity_short_dwell_count` بار)، `tag_replay` (اسکن رد‌شده با تکرار/پسروی شمارنده)، `tag_distance` (اسکن یک ایستگاه توسط دو نگهبان در `integrity_pair_minutes` با فاصله بیش از `integrity_pair_km`)، `clock` (پسروی ساعت) و `offline_repeat` (دست‌کم `integrity_offline_repeat_count` اسکن offline_too_long). حالت پیش‌فرض `integrity_mode=shadow` است و تصمیم مسیریابی مشترک (`shadow_mode` و `maintenance_silence`) اعمال می‌شود؛ این قواعد در هیچ حالتی پرونده خودکار نمی‌سازند.
+

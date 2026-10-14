@@ -200,6 +200,8 @@ from .routers import schedules
 from .routers import field_safety
 from .routers import offline
 from .routers import field_comms
+from .routers import supervision
+app.include_router(supervision.router)
 app.include_router(field_comms.upload_router)
 app.include_router(field_comms.router)
 app.include_router(stations.router)

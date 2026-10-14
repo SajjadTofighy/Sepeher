@@ -89,7 +89,10 @@ def save_settings(p: RuntimeSettings):
                     'offline_pbkdf2_iterations', 'offline_shift_grace_minutes', 'max_offline_minutes',
                     'media_chunk_bytes', 'media_single_upload_max_bytes', 'media_max_bytes', 'media_video_max_seconds',
                     'media_audio_max_seconds', 'media_video_bitrate_kbps', 'media_audio_bitrate_kbps',
-                    'media_retention_days', 'report_routing', 'message_urgent_escalation_seconds')}))
+                    'media_retention_days', 'report_routing', 'message_urgent_escalation_seconds',
+                    'integrity_mode', 'integrity_window_hours', 'integrity_short_dwell_count',
+                    'integrity_offline_repeat_count', 'integrity_pair_minutes', 'integrity_pair_km',
+                    'exception_device_silence_minutes')}))
     state["settings"] = p.model_dump()
     audit("ذخیره تنظیمات نمایشی", "SETTINGS")
     return p

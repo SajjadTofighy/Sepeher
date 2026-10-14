@@ -2272,6 +2272,431 @@
         }
       }
     },
+    "/api/v1/tour/exceptions": {
+      "get": {
+        "tags": [
+          "supervision"
+        ],
+        "summary": "Exception Board",
+        "operationId": "exception_board_api_v1_tour_exceptions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExceptionBoard"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/tour/station-status": {
+      "get": {
+        "tags": [
+          "supervision"
+        ],
+        "summary": "Station Status",
+        "operationId": "station_status_api_v1_tour_station_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StationStatus"
+                  },
+                  "type": "array",
+                  "title": "Response Station Status Api V1 Tour Station Status Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reports/tour/summary": {
+      "get": {
+        "tags": [
+          "supervision"
+        ],
+        "summary": "Patrol Report",
+        "operationId": "patrol_report_api_v1_reports_tour_summary_get",
+        "parameters": [
+          {
+            "name": "window_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Window From"
+            }
+          },
+          {
+            "name": "window_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Window To"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(json|csv)$",
+              "default": "json",
+              "title": "Format"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatrolReport"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reports/tour/guards/{guard_id}": {
+      "get": {
+        "tags": [
+          "supervision"
+        ],
+        "summary": "Guard Detail",
+        "operationId": "guard_detail_api_v1_reports_tour_guards__guard_id__get",
+        "parameters": [
+          {
+            "name": "guard_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Guard Id"
+            }
+          },
+          {
+            "name": "window_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Window From"
+            }
+          },
+          {
+            "name": "window_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Window To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardDetailReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/media/uploads/{id}": {
       "put": {
         "tags": [
@@ -11912,6 +12337,29 @@
         ],
         "title": "AssistantAnswer"
       },
+      "AuditChainHealth": {
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid",
+          "count",
+          "scope"
+        ],
+        "title": "AuditChainHealth"
+      },
       "AuditRecord": {
         "properties": {
           "sub": {
@@ -12776,6 +13224,116 @@
         ],
         "title": "CommandPreview"
       },
+      "ComplianceTotals": {
+        "properties": {
+          "planned": {
+            "type": "integer",
+            "title": "Planned"
+          },
+          "visited": {
+            "type": "integer",
+            "title": "Visited"
+          },
+          "verified": {
+            "type": "integer",
+            "title": "Verified"
+          },
+          "verified_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified Percent"
+          },
+          "missed": {
+            "type": "integer",
+            "title": "Missed"
+          },
+          "pending": {
+            "type": "integer",
+            "title": "Pending"
+          },
+          "suspended": {
+            "type": "integer",
+            "title": "Suspended"
+          }
+        },
+        "type": "object",
+        "required": [
+          "planned",
+          "visited",
+          "verified",
+          "verified_percent",
+          "missed",
+          "pending",
+          "suspended"
+        ],
+        "title": "ComplianceTotals"
+      },
+      "ContractorLine": {
+        "properties": {
+          "planned": {
+            "type": "integer",
+            "title": "Planned"
+          },
+          "visited": {
+            "type": "integer",
+            "title": "Visited"
+          },
+          "verified": {
+            "type": "integer",
+            "title": "Verified"
+          },
+          "verified_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified Percent"
+          },
+          "missed": {
+            "type": "integer",
+            "title": "Missed"
+          },
+          "pending": {
+            "type": "integer",
+            "title": "Pending"
+          },
+          "suspended": {
+            "type": "integer",
+            "title": "Suspended"
+          },
+          "contractor_id": {
+            "type": "string",
+            "title": "Contractor Id"
+          },
+          "zone_id": {
+            "type": "string",
+            "title": "Zone Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "planned",
+          "visited",
+          "verified",
+          "verified_percent",
+          "missed",
+          "pending",
+          "suspended",
+          "contractor_id",
+          "zone_id"
+        ],
+        "title": "ContractorLine"
+      },
       "Coverage": {
         "properties": {
           "items": {
@@ -13163,6 +13721,34 @@
         ],
         "title": "EmergencyContact"
       },
+      "EmergencyLine": {
+        "properties": {
+          "zone_id": {
+            "type": "string",
+            "title": "Zone Id"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "changed_at": {
+            "type": "string",
+            "title": "Changed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "zone_id",
+          "active",
+          "reason",
+          "changed_at"
+        ],
+        "title": "EmergencyLine"
+      },
       "EmergencyMode": {
         "properties": {
           "zone_id": {
@@ -13331,6 +13917,176 @@
           "message"
         ],
         "title": "ErrorDetail"
+      },
+      "ExceptionBoard": {
+        "properties": {
+          "classification_label": {
+            "type": "string",
+            "title": "Classification Label"
+          },
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At"
+          },
+          "generated_at_jalali": {
+            "type": "string",
+            "title": "Generated At Jalali"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ExceptionItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts"
+          },
+          "suspended": {
+            "items": {
+              "$ref": "#/components/schemas/SuspendedTour"
+            },
+            "type": "array",
+            "title": "Suspended"
+          },
+          "emergency_zone_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Emergency Zone Ids"
+          },
+          "stations": {
+            "items": {
+              "$ref": "#/components/schemas/StationStatus"
+            },
+            "type": "array",
+            "title": "Stations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "classification_label",
+          "generated_at",
+          "generated_at_jalali",
+          "items",
+          "counts",
+          "suspended",
+          "emergency_zone_ids",
+          "stations"
+        ],
+        "title": "ExceptionBoard"
+      },
+      "ExceptionItem": {
+        "properties": {
+          "zone_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Zone Id"
+          },
+          "contractor_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Contractor Id"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "station_missed",
+              "station_overdue",
+              "scan_low_trust",
+              "scan_pending_review",
+              "alarm_unacked",
+              "duress_unacked",
+              "man_down_unacked",
+              "device_silent",
+              "muster_open",
+              "message_urgent_unacked",
+              "integrity"
+            ],
+            "title": "Kind"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ],
+            "title": "Severity"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "since": {
+            "type": "string",
+            "title": "Since"
+          },
+          "guard_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guard Id"
+          },
+          "station_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Station Id"
+          },
+          "source_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Source Ids"
+          },
+          "can_execute": {
+            "type": "boolean",
+            "const": false,
+            "title": "Can Execute",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "zone_id",
+          "contractor_id",
+          "id",
+          "kind",
+          "severity",
+          "title",
+          "detail",
+          "since",
+          "source_ids"
+        ],
+        "title": "ExceptionItem"
       },
       "ExportAuthorization": {
         "properties": {
@@ -14740,6 +15496,75 @@
         ],
         "title": "FindingEvidence"
       },
+      "GuardCheck": {
+        "properties": {
+          "scheduled_tour_id": {
+            "type": "string",
+            "title": "Scheduled Tour Id"
+          },
+          "station_id": {
+            "type": "string",
+            "title": "Station Id"
+          },
+          "due_at": {
+            "type": "string",
+            "title": "Due At"
+          },
+          "ends_at": {
+            "type": "string",
+            "title": "Ends At"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "visited_unverified",
+              "missed",
+              "pending",
+              "suspended"
+            ],
+            "title": "Outcome"
+          },
+          "visit_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visit Id"
+          },
+          "trust_level": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "high",
+                  "medium",
+                  "low"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trust Level"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scheduled_tour_id",
+          "station_id",
+          "due_at",
+          "ends_at",
+          "outcome",
+          "visit_id",
+          "trust_level"
+        ],
+        "title": "GuardCheck"
+      },
       "GuardCredentialInput": {
         "properties": {
           "pin": {
@@ -14763,6 +15588,92 @@
           "duress_pin"
         ],
         "title": "GuardCredentialInput"
+      },
+      "GuardDetailReport": {
+        "properties": {
+          "classification_label": {
+            "type": "string",
+            "title": "Classification Label"
+          },
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At"
+          },
+          "viewer": {
+            "type": "string",
+            "title": "Viewer"
+          },
+          "guard_id": {
+            "type": "string",
+            "title": "Guard Id"
+          },
+          "guard_name": {
+            "type": "string",
+            "title": "Guard Name"
+          },
+          "zone_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone Id"
+          },
+          "contractor_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contractor Id"
+          },
+          "period": {
+            "$ref": "#/components/schemas/ReportPeriod"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/GuardCheck"
+            },
+            "type": "array",
+            "title": "Checks"
+          },
+          "scans": {
+            "items": {
+              "$ref": "#/components/schemas/ScanRecord"
+            },
+            "type": "array",
+            "title": "Scans"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/ComplianceTotals"
+          },
+          "audit_id": {
+            "type": "string",
+            "title": "Audit Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "classification_label",
+          "generated_at",
+          "viewer",
+          "guard_id",
+          "guard_name",
+          "zone_id",
+          "contractor_id",
+          "period",
+          "checks",
+          "scans",
+          "totals",
+          "audit_id"
+        ],
+        "title": "GuardDetailReport"
       },
       "GuardRecord": {
         "properties": {
@@ -16570,6 +17481,87 @@
         ],
         "title": "PatrolPlanStop"
       },
+      "PatrolReport": {
+        "properties": {
+          "classification_label": {
+            "type": "string",
+            "title": "Classification Label"
+          },
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At"
+          },
+          "generated_at_jalali": {
+            "type": "string",
+            "title": "Generated At Jalali"
+          },
+          "viewer": {
+            "type": "string",
+            "title": "Viewer"
+          },
+          "period": {
+            "$ref": "#/components/schemas/ReportPeriod"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/ComplianceTotals"
+          },
+          "trust": {
+            "$ref": "#/components/schemas/TrustSummary"
+          },
+          "contractors": {
+            "items": {
+              "$ref": "#/components/schemas/ContractorLine"
+            },
+            "type": "array",
+            "title": "Contractors"
+          },
+          "emergency": {
+            "items": {
+              "$ref": "#/components/schemas/EmergencyLine"
+            },
+            "type": "array",
+            "title": "Emergency"
+          },
+          "integrity": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Integrity"
+          },
+          "exceptions": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Exceptions"
+          },
+          "audit_chain": {
+            "$ref": "#/components/schemas/AuditChainHealth"
+          },
+          "audit_id": {
+            "type": "string",
+            "title": "Audit Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "classification_label",
+          "generated_at",
+          "generated_at_jalali",
+          "viewer",
+          "period",
+          "totals",
+          "trust",
+          "contractors",
+          "emergency",
+          "integrity",
+          "exceptions",
+          "audit_chain",
+          "audit_id"
+        ],
+        "title": "PatrolReport"
+      },
       "PermissionMatrix": {
         "properties": {
           "permissions": {
@@ -17594,6 +18586,34 @@
         ],
         "title": "ReportAcknowledgement"
       },
+      "ReportPeriod": {
+        "properties": {
+          "window_from": {
+            "type": "string",
+            "title": "Window From"
+          },
+          "window_to": {
+            "type": "string",
+            "title": "Window To"
+          },
+          "from_jalali": {
+            "type": "string",
+            "title": "From Jalali"
+          },
+          "to_jalali": {
+            "type": "string",
+            "title": "To Jalali"
+          }
+        },
+        "type": "object",
+        "required": [
+          "window_from",
+          "window_to",
+          "from_jalali",
+          "to_jalali"
+        ],
+        "title": "ReportPeriod"
+      },
       "ReportRouting": {
         "properties": {
           "security": {
@@ -17892,6 +18912,57 @@
       },
       "RuntimeSettings": {
         "properties": {
+          "integrity_mode": {
+            "type": "string",
+            "enum": [
+              "shadow",
+              "active"
+            ],
+            "title": "Integrity Mode",
+            "default": "shadow"
+          },
+          "integrity_window_hours": {
+            "type": "number",
+            "maximum": 720.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Integrity Window Hours",
+            "default": 24
+          },
+          "integrity_short_dwell_count": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 2.0,
+            "title": "Integrity Short Dwell Count",
+            "default": 3
+          },
+          "integrity_offline_repeat_count": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 2.0,
+            "title": "Integrity Offline Repeat Count",
+            "default": 3
+          },
+          "integrity_pair_minutes": {
+            "type": "number",
+            "maximum": 240.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Integrity Pair Minutes",
+            "default": 10
+          },
+          "integrity_pair_km": {
+            "type": "number",
+            "maximum": 100.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Integrity Pair Km",
+            "default": 1
+          },
+          "exception_device_silence_minutes": {
+            "type": "integer",
+            "maximum": 1440.0,
+            "minimum": 1.0,
+            "title": "Exception Device Silence Minutes",
+            "default": 10
+          },
           "media_chunk_bytes": {
             "type": "integer",
             "maximum": 4194304.0,
@@ -19902,6 +20973,94 @@
         ],
         "title": "StationScan"
       },
+      "StationStatus": {
+        "properties": {
+          "zone_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Zone Id"
+          },
+          "contractor_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Contractor Id"
+          },
+          "station_id": {
+            "type": "string",
+            "title": "Station Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "unverified",
+              "never"
+            ],
+            "title": "Status"
+          },
+          "last_scan_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Scan Id"
+          },
+          "last_trust": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "high",
+                  "medium",
+                  "low"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Trust"
+          },
+          "last_scan_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Scan At"
+          },
+          "tag_mode": {
+            "type": "string",
+            "title": "Tag Mode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "zone_id",
+          "contractor_id",
+          "station_id",
+          "name",
+          "status",
+          "last_scan_id",
+          "last_trust",
+          "last_scan_at",
+          "tag_mode"
+        ],
+        "title": "StationStatus"
+      },
       "StationTagSheet": {
         "properties": {
           "code": {
@@ -20752,6 +21911,58 @@
         ],
         "title": "SunProvisioning"
       },
+      "SuspendedTour": {
+        "properties": {
+          "zone_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Zone Id"
+          },
+          "contractor_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Contractor Id"
+          },
+          "scheduled_tour_id": {
+            "type": "string",
+            "title": "Scheduled Tour Id"
+          },
+          "guard_id": {
+            "type": "string",
+            "title": "Guard Id"
+          },
+          "due_at": {
+            "type": "string",
+            "title": "Due At"
+          },
+          "ends_at": {
+            "type": "string",
+            "title": "Ends At"
+          },
+          "station_count": {
+            "type": "integer",
+            "title": "Station Count"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "zone_id",
+          "contractor_id",
+          "scheduled_tour_id",
+          "guard_id",
+          "due_at",
+          "ends_at",
+          "station_count",
+          "reason"
+        ],
+        "title": "SuspendedTour"
+      },
       "TagInput": {
         "properties": {
           "zone_id": {
@@ -21423,6 +22634,49 @@
           "status"
         ],
         "title": "Transition"
+      },
+      "TrustSummary": {
+        "properties": {
+          "high": {
+            "type": "integer",
+            "title": "High"
+          },
+          "medium": {
+            "type": "integer",
+            "title": "Medium"
+          },
+          "low": {
+            "type": "integer",
+            "title": "Low"
+          },
+          "manual": {
+            "type": "integer",
+            "title": "Manual"
+          },
+          "pending_review": {
+            "type": "integer",
+            "title": "Pending Review"
+          },
+          "weak_tag": {
+            "type": "integer",
+            "title": "Weak Tag"
+          },
+          "rejected_replay": {
+            "type": "integer",
+            "title": "Rejected Replay"
+          }
+        },
+        "type": "object",
+        "required": [
+          "high",
+          "medium",
+          "low",
+          "manual",
+          "pending_review",
+          "weak_tag",
+          "rejected_replay"
+        ],
+        "title": "TrustSummary"
       },
       "ValidationError": {
         "properties": {
