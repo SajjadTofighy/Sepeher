@@ -1,0 +1,16 @@
+**/node_modules
+**/__pycache__
+.venv
+.preview-deps
+.git
+frontend/test-results
+frontend/playwright-report
+**/dist
+**/data
+**/.env
+**/.env.*
+**/.DS_Store
+**/.pytest_cache
+**/test-results
+**/playwright-report
+repositories

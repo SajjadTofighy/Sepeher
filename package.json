@@ -1,0 +1,23 @@
+{
+  "name": "sepehr-workspace",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "npm --prefix frontend run build",
+    "test:api": "python -m pytest backend/tests -q",
+    "docker:init": "node scripts/compose.mjs init",
+    "docker:build": "node scripts/compose.mjs build",
+    "docker:up": "node scripts/compose.mjs up",
+    "docker:down": "node scripts/compose.mjs down",
+    "docker:logs": "node scripts/compose.mjs logs",
+    "docker:config": "node scripts/compose.mjs config",
+    "keycloak:client": "python3 scripts/keycloak.py create-client",
+    "keycloak:user": "python3 scripts/keycloak.py create-user",
+    "keycloak:audit": "python3 scripts/keycloak.py configure-audit",
+    "dev:demo": "node scripts/dev.mjs --demo",
+    "docker:production:check": "node scripts/compose.mjs production-check",
+    "docker:production:pull": "node scripts/compose.mjs production-pull",
+    "keycloak:sync-security": "python3 scripts/keycloak.py sync-security"
+  }
+}

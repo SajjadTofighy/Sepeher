@@ -1,0 +1,76 @@
+ssl_protocols TLSv1.2 TLSv1.3;
+ssl_session_tickets off;
+
+server {
+    listen 443 ssl default_server;
+    server_name _;
+    ssl_certificate /etc/sepehr/tls/app/fullchain.pem;
+    ssl_certificate_key /etc/sepehr/tls/app/privkey.pem;
+    return 444;
+}
+server {
+    listen 443 ssl;
+    server_name ${SEPEHR_APP_HOSTNAME};
+    ssl_certificate /etc/sepehr/tls/app/fullchain.pem;
+    ssl_certificate_key /etc/sepehr/tls/app/privkey.pem;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' ${SEPEHR_RESOURCE_ORIGINS}; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'" always;
+    add_header Referrer-Policy "no-referrer" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    root /usr/share/nginx/html;
+    index index.html;
+    location /api/ {
+        proxy_pass ${SEPEHR_API_UPSTREAM};
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_buffering off;
+        proxy_read_timeout 60s;
+    }
+    location = /docs {
+        proxy_pass ${SEPEHR_API_UPSTREAM};
+        proxy_hide_header Content-Security-Policy;
+        # Swagger has an inline bootstrap; assets remain local.
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'" always;
+    }
+    location = /openapi.json { proxy_pass ${SEPEHR_API_UPSTREAM}; }
+    location /assets/ { try_files $uri =404; }
+    location /swagger/ { try_files $uri =404; }
+    location / { try_files $uri $uri/ /index.html; }
+}
+server {
+    listen 443 ssl;
+    server_name ${SEPEHR_IDENTITY_HOSTNAME};
+    ssl_certificate /etc/sepehr/tls/identity/fullchain.pem;
+    ssl_certificate_key /etc/sepehr/tls/identity/privkey.pem;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    location /realms/ {
+        proxy_pass ${SEPEHR_KEYCLOAK_UPSTREAM};
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-Port 443;
+    }
+    location /resources/ {
+        proxy_pass ${SEPEHR_KEYCLOAK_UPSTREAM};
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+    location / { return 404; }
+}
+server {
+    listen 9443 ssl;
+    server_name ${SEPEHR_ADMIN_HOSTNAME};
+    ssl_certificate /etc/sepehr/tls/admin/fullchain.pem;
+    ssl_certificate_key /etc/sepehr/tls/admin/privkey.pem;
+    allow ${SEPEHR_MANAGEMENT_CIDR};
+    deny all;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    location / {
+        proxy_pass ${SEPEHR_KEYCLOAK_UPSTREAM};
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-Port 9443;
+    }
+}

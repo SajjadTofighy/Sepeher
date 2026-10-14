@@ -1,0 +1,6402 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Sepehr Command — Mock API",
+    "description": "Local demo with persistent SQLite position history and in-memory operations, single worker. No production authentication or hardware access.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/bootstrap": {
+      "get": {
+        "summary": "Bootstrap",
+        "operationId": "bootstrap_api_v1_bootstrap_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bootstrap"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets": {
+      "get": {
+        "summary": "Assets",
+        "operationId": "assets_api_v1_assets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Asset"
+                  },
+                  "type": "array",
+                  "title": "Response Assets Api V1 Assets Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets/{id}/track": {
+      "get": {
+        "summary": "Track",
+        "operationId": "track_api_v1_assets__id__track_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Until"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 500,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TrackPoint"
+                  },
+                  "title": "Response Track Api V1 Assets  Id  Track Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics": {
+      "get": {
+        "summary": "Analytics",
+        "operationId": "analytics_api_v1_analytics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Summary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/audit": {
+      "get": {
+        "summary": "Audits",
+        "operationId": "audits_api_v1_audit_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AuditRecord"
+                  },
+                  "type": "array",
+                  "title": "Response Audits Api V1 Audit Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/audit/verify": {
+      "get": {
+        "summary": "Verify",
+        "operationId": "verify_api_v1_audit_verify_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/demo/scenario": {
+      "post": {
+        "summary": "Scenario",
+        "operationId": "scenario_api_v1_demo_scenario_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts": {
+      "get": {
+        "summary": "Alerts",
+        "operationId": "alerts_api_v1_alerts_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Alert"
+                  },
+                  "type": "array",
+                  "title": "Response Alerts Api V1 Alerts Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/demo/story": {
+      "post": {
+        "summary": "Story",
+        "description": "Design appendix, step 2: an organisational tracker without a night permit drives\ninto the protected zone at the scenario clock 23:10; the policy engine detects it.",
+        "operationId": "story_api_v1_demo_story_post",
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/demo/reset": {
+      "post": {
+        "summary": "Reset",
+        "operationId": "reset_api_v1_demo_reset_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events": {
+      "get": {
+        "summary": "Events",
+        "operationId": "events_api_v1_events_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/incidents": {
+      "get": {
+        "tags": [
+          "incidents"
+        ],
+        "summary": "Incidents",
+        "operationId": "incidents_api_v1_incidents_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Incident"
+                  },
+                  "type": "array",
+                  "title": "Response Incidents Api V1 Incidents Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "incidents"
+        ],
+        "summary": "Create Process Incident",
+        "operationId": "create_process_incident_api_v1_incidents_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IncidentCreation"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Incident"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/incidents/{id}/hazard-area": {
+      "put": {
+        "tags": [
+          "incidents"
+        ],
+        "summary": "Set Hazard Area",
+        "operationId": "set_hazard_area_api_v1_incidents__id__hazard_area_put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/HazardCircle"
+                  },
+                  {
+                    "$ref": "#/components/schemas/HazardPolygon"
+                  }
+                ],
+                "discriminator": {
+                  "propertyName": "type",
+                  "mapping": {
+                    "circle": "#/components/schemas/HazardCircle",
+                    "polygon": "#/components/schemas/HazardPolygon"
+                  }
+                },
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Incident"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "incidents"
+        ],
+        "summary": "Clear Hazard Area",
+        "operationId": "clear_hazard_area_api_v1_incidents__id__hazard_area_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Incident"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/incidents/{id}": {
+      "get": {
+        "tags": [
+          "incidents"
+        ],
+        "summary": "Incident",
+        "operationId": "incident_api_v1_incidents__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Incident"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/incidents/{id}/transition": {
+      "post": {
+        "tags": [
+          "incidents"
+        ],
+        "summary": "Transition",
+        "operationId": "transition_api_v1_incidents__id__transition_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Transition"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Incident"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/incidents/{id}/nearby": {
+      "get": {
+        "tags": [
+          "incidents"
+        ],
+        "summary": "Nearby",
+        "operationId": "nearby_api_v1_incidents__id__nearby_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NearbyPatrol"
+                  },
+                  "title": "Response Nearby Api V1 Incidents  Id  Nearby Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/incidents/{id}/report": {
+      "get": {
+        "tags": [
+          "incidents"
+        ],
+        "summary": "Report",
+        "operationId": "report_api_v1_incidents__id__report_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentReport"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/commands": {
+      "get": {
+        "tags": [
+          "commands"
+        ],
+        "summary": "Commands",
+        "operationId": "commands_api_v1_commands_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Command"
+                  },
+                  "type": "array",
+                  "title": "Response Commands Api V1 Commands Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "commands"
+        ],
+        "summary": "Command",
+        "operationId": "command_api_v1_commands_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommandInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Command"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/policies": {
+      "post": {
+        "tags": [
+          "policies"
+        ],
+        "summary": "Create Policy",
+        "operationId": "create_policy_api_v1_policies_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolicyInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Policy"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/policies/{id}/test": {
+      "post": {
+        "tags": [
+          "policies"
+        ],
+        "summary": "Test Policy",
+        "operationId": "test_policy_api_v1_policies__id__test_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/policies/{id}/status": {
+      "patch": {
+        "tags": [
+          "policies"
+        ],
+        "summary": "Policy Status",
+        "operationId": "policy_status_api_v1_policies__id__status_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolicyStatus"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Policy"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/missions": {
+      "get": {
+        "tags": [
+          "missions"
+        ],
+        "summary": "Missions",
+        "operationId": "missions_api_v1_missions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Mission"
+                  },
+                  "type": "array",
+                  "title": "Response Missions Api V1 Missions Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/missions/{id}/checkpoint": {
+      "post": {
+        "tags": [
+          "missions"
+        ],
+        "summary": "Checkpoint",
+        "operationId": "checkpoint_api_v1_missions__id__checkpoint_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Mission"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assistant": {
+      "post": {
+        "tags": [
+          "assistant"
+        ],
+        "summary": "Assistant",
+        "operationId": "assistant_api_v1_assistant_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Question"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantAnswer"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/zones": {
+      "get": {
+        "tags": [
+          "configuration"
+        ],
+        "summary": "Zones",
+        "operationId": "zones_api_v1_zones_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Zone"
+                  },
+                  "type": "array",
+                  "title": "Response Zones Api V1 Zones Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "configuration"
+        ],
+        "summary": "Create Zone",
+        "operationId": "create_zone_api_v1_zones_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZoneInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Zone"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/zones/{id}": {
+      "put": {
+        "tags": [
+          "configuration"
+        ],
+        "summary": "Edit Zone",
+        "operationId": "edit_zone_api_v1_zones__id__put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZoneInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Zone"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets/{id}/settings": {
+      "patch": {
+        "tags": [
+          "configuration"
+        ],
+        "summary": "Asset Settings",
+        "operationId": "asset_settings_api_v1_assets__id__settings_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetSettings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Asset"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/settings": {
+      "get": {
+        "tags": [
+          "configuration"
+        ],
+        "summary": "Get Settings",
+        "operationId": "get_settings_api_v1_settings_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuntimeSettings"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "configuration"
+        ],
+        "summary": "Save Settings",
+        "operationId": "save_settings_api_v1_settings_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RuntimeSettings"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuntimeSettings"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cameras": {
+      "get": {
+        "tags": [
+          "configuration"
+        ],
+        "summary": "Cameras",
+        "operationId": "cameras_api_v1_cameras_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Camera"
+                  },
+                  "type": "array",
+                  "title": "Response Cameras Api V1 Cameras Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cameras/{id}/event": {
+      "post": {
+        "tags": [
+          "configuration"
+        ],
+        "summary": "Camera Event",
+        "operationId": "camera_event_api_v1_cameras__id__event_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CameraEventInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlateReadResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets/{id}/positions": {
+      "post": {
+        "tags": [
+          "positions"
+        ],
+        "summary": "Record Position",
+        "operationId": "record_position_api_v1_assets__id__positions_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PositionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrackPoint"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets/{id}/events": {
+      "post": {
+        "tags": [
+          "positions"
+        ],
+        "summary": "Record Event",
+        "operationId": "record_event_api_v1_assets__id__events_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceEventInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceEventResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/intel/ingest/pipeline-pressure": {
+      "post": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Pipeline Pressure",
+        "operationId": "pipeline_pressure_api_v1_intel_ingest_pipeline_pressure_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PipelinePressureInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelinePressureResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/intel/ingest/plate-read": {
+      "post": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Plate Read",
+        "operationId": "plate_read_api_v1_intel_ingest_plate_read_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlateReadInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlateReadResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/intel/segments": {
+      "get": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Segments",
+        "operationId": "segments_api_v1_intel_segments_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Segment"
+                  },
+                  "type": "array",
+                  "title": "Response Segments Api V1 Intel Segments Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/intel/layers/import": {
+      "post": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Import Layers",
+        "operationId": "import_layers_api_v1_intel_layers_import_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LayerImport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayerImportResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/intel/findings": {
+      "get": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "List Findings",
+        "operationId": "list_findings_api_v1_intel_findings_get",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "open",
+                    "acknowledged",
+                    "resolved"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Finding"
+                  },
+                  "title": "Response List Findings Api V1 Intel Findings Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/intel/findings/{id}/ack": {
+      "post": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Acknowledge Finding",
+        "operationId": "acknowledge_finding_api_v1_intel_findings__id__ack_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Finding"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/intel/coverage": {
+      "get": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Patrol Coverage",
+        "operationId": "patrol_coverage_api_v1_intel_coverage_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Coverage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/intel/safety": {
+      "get": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Patrol Safety",
+        "operationId": "patrol_safety_api_v1_intel_safety_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SafetyStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/intel/safety/{asset_id}/confirm": {
+      "post": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Confirm Safety",
+        "operationId": "confirm_safety_api_v1_intel_safety__asset_id__confirm_post",
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SafetyConfirmation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SafetyEpisode"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/intel/hazard/{incident_id}": {
+      "get": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Incident Hazard",
+        "operationId": "incident_hazard_api_v1_intel_hazard__incident_id__get",
+        "parameters": [
+          {
+            "name": "incident_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Incident Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HazardStatus"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/intel/risk": {
+      "get": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Risk Scores",
+        "operationId": "risk_scores_api_v1_intel_risk_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/intel/patrol-plans": {
+      "get": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Patrol Plans",
+        "operationId": "patrol_plans_api_v1_intel_patrol_plans_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PatrolPlan"
+                  },
+                  "type": "array",
+                  "title": "Response Patrol Plans Api V1 Intel Patrol Plans Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Create Patrol Plan",
+        "operationId": "create_patrol_plan_api_v1_intel_patrol_plans_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatrolPlanInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatrolPlan"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/intel/patrol-plans/{id}": {
+      "get": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Patrol Plan",
+        "operationId": "patrol_plan_api_v1_intel_patrol_plans__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatrolPlan"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/intel/patrol-plans/{id}/approve": {
+      "post": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Approve Patrol Plan",
+        "operationId": "approve_patrol_plan_api_v1_intel_patrol_plans__id__approve_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatrolPlan"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/intel/patrol-plans/{id}/discard": {
+      "post": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Discard Patrol Plan",
+        "operationId": "discard_patrol_plan_api_v1_intel_patrol_plans__id__discard_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatrolPlan"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/shift": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Shift",
+        "operationId": "shift_api_v1_reports_shift_get",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShiftReport"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Alert": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "time": {
+            "type": "string",
+            "title": "Time"
+          },
+          "policy_id": {
+            "type": "string",
+            "title": "Policy Id"
+          },
+          "policy": {
+            "type": "string",
+            "title": "Policy"
+          },
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "zone": {
+            "type": "string",
+            "title": "Zone"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "shadow",
+              "active"
+            ],
+            "title": "Mode"
+          },
+          "routed": {
+            "type": "boolean",
+            "title": "Routed"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "clock": {
+            "type": "string",
+            "title": "Clock"
+          },
+          "incident_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Incident Id"
+          },
+          "mission_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mission Id"
+          },
+          "target_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Id"
+          },
+          "checkpoint_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checkpoint Index"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "camera_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Camera Id"
+          },
+          "plate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plate"
+          },
+          "finding_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finding Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "time",
+          "policy_id",
+          "policy",
+          "asset_id",
+          "zone",
+          "severity",
+          "mode",
+          "routed",
+          "reason",
+          "clock"
+        ],
+        "title": "Alert"
+      },
+      "Asset": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "vehicle",
+              "person"
+            ],
+            "title": "Kind"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "online",
+              "offline",
+              "warning"
+            ],
+            "title": "Status"
+          },
+          "lon": {
+            "type": "number",
+            "title": "Lon"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "speed": {
+            "type": "number",
+            "title": "Speed"
+          },
+          "battery": {
+            "type": "integer",
+            "title": "Battery"
+          },
+          "signal": {
+            "type": "integer",
+            "title": "Signal"
+          },
+          "field": {
+            "type": "string",
+            "title": "Field"
+          },
+          "mission": {
+            "type": "string",
+            "title": "Mission"
+          },
+          "operator": {
+            "type": "string",
+            "title": "Operator"
+          },
+          "sim": {
+            "type": "string",
+            "title": "Sim"
+          },
+          "carrier": {
+            "type": "string",
+            "title": "Carrier"
+          },
+          "firmware": {
+            "type": "string",
+            "title": "Firmware"
+          },
+          "last_seen": {
+            "type": "string",
+            "title": "Last Seen"
+          },
+          "report_interval": {
+            "type": "integer",
+            "title": "Report Interval",
+            "default": 30
+          },
+          "data_package": {
+            "type": "string",
+            "title": "Data Package",
+            "default": "active"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "patrol",
+              "field",
+              "org"
+            ],
+            "title": "Unit",
+            "default": "patrol"
+          },
+          "authorized": {
+            "type": "boolean",
+            "title": "Authorized",
+            "default": true
+          },
+          "capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Capabilities"
+          },
+          "track": {
+            "items": {
+              "$ref": "#/components/schemas/TrackPoint"
+            },
+            "type": "array",
+            "title": "Track"
+          },
+          "patrol_base": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patrol Base"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "status",
+          "lon",
+          "lat",
+          "speed",
+          "battery",
+          "signal",
+          "field",
+          "mission",
+          "operator",
+          "sim",
+          "carrier",
+          "firmware",
+          "last_seen",
+          "capabilities",
+          "track"
+        ],
+        "title": "Asset"
+      },
+      "AssetSettings": {
+        "properties": {
+          "carrier": {
+            "type": "string",
+            "enum": [
+              "همراه اول",
+              "ایرانسل"
+            ],
+            "title": "Carrier"
+          },
+          "sim": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 4,
+            "title": "Sim"
+          },
+          "report_interval": {
+            "type": "integer",
+            "maximum": 3600.0,
+            "minimum": 5.0,
+            "title": "Report Interval"
+          },
+          "data_package": {
+            "type": "string",
+            "enum": [
+              "active",
+              "expiring",
+              "expired"
+            ],
+            "title": "Data Package",
+            "default": "active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "carrier",
+          "sim",
+          "report_interval"
+        ],
+        "title": "AssetSettings"
+      },
+      "AssistantAnswer": {
+        "properties": {
+          "answer": {
+            "type": "string",
+            "title": "Answer"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "mock": {
+            "type": "boolean",
+            "title": "Mock"
+          },
+          "can_execute": {
+            "type": "boolean",
+            "title": "Can Execute"
+          }
+        },
+        "type": "object",
+        "required": [
+          "answer",
+          "sources",
+          "mock",
+          "can_execute"
+        ],
+        "title": "AssistantAnswer"
+      },
+      "AuditRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "time": {
+            "type": "string",
+            "title": "Time"
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "previous_hash": {
+            "type": "string",
+            "title": "Previous Hash"
+          },
+          "hash": {
+            "type": "string",
+            "title": "Hash"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "time",
+          "actor",
+          "action",
+          "target",
+          "detail",
+          "previous_hash",
+          "hash"
+        ],
+        "title": "AuditRecord"
+      },
+      "Bootstrap": {
+        "properties": {
+          "assets": {
+            "items": {
+              "$ref": "#/components/schemas/Asset"
+            },
+            "type": "array",
+            "title": "Assets"
+          },
+          "incidents": {
+            "items": {
+              "$ref": "#/components/schemas/Incident"
+            },
+            "type": "array",
+            "title": "Incidents"
+          },
+          "zones": {
+            "items": {
+              "$ref": "#/components/schemas/Zone"
+            },
+            "type": "array",
+            "title": "Zones"
+          },
+          "policies": {
+            "items": {
+              "$ref": "#/components/schemas/Policy"
+            },
+            "type": "array",
+            "title": "Policies"
+          },
+          "missions": {
+            "items": {
+              "$ref": "#/components/schemas/Mission"
+            },
+            "type": "array",
+            "title": "Missions"
+          },
+          "commands": {
+            "items": {
+              "$ref": "#/components/schemas/Command"
+            },
+            "type": "array",
+            "title": "Commands"
+          },
+          "audit": {
+            "items": {
+              "$ref": "#/components/schemas/AuditRecord"
+            },
+            "type": "array",
+            "title": "Audit"
+          },
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/Alert"
+            },
+            "type": "array",
+            "title": "Alerts",
+            "default": []
+          },
+          "pipelines": {
+            "items": {
+              "$ref": "#/components/schemas/Pipeline"
+            },
+            "type": "array",
+            "title": "Pipelines"
+          },
+          "facilities": {
+            "items": {
+              "$ref": "#/components/schemas/Facility"
+            },
+            "type": "array",
+            "title": "Facilities"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/Summary"
+          },
+          "meta": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "assets",
+          "incidents",
+          "zones",
+          "policies",
+          "missions",
+          "commands",
+          "audit",
+          "pipelines",
+          "facilities",
+          "summary",
+          "meta"
+        ],
+        "title": "Bootstrap"
+      },
+      "Camera": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "zone": {
+            "type": "string",
+            "title": "Zone"
+          },
+          "lon": {
+            "type": "number",
+            "title": "Lon"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "online",
+              "offline"
+            ],
+            "title": "Status"
+          },
+          "analysis": {
+            "type": "string",
+            "title": "Analysis"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "zone",
+          "lon",
+          "lat",
+          "status",
+          "analysis"
+        ],
+        "title": "Camera"
+      },
+      "CameraEventInput": {
+        "properties": {
+          "event": {
+            "type": "string",
+            "enum": [
+              "intrusion",
+              "fire",
+              "plate"
+            ],
+            "title": "Event",
+            "default": "plate"
+          },
+          "plate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plate"
+          },
+          "time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time"
+          },
+          "vehicle_class": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "heavy",
+                  "light",
+                  "unknown"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vehicle Class"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "CameraEventInput",
+        "description": "Legacy adapter requires real plate fields; old demo-only payloads are rejected."
+      },
+      "Checkpoint": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "visited": {
+            "type": "boolean",
+            "title": "Visited"
+          },
+          "target_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Id"
+          },
+          "lon": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lon"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "visited_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visited At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "visited"
+        ],
+        "title": "Checkpoint"
+      },
+      "ClosureSuggestion": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "distance_km": {
+            "type": "number",
+            "title": "Distance Km"
+          },
+          "distance_type": {
+            "type": "string",
+            "const": "straight_line",
+            "title": "Distance Type"
+          },
+          "eta_minutes": {
+            "type": "number",
+            "title": "Eta Minutes"
+          },
+          "lon": {
+            "type": "number",
+            "title": "Lon"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "eta_label": {
+            "type": "string",
+            "const": "تخمینی",
+            "title": "Eta Label",
+            "default": "تخمینی"
+          },
+          "target": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Target"
+          },
+          "access_point_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access Point Index"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "name",
+          "distance_km",
+          "distance_type",
+          "eta_minutes",
+          "lon",
+          "lat",
+          "target"
+        ],
+        "title": "ClosureSuggestion"
+      },
+      "Command": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "command": {
+            "type": "string",
+            "enum": [
+              "position",
+              "ping",
+              "interval",
+              "restart",
+              "beacon",
+              "diagnostics"
+            ],
+            "title": "Command"
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "data",
+              "sms"
+            ],
+            "title": "Channel"
+          },
+          "interval_seconds": {
+            "type": "integer",
+            "title": "Interval Seconds"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "sent",
+              "delivered",
+              "executed",
+              "timed_out"
+            ],
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          },
+          "epoch": {
+            "type": "number",
+            "title": "Epoch"
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "title": "Timeout Seconds"
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor"
+          },
+          "mock": {
+            "type": "boolean",
+            "title": "Mock"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "asset_id",
+          "command",
+          "channel",
+          "interval_seconds",
+          "request_id",
+          "status",
+          "created_at",
+          "updated_at",
+          "epoch",
+          "timeout_seconds",
+          "actor",
+          "mock"
+        ],
+        "title": "Command"
+      },
+      "CommandInput": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "command": {
+            "type": "string",
+            "enum": [
+              "position",
+              "ping",
+              "interval",
+              "restart",
+              "beacon",
+              "diagnostics"
+            ],
+            "title": "Command"
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "data",
+              "sms"
+            ],
+            "title": "Channel",
+            "default": "data"
+          },
+          "interval_seconds": {
+            "type": "integer",
+            "maximum": 3600.0,
+            "minimum": 5.0,
+            "title": "Interval Seconds",
+            "default": 30
+          },
+          "request_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Request Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "command",
+          "request_id"
+        ],
+        "title": "CommandInput"
+      },
+      "Coverage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CoverageItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/CoverageTotals"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "totals"
+        ],
+        "title": "Coverage"
+      },
+      "CoverageItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "segment",
+              "facility"
+            ],
+            "title": "Kind"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "stale",
+              "never"
+            ],
+            "title": "Status"
+          },
+          "last_visit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Visit"
+          },
+          "last_asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Asset Id"
+          },
+          "age_minutes": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Minutes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "status"
+        ],
+        "title": "CoverageItem"
+      },
+      "CoverageTotals": {
+        "properties": {
+          "percent_ok": {
+            "type": "number",
+            "title": "Percent Ok"
+          },
+          "by_field": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "By Field"
+          }
+        },
+        "type": "object",
+        "required": [
+          "percent_ok",
+          "by_field"
+        ],
+        "title": "CoverageTotals"
+      },
+      "DeviceEvent": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "type": {
+            "type": "string",
+            "const": "sos",
+            "title": "Type"
+          },
+          "time": {
+            "type": "string",
+            "title": "Time"
+          },
+          "received_at": {
+            "type": "string",
+            "title": "Received At"
+          },
+          "alert_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Alert Ids"
+          },
+          "incident_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Incident Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "asset_id",
+          "type",
+          "time",
+          "received_at",
+          "alert_ids",
+          "incident_ids"
+        ],
+        "title": "DeviceEvent"
+      },
+      "DeviceEventInput": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "sos",
+            "title": "Type"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "time"
+        ],
+        "title": "DeviceEventInput"
+      },
+      "DeviceEventResult": {
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/DeviceEvent"
+          },
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/Alert"
+            },
+            "type": "array",
+            "title": "Alerts"
+          },
+          "incidents": {
+            "items": {
+              "$ref": "#/components/schemas/Incident"
+            },
+            "type": "array",
+            "title": "Incidents"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event",
+          "alerts",
+          "incidents"
+        ],
+        "title": "DeviceEventResult"
+      },
+      "EmergencyContact": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "role": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Role"
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Phone"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "role",
+          "phone"
+        ],
+        "title": "EmergencyContact"
+      },
+      "Facility": {
+        "properties": {
+          "road_distance_m": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Road Distance M"
+          },
+          "village_distance_m": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Village Distance M"
+          },
+          "heavy_vehicle_access": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heavy Vehicle Access"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "well",
+              "station",
+              "plant",
+              "manifold"
+            ],
+            "title": "Kind"
+          },
+          "lon": {
+            "type": "number",
+            "title": "Lon"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "radius_m": {
+            "type": "number",
+            "title": "Radius M"
+          },
+          "unmanned": {
+            "type": "boolean",
+            "title": "Unmanned"
+          },
+          "field": {
+            "type": "string",
+            "title": "Field"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "lon",
+          "lat",
+          "radius_m",
+          "unmanned",
+          "field"
+        ],
+        "title": "Facility"
+      },
+      "FacilityProperties": {
+        "properties": {
+          "road_distance_m": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Road Distance M"
+          },
+          "village_distance_m": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Village Distance M"
+          },
+          "heavy_vehicle_access": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heavy Vehicle Access"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 3,
+            "title": "Name"
+          },
+          "field": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Field"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "well",
+              "station",
+              "plant",
+              "manifold"
+            ],
+            "title": "Kind"
+          },
+          "radius_m": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Radius M"
+          },
+          "unmanned": {
+            "type": "boolean",
+            "title": "Unmanned"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "field",
+          "kind",
+          "radius_m",
+          "unmanned"
+        ],
+        "title": "FacilityProperties"
+      },
+      "FieldMetric": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "events": {
+            "type": "integer",
+            "title": "Events"
+          },
+          "coverage": {
+            "type": "number",
+            "title": "Coverage"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "events",
+          "coverage"
+        ],
+        "title": "FieldMetric"
+      },
+      "Finding": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "rule_id": {
+            "type": "string",
+            "title": "Rule Id"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low",
+              "info"
+            ],
+            "title": "Severity"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "shadow",
+              "active"
+            ],
+            "title": "Mode",
+            "default": "shadow"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "acknowledged",
+              "resolved"
+            ],
+            "title": "Status",
+            "default": "open"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          },
+          "subject_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Subject Ids"
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Summary"
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/FindingEvidence"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "incident_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Incident Id"
+          },
+          "can_execute": {
+            "type": "boolean",
+            "const": false,
+            "title": "Can Execute",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "rule_id",
+          "severity",
+          "created_at",
+          "updated_at",
+          "subject_ids",
+          "summary",
+          "evidence",
+          "sources"
+        ],
+        "title": "Finding"
+      },
+      "FindingEvidence": {
+        "properties": {
+          "rule": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Rule"
+          },
+          "thresholds": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Thresholds"
+          },
+          "window_from": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Window From"
+          },
+          "window_to": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Window To"
+          },
+          "points": {
+            "items": {
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              ],
+              "type": "array",
+              "maxItems": 3,
+              "minItems": 3
+            },
+            "type": "array",
+            "title": "Points"
+          },
+          "values": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Values"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rule",
+          "thresholds",
+          "window_from",
+          "window_to",
+          "points",
+          "values"
+        ],
+        "title": "FindingEvidence"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HazardAsset": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "distance_to_boundary_km": {
+            "type": "number",
+            "title": "Distance To Boundary Km"
+          },
+          "finding_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finding Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "name",
+          "distance_to_boundary_km"
+        ],
+        "title": "HazardAsset"
+      },
+      "HazardCircle": {
+        "properties": {
+          "access_points": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Access Points"
+          },
+          "type": {
+            "type": "string",
+            "const": "circle",
+            "title": "Type"
+          },
+          "center": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Center"
+          },
+          "radius_m": {
+            "type": "number",
+            "maximum": 100000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Radius M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "center",
+          "radius_m"
+        ],
+        "title": "HazardCircle"
+      },
+      "HazardPolygon": {
+        "properties": {
+          "access_points": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Access Points"
+          },
+          "type": {
+            "type": "string",
+            "const": "polygon",
+            "title": "Type"
+          },
+          "points": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 3,
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "points"
+        ],
+        "title": "HazardPolygon"
+      },
+      "HazardStatus": {
+        "properties": {
+          "inside": {
+            "items": {
+              "$ref": "#/components/schemas/HazardAsset"
+            },
+            "type": "array",
+            "title": "Inside"
+          },
+          "approaching": {
+            "items": {
+              "$ref": "#/components/schemas/HazardAsset"
+            },
+            "type": "array",
+            "title": "Approaching"
+          },
+          "closure_suggestions": {
+            "items": {
+              "$ref": "#/components/schemas/ClosureSuggestion"
+            },
+            "type": "array",
+            "title": "Closure Suggestions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "inside",
+          "approaching",
+          "closure_suggestions"
+        ],
+        "title": "HazardStatus"
+      },
+      "Incident": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low",
+              "info"
+            ],
+            "title": "Severity"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "detected",
+              "confirmed",
+              "assigned",
+              "en_route",
+              "on_scene",
+              "closed"
+            ],
+            "title": "Status"
+          },
+          "zone": {
+            "type": "string",
+            "title": "Zone"
+          },
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "lon": {
+            "type": "number",
+            "title": "Lon"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To"
+          },
+          "zone_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone Id"
+          },
+          "policy_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Id"
+          },
+          "eta_minutes": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eta Minutes"
+          },
+          "arrived_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arrived At"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineEntry"
+            },
+            "type": "array",
+            "title": "Timeline"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "patrol_safety",
+                  "sos",
+                  "process",
+                  "pressure_drop",
+                  "anpr"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "pressure_context": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PressureContext"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hazard_area": {
+            "anyOf": [
+              {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/HazardCircle"
+                  },
+                  {
+                    "$ref": "#/components/schemas/HazardPolygon"
+                  }
+                ],
+                "discriminator": {
+                  "propertyName": "type",
+                  "mapping": {
+                    "circle": "#/components/schemas/HazardCircle",
+                    "polygon": "#/components/schemas/HazardPolygon"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hazard Area"
+          },
+          "emergency_contacts": {
+            "items": {
+              "$ref": "#/components/schemas/EmergencyContact"
+            },
+            "type": "array",
+            "title": "Emergency Contacts"
+          },
+          "backup_patrols": {
+            "items": {
+              "$ref": "#/components/schemas/NearbyPatrol"
+            },
+            "type": "array",
+            "title": "Backup Patrols"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "severity",
+          "status",
+          "zone",
+          "asset_id",
+          "lon",
+          "lat",
+          "created_at",
+          "description",
+          "timeline"
+        ],
+        "title": "Incident"
+      },
+      "IncidentCreation": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Title"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low",
+              "info"
+            ],
+            "title": "Severity"
+          },
+          "lon": {
+            "type": "number",
+            "title": "Lon"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "severity",
+          "lon",
+          "lat",
+          "description"
+        ],
+        "title": "IncidentCreation"
+      },
+      "IncidentReport": {
+        "properties": {
+          "incident": {
+            "$ref": "#/components/schemas/Incident"
+          },
+          "hazard": {
+            "$ref": "#/components/schemas/HazardStatus"
+          },
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At"
+          },
+          "mock": {
+            "type": "boolean",
+            "title": "Mock"
+          }
+        },
+        "type": "object",
+        "required": [
+          "incident",
+          "hazard",
+          "generated_at",
+          "mock"
+        ],
+        "title": "IncidentReport"
+      },
+      "LayerImport": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "FeatureCollection",
+            "title": "Type"
+          },
+          "features": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/LineFeature"
+                },
+                {
+                  "$ref": "#/components/schemas/PointFeature"
+                }
+              ]
+            },
+            "type": "array",
+            "maxItems": 1000,
+            "minItems": 1,
+            "title": "Features"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "features"
+        ],
+        "title": "LayerImport"
+      },
+      "LayerImportResult": {
+        "properties": {
+          "pipelines": {
+            "items": {
+              "$ref": "#/components/schemas/Pipeline"
+            },
+            "type": "array",
+            "title": "Pipelines"
+          },
+          "facilities": {
+            "items": {
+              "$ref": "#/components/schemas/Facility"
+            },
+            "type": "array",
+            "title": "Facilities"
+          },
+          "segments": {
+            "items": {
+              "$ref": "#/components/schemas/Segment"
+            },
+            "type": "array",
+            "title": "Segments"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pipelines",
+          "facilities",
+          "segments"
+        ],
+        "title": "LayerImportResult"
+      },
+      "LayerProperties": {
+        "properties": {
+          "road_distance_m": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Road Distance M"
+          },
+          "village_distance_m": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Village Distance M"
+          },
+          "heavy_vehicle_access": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heavy Vehicle Access"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 3,
+            "title": "Name"
+          },
+          "field": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Field"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "field"
+        ],
+        "title": "LayerProperties"
+      },
+      "LineFeature": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "Feature",
+            "title": "Type"
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/LineGeometry"
+          },
+          "properties": {
+            "$ref": "#/components/schemas/LayerProperties"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "geometry",
+          "properties"
+        ],
+        "title": "LineFeature"
+      },
+      "LineGeometry": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "LineString",
+            "title": "Type"
+          },
+          "coordinates": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "maxItems": 10000,
+            "minItems": 2,
+            "title": "Coordinates"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "coordinates"
+        ],
+        "title": "LineGeometry"
+      },
+      "Mission": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "zone": {
+            "type": "string",
+            "title": "Zone"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "progress": {
+            "type": "integer",
+            "title": "Progress"
+          },
+          "checkpoints": {
+            "items": {
+              "$ref": "#/components/schemas/Checkpoint"
+            },
+            "type": "array",
+            "title": "Checkpoints"
+          },
+          "plan_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Id"
+          },
+          "plan_window_minutes": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Window Minutes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "asset_id",
+          "zone",
+          "status",
+          "progress",
+          "checkpoints"
+        ],
+        "title": "Mission"
+      },
+      "NearbyPatrol": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "distance_km": {
+            "type": "number",
+            "title": "Distance Km"
+          },
+          "distance_type": {
+            "type": "string",
+            "const": "straight_line",
+            "title": "Distance Type"
+          },
+          "eta_minutes": {
+            "type": "number",
+            "title": "Eta Minutes"
+          },
+          "lon": {
+            "type": "number",
+            "title": "Lon"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "name",
+          "distance_km",
+          "distance_type",
+          "eta_minutes",
+          "lon",
+          "lat"
+        ],
+        "title": "NearbyPatrol"
+      },
+      "PatrolPlan": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "approved",
+              "discarded"
+            ],
+            "title": "Status"
+          },
+          "shift_start": {
+            "type": "string",
+            "title": "Shift Start"
+          },
+          "shift_end": {
+            "type": "string",
+            "title": "Shift End"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "approved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved At"
+          },
+          "discarded_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discarded At"
+          },
+          "patrols": {
+            "items": {
+              "$ref": "#/components/schemas/PlannedPatrol"
+            },
+            "type": "array",
+            "title": "Patrols"
+          },
+          "settings_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Settings Snapshot"
+          },
+          "mission_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Mission Ids"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "finding_id": {
+            "type": "string",
+            "title": "Finding Id"
+          },
+          "can_execute": {
+            "type": "boolean",
+            "const": false,
+            "title": "Can Execute",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "shift_start",
+          "shift_end",
+          "created_at",
+          "patrols",
+          "settings_snapshot",
+          "mission_ids",
+          "warnings",
+          "finding_id"
+        ],
+        "title": "PatrolPlan"
+      },
+      "PatrolPlanInput": {
+        "properties": {
+          "shift_start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Shift Start"
+          },
+          "shift_end": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Shift End"
+          },
+          "asset_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Asset Ids"
+          },
+          "stops_per_patrol": {
+            "type": "integer",
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Stops Per Patrol",
+            "default": 3
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "shift_start",
+          "shift_end",
+          "asset_ids"
+        ],
+        "title": "PatrolPlanInput"
+      },
+      "PatrolPlanStop": {
+        "properties": {
+          "target_id": {
+            "type": "string",
+            "title": "Target Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "segment",
+              "facility"
+            ],
+            "title": "Kind"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "field": {
+            "type": "string",
+            "title": "Field"
+          },
+          "lon": {
+            "type": "number",
+            "title": "Lon"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "due_at": {
+            "type": "string",
+            "title": "Due At"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/RiskFactor"
+            },
+            "type": "array",
+            "title": "Breakdown"
+          },
+          "finding_id": {
+            "type": "string",
+            "title": "Finding Id"
+          },
+          "mandatory": {
+            "type": "boolean",
+            "title": "Mandatory"
+          }
+        },
+        "type": "object",
+        "required": [
+          "target_id",
+          "kind",
+          "name",
+          "field",
+          "lon",
+          "lat",
+          "due_at",
+          "score",
+          "breakdown",
+          "finding_id",
+          "mandatory"
+        ],
+        "title": "PatrolPlanStop"
+      },
+      "Pipeline": {
+        "properties": {
+          "road_distance_m": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Road Distance M"
+          },
+          "village_distance_m": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Village Distance M"
+          },
+          "heavy_vehicle_access": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heavy Vehicle Access"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "field": {
+            "type": "string",
+            "title": "Field"
+          },
+          "points": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "field",
+          "points"
+        ],
+        "title": "Pipeline"
+      },
+      "PipelinePressureEvent": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "pipeline_id": {
+            "type": "string",
+            "title": "Pipeline Id"
+          },
+          "segment_id": {
+            "type": "string",
+            "title": "Segment Id"
+          },
+          "chainage_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chainage M"
+          },
+          "time": {
+            "type": "string",
+            "title": "Time"
+          },
+          "received_at": {
+            "type": "string",
+            "title": "Received At"
+          },
+          "pressure_drop_pct": {
+            "type": "number",
+            "title": "Pressure Drop Pct"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "lon": {
+            "type": "number",
+            "title": "Lon"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "finding_id": {
+            "type": "string",
+            "title": "Finding Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "pipeline_id",
+          "segment_id",
+          "time",
+          "received_at",
+          "pressure_drop_pct",
+          "source",
+          "lon",
+          "lat",
+          "finding_id"
+        ],
+        "title": "PipelinePressureEvent"
+      },
+      "PipelinePressureInput": {
+        "properties": {
+          "pipeline_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Pipeline Id"
+          },
+          "chainage_m": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chainage M"
+          },
+          "segment_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segment Id"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Time"
+          },
+          "pressure_drop_pct": {
+            "type": "number",
+            "maximum": 100.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Pressure Drop Pct"
+          },
+          "source": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Source"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pipeline_id",
+          "time",
+          "pressure_drop_pct",
+          "source"
+        ],
+        "title": "PipelinePressureInput"
+      },
+      "PipelinePressureResult": {
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/PipelinePressureEvent"
+          },
+          "finding": {
+            "$ref": "#/components/schemas/Finding"
+          },
+          "incident": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Incident"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "event",
+          "finding"
+        ],
+        "title": "PipelinePressureResult"
+      },
+      "PlannedPatrol": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "base": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Base"
+          },
+          "stops": {
+            "items": {
+              "$ref": "#/components/schemas/PatrolPlanStop"
+            },
+            "type": "array",
+            "title": "Stops"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "base",
+          "stops"
+        ],
+        "title": "PlannedPatrol"
+      },
+      "PlateReadEvent": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "const": "plate_read",
+            "title": "Type",
+            "default": "plate_read"
+          },
+          "source": {
+            "type": "string",
+            "const": "reported",
+            "title": "Source",
+            "default": "reported"
+          },
+          "camera_id": {
+            "type": "string",
+            "title": "Camera Id"
+          },
+          "plate": {
+            "type": "string",
+            "title": "Plate"
+          },
+          "time": {
+            "type": "string",
+            "title": "Time"
+          },
+          "received_at": {
+            "type": "string",
+            "title": "Received At"
+          },
+          "vehicle_class": {
+            "type": "string",
+            "enum": [
+              "heavy",
+              "light",
+              "unknown"
+            ],
+            "title": "Vehicle Class"
+          },
+          "lon": {
+            "type": "number",
+            "title": "Lon"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "sensitive": {
+            "type": "boolean",
+            "title": "Sensitive"
+          },
+          "alert_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Alert Ids"
+          },
+          "finding_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Finding Ids"
+          },
+          "incident_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Incident Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "camera_id",
+          "plate",
+          "time",
+          "received_at",
+          "vehicle_class",
+          "lon",
+          "lat",
+          "sensitive",
+          "alert_ids",
+          "finding_ids",
+          "incident_ids"
+        ],
+        "title": "PlateReadEvent"
+      },
+      "PlateReadInput": {
+        "properties": {
+          "plate": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Plate"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Time"
+          },
+          "vehicle_class": {
+            "type": "string",
+            "enum": [
+              "heavy",
+              "light",
+              "unknown"
+            ],
+            "title": "Vehicle Class"
+          },
+          "camera_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Camera Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "plate",
+          "time",
+          "vehicle_class",
+          "camera_id"
+        ],
+        "title": "PlateReadInput"
+      },
+      "PlateReadResult": {
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/PlateReadEvent"
+          },
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/Alert"
+            },
+            "type": "array",
+            "title": "Alerts"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "type": "array",
+            "title": "Findings"
+          },
+          "incidents": {
+            "items": {
+              "$ref": "#/components/schemas/Incident"
+            },
+            "type": "array",
+            "title": "Incidents"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event",
+          "alerts",
+          "findings",
+          "incidents"
+        ],
+        "title": "PlateReadResult"
+      },
+      "PointFeature": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "Feature",
+            "title": "Type"
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/PointGeometry"
+          },
+          "properties": {
+            "$ref": "#/components/schemas/FacilityProperties"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "geometry",
+          "properties"
+        ],
+        "title": "PointFeature"
+      },
+      "PointGeometry": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "Point",
+            "title": "Type"
+          },
+          "coordinates": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Coordinates"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "coordinates"
+        ],
+        "title": "PointGeometry"
+      },
+      "Policy": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "zone": {
+            "type": "string",
+            "title": "Zone"
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          },
+          "condition": {
+            "type": "string",
+            "title": "Condition"
+          },
+          "threshold": {
+            "type": "integer",
+            "title": "Threshold"
+          },
+          "schedule": {
+            "type": "string",
+            "title": "Schedule"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "tested",
+              "shadow",
+              "active"
+            ],
+            "title": "Status"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "matches": {
+            "type": "integer",
+            "title": "Matches"
+          },
+          "false_positives": {
+            "type": "integer",
+            "title": "False Positives"
+          },
+          "approver": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approver"
+          },
+          "test_result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Test Result"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "zone",
+          "subject",
+          "condition",
+          "threshold",
+          "schedule",
+          "action",
+          "severity",
+          "status",
+          "version",
+          "matches",
+          "false_positives"
+        ],
+        "title": "Policy"
+      },
+      "PolicyInput": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 3,
+            "title": "Name"
+          },
+          "zone": {
+            "type": "string",
+            "title": "Zone"
+          },
+          "subject": {
+            "type": "string",
+            "enum": [
+              "vehicle",
+              "person",
+              "all"
+            ],
+            "title": "Subject",
+            "default": "vehicle"
+          },
+          "condition": {
+            "type": "string",
+            "enum": [
+              "geofence_entry",
+              "unknown_vehicle",
+              "route_deviation",
+              "after_hours",
+              "long_stop",
+              "connection_lost",
+              "tamper",
+              "gps_jump",
+              "sos",
+              "missed_checkpoint",
+              "correlated_events",
+              "camera_event"
+            ],
+            "title": "Condition",
+            "default": "geofence_entry"
+          },
+          "threshold": {
+            "type": "integer",
+            "maximum": 3600.0,
+            "minimum": 1.0,
+            "title": "Threshold",
+            "default": 1
+          },
+          "schedule": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Schedule",
+            "default": "تمام شبانه‌روز"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "create_incident",
+              "notify",
+              "suggest_patrol",
+              "log_only"
+            ],
+            "title": "Action",
+            "default": "create_incident"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low",
+              "info"
+            ],
+            "title": "Severity",
+            "default": "high"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "zone"
+        ],
+        "title": "PolicyInput"
+      },
+      "PolicyStatus": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "shadow",
+              "active",
+              "draft"
+            ],
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "PolicyStatus"
+      },
+      "PositionInput": {
+        "properties": {
+          "lon": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Lon"
+          },
+          "lat": {
+            "type": "number",
+            "maximum": 85.051129,
+            "minimum": -85.051129,
+            "title": "Lat"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Time"
+          },
+          "speed": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lon",
+          "lat"
+        ],
+        "title": "PositionInput"
+      },
+      "PressureContext": {
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "title": "Event Id"
+          },
+          "pipeline_id": {
+            "type": "string",
+            "title": "Pipeline Id"
+          },
+          "segment_id": {
+            "type": "string",
+            "title": "Segment Id"
+          },
+          "last_visit": {
+            "$ref": "#/components/schemas/CoverageItem"
+          },
+          "nearest_patrol": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NearbyPatrol"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nearest_patrol_position_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nearest Patrol Position Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_id",
+          "pipeline_id",
+          "segment_id",
+          "last_visit"
+        ],
+        "title": "PressureContext"
+      },
+      "Question": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 2,
+            "title": "Question"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question"
+        ],
+        "title": "Question"
+      },
+      "RiskFactor": {
+        "properties": {
+          "factor": {
+            "type": "string",
+            "enum": [
+              "incidents",
+              "access",
+              "staleness",
+              "exposure"
+            ],
+            "title": "Factor"
+          },
+          "raw": {
+            "title": "Raw"
+          },
+          "normalized": {
+            "type": "number",
+            "title": "Normalized"
+          },
+          "weight": {
+            "type": "number",
+            "title": "Weight"
+          },
+          "contribution": {
+            "type": "number",
+            "title": "Contribution"
+          }
+        },
+        "type": "object",
+        "required": [
+          "factor",
+          "raw",
+          "normalized",
+          "weight",
+          "contribution"
+        ],
+        "title": "RiskFactor"
+      },
+      "RiskItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "segment",
+              "facility"
+            ],
+            "title": "Kind"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "field": {
+            "type": "string",
+            "title": "Field"
+          },
+          "lon": {
+            "type": "number",
+            "title": "Lon"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/RiskFactor"
+            },
+            "type": "array",
+            "title": "Breakdown"
+          },
+          "finding_id": {
+            "type": "string",
+            "title": "Finding Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "field",
+          "lon",
+          "lat",
+          "score",
+          "breakdown",
+          "finding_id"
+        ],
+        "title": "RiskItem"
+      },
+      "RiskStatus": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RiskItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "max_score": {
+            "type": "number",
+            "title": "Max Score"
+          },
+          "computed_at": {
+            "type": "string",
+            "title": "Computed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "max_score",
+          "computed_at"
+        ],
+        "title": "RiskStatus"
+      },
+      "RiskWeights": {
+        "properties": {
+          "incidents": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Incidents",
+            "default": 0.4
+          },
+          "access": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Access",
+            "default": 0.2
+          },
+          "staleness": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Staleness",
+            "default": 0.3
+          },
+          "exposure": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Exposure",
+            "default": 0.1
+          }
+        },
+        "type": "object",
+        "title": "RiskWeights"
+      },
+      "RuntimeSettings": {
+        "properties": {
+          "organization": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 3,
+            "title": "Organization",
+            "default": "نفت و گاز آغاجاری"
+          },
+          "retention_days": {
+            "type": "integer",
+            "maximum": 3650.0,
+            "minimum": 7.0,
+            "title": "Retention Days",
+            "default": 90
+          },
+          "weak_coverage_timeout": {
+            "type": "integer",
+            "maximum": 120.0,
+            "minimum": 1.0,
+            "title": "Weak Coverage Timeout",
+            "default": 20
+          },
+          "normal_coverage_timeout": {
+            "type": "integer",
+            "maximum": 120.0,
+            "minimum": 1.0,
+            "title": "Normal Coverage Timeout",
+            "default": 5
+          },
+          "dedupe_seconds": {
+            "type": "integer",
+            "maximum": 3600.0,
+            "minimum": 5.0,
+            "title": "Dedupe Seconds",
+            "default": 60
+          },
+          "intel_tick_seconds": {
+            "type": "integer",
+            "maximum": 3600.0,
+            "minimum": 1.0,
+            "title": "Intel Tick Seconds",
+            "default": 5
+          },
+          "intel_coverage_buffer_m": {
+            "type": "number",
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Intel Coverage Buffer M",
+            "default": 200
+          },
+          "intel_coverage_backfill_hours": {
+            "type": "number",
+            "maximum": 8760.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Intel Coverage Backfill Hours",
+            "default": 72
+          },
+          "intel_coverage_stale_hours": {
+            "type": "number",
+            "maximum": 8760.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Intel Coverage Stale Hours",
+            "default": 12
+          },
+          "intel_coverage_unmanned_stale_hours": {
+            "type": "number",
+            "maximum": 8760.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Intel Coverage Unmanned Stale Hours",
+            "default": 8
+          },
+          "intel_coverage_mode": {
+            "type": "string",
+            "enum": [
+              "shadow",
+              "active"
+            ],
+            "title": "Intel Coverage Mode",
+            "default": "shadow"
+          },
+          "intel_safety_stop_minutes": {
+            "type": "number",
+            "maximum": 120.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Intel Safety Stop Minutes",
+            "default": 3
+          },
+          "intel_safety_checkin_minutes": {
+            "type": "number",
+            "maximum": 120.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Intel Safety Checkin Minutes",
+            "default": 10
+          },
+          "intel_safety_remote_km": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Intel Safety Remote Km",
+            "default": 1
+          },
+          "intel_safety_normal_hours": {
+            "type": "string",
+            "title": "Intel Safety Normal Hours",
+            "default": "06:00–20:00"
+          },
+          "intel_safety_mode": {
+            "type": "string",
+            "enum": [
+              "shadow",
+              "active"
+            ],
+            "title": "Intel Safety Mode",
+            "default": "shadow"
+          },
+          "intel_hazard_approach_km": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Intel Hazard Approach Km",
+            "default": 2
+          },
+          "intel_risk_weights": {
+            "$ref": "#/components/schemas/RiskWeights"
+          },
+          "intel_risk_incident_radius_m": {
+            "type": "number",
+            "maximum": 100000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Intel Risk Incident Radius M",
+            "default": 500
+          },
+          "intel_risk_half_life_days": {
+            "type": "number",
+            "maximum": 3650.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Intel Risk Half Life Days",
+            "default": 30
+          },
+          "intel_risk_alpha": {
+            "type": "number",
+            "maximum": 10.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Intel Risk Alpha",
+            "default": 2
+          },
+          "intel_plan_dwell_minutes": {
+            "type": "number",
+            "maximum": 240.0,
+            "minimum": 0.0,
+            "title": "Intel Plan Dwell Minutes",
+            "default": 10
+          },
+          "intel_plan_time_jitter_minutes": {
+            "type": "number",
+            "maximum": 720.0,
+            "minimum": 0.0,
+            "title": "Intel Plan Time Jitter Minutes",
+            "default": 60
+          },
+          "intel_plan_window_minutes": {
+            "type": "number",
+            "maximum": 240.0,
+            "minimum": 0.0,
+            "title": "Intel Plan Window Minutes",
+            "default": 30
+          },
+          "intel_shifts": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 24,
+            "minItems": 1,
+            "title": "Intel Shifts"
+          },
+          "intel_pressure_enabled": {
+            "type": "boolean",
+            "title": "Intel Pressure Enabled",
+            "default": false
+          },
+          "intel_pressure_mode": {
+            "type": "string",
+            "enum": [
+              "shadow",
+              "active"
+            ],
+            "title": "Intel Pressure Mode",
+            "default": "shadow"
+          },
+          "intel_anpr_enabled": {
+            "type": "boolean",
+            "title": "Intel Anpr Enabled",
+            "default": false
+          },
+          "intel_vehicle_allowlist": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 10000,
+            "title": "Intel Vehicle Allowlist"
+          },
+          "intel_anpr_night_hours": {
+            "type": "string",
+            "title": "Intel Anpr Night Hours",
+            "default": "22:00–06:00"
+          },
+          "intel_anpr_repeat_window_minutes": {
+            "type": "number",
+            "maximum": 1440.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Intel Anpr Repeat Window Minutes",
+            "default": 30
+          },
+          "intel_anpr_sensitive_camera_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 1000,
+            "title": "Intel Anpr Sensitive Camera Ids"
+          },
+          "intel_emergency_contacts": {
+            "items": {
+              "$ref": "#/components/schemas/EmergencyContact"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Intel Emergency Contacts"
+          },
+          "shadow_mode": {
+            "type": "boolean",
+            "title": "Shadow Mode",
+            "default": true
+          },
+          "maintenance_silence": {
+            "type": "boolean",
+            "title": "Maintenance Silence",
+            "default": false
+          },
+          "gis_mode": {
+            "type": "string",
+            "enum": [
+              "local",
+              "wms",
+              "wfs"
+            ],
+            "title": "Gis Mode",
+            "default": "local"
+          },
+          "gis_url": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Gis Url",
+            "default": ""
+          },
+          "gis_layers": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Gis Layers",
+            "default": ""
+          },
+          "gis_wms_version": {
+            "type": "string",
+            "enum": [
+              "1.1.1",
+              "1.3.0"
+            ],
+            "title": "Gis Wms Version",
+            "default": "1.3.0"
+          },
+          "gis_wfs_version": {
+            "type": "string",
+            "enum": [
+              "1.1.0",
+              "2.0.0"
+            ],
+            "title": "Gis Wfs Version",
+            "default": "2.0.0"
+          },
+          "gis_opacity": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Gis Opacity",
+            "default": 0.7
+          }
+        },
+        "type": "object",
+        "title": "RuntimeSettings"
+      },
+      "SafetyConfirmation": {
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "title": "SafetyConfirmation"
+      },
+      "SafetyEpisode": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "idle",
+              "stopped",
+              "check_pending",
+              "confirmed",
+              "escalated"
+            ],
+            "title": "State"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "deadline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadline"
+          },
+          "facility_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Facility Id"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "state",
+          "reason"
+        ],
+        "title": "SafetyEpisode"
+      },
+      "SafetyStatus": {
+        "properties": {
+          "episodes": {
+            "items": {
+              "$ref": "#/components/schemas/SafetyEpisode"
+            },
+            "type": "array",
+            "title": "Episodes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "episodes"
+        ],
+        "title": "SafetyStatus"
+      },
+      "Segment": {
+        "properties": {
+          "road_distance_m": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Road Distance M"
+          },
+          "village_distance_m": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Village Distance M"
+          },
+          "heavy_vehicle_access": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heavy Vehicle Access"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "pipeline_id": {
+            "type": "string",
+            "title": "Pipeline Id"
+          },
+          "index": {
+            "type": "integer",
+            "title": "Index"
+          },
+          "points": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Points"
+          },
+          "length_m": {
+            "type": "number",
+            "title": "Length M"
+          },
+          "field": {
+            "type": "string",
+            "title": "Field"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "pipeline_id",
+          "index",
+          "points",
+          "length_m",
+          "field"
+        ],
+        "title": "Segment"
+      },
+      "ShiftReport": {
+        "properties": {
+          "window_from": {
+            "type": "string",
+            "title": "Window From"
+          },
+          "window_to": {
+            "type": "string",
+            "title": "Window To"
+          },
+          "timezone": {
+            "type": "string",
+            "const": "Asia/Tehran",
+            "title": "Timezone",
+            "default": "Asia/Tehran"
+          },
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At"
+          },
+          "data_since": {
+            "type": "string",
+            "title": "Data Since"
+          },
+          "data_source_id": {
+            "type": "string",
+            "title": "Data Source Id"
+          },
+          "partial": {
+            "type": "boolean",
+            "title": "Partial"
+          },
+          "headlines": {
+            "items": {
+              "$ref": "#/components/schemas/ShiftReportLine"
+            },
+            "type": "array",
+            "title": "Headlines"
+          },
+          "sections": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ShiftReportSection"
+            },
+            "propertyNames": {
+              "enum": [
+                "incidents",
+                "coverage",
+                "trackers",
+                "commands",
+                "compliance",
+                "safety",
+                "findings"
+              ]
+            },
+            "type": "object",
+            "title": "Sections"
+          },
+          "can_execute": {
+            "type": "boolean",
+            "const": false,
+            "title": "Can Execute",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "window_from",
+          "window_to",
+          "generated_at",
+          "data_since",
+          "data_source_id",
+          "partial",
+          "headlines",
+          "sections"
+        ],
+        "title": "ShiftReport"
+      },
+      "ShiftReportLine": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "source_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Source Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "source_ids"
+        ],
+        "title": "ShiftReportLine"
+      },
+      "ShiftReportSection": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "partial": {
+            "type": "boolean",
+            "title": "Partial"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "counts": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Counts"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/ShiftReportLine"
+            },
+            "type": "array",
+            "title": "Lines"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "partial",
+          "notes",
+          "counts",
+          "lines"
+        ],
+        "title": "ShiftReportSection"
+      },
+      "Summary": {
+        "properties": {
+          "online": {
+            "type": "integer",
+            "title": "Online"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "offline": {
+            "type": "integer",
+            "title": "Offline",
+            "default": 0
+          },
+          "warning": {
+            "type": "integer",
+            "title": "Warning",
+            "default": 0
+          },
+          "maintenance": {
+            "type": "integer",
+            "title": "Maintenance",
+            "default": 0
+          },
+          "critical": {
+            "type": "integer",
+            "title": "Critical"
+          },
+          "open_incidents": {
+            "type": "integer",
+            "title": "Open Incidents"
+          },
+          "closed_incidents": {
+            "type": "integer",
+            "title": "Closed Incidents",
+            "default": 0
+          },
+          "missions": {
+            "type": "integer",
+            "title": "Missions"
+          },
+          "policy_alerts": {
+            "type": "integer",
+            "title": "Policy Alerts",
+            "default": 0
+          },
+          "shadow_alerts": {
+            "type": "integer",
+            "title": "Shadow Alerts",
+            "default": 0
+          },
+          "active_policies": {
+            "type": "integer",
+            "title": "Active Policies",
+            "default": 0
+          },
+          "hot_zone": {
+            "type": "string",
+            "title": "Hot Zone",
+            "default": ""
+          },
+          "coverage": {
+            "type": "number",
+            "title": "Coverage"
+          },
+          "response_minutes": {
+            "type": "number",
+            "title": "Response Minutes"
+          },
+          "availability": {
+            "type": "number",
+            "title": "Availability"
+          },
+          "trend": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Trend"
+          },
+          "cycle": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Cycle"
+          },
+          "cycle_measured": {
+            "items": {
+              "type": "boolean"
+            },
+            "type": "array",
+            "title": "Cycle Measured",
+            "default": []
+          },
+          "cycle_samples": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Cycle Samples",
+            "default": []
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/FieldMetric"
+            },
+            "type": "array",
+            "title": "Fields"
+          },
+          "mock": {
+            "type": "boolean",
+            "title": "Mock"
+          }
+        },
+        "type": "object",
+        "required": [
+          "online",
+          "total",
+          "critical",
+          "open_incidents",
+          "missions",
+          "coverage",
+          "response_minutes",
+          "availability",
+          "trend",
+          "cycle",
+          "fields",
+          "mock"
+        ],
+        "title": "Summary"
+      },
+      "TimelineEntry": {
+        "properties": {
+          "time": {
+            "type": "string",
+            "title": "Time"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "time",
+          "action",
+          "actor"
+        ],
+        "title": "TimelineEntry"
+      },
+      "TrackPoint": {
+        "properties": {
+          "lon": {
+            "type": "number",
+            "title": "Lon"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "time": {
+            "type": "string",
+            "title": "Time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lon",
+          "lat",
+          "time"
+        ],
+        "title": "TrackPoint"
+      },
+      "Transition": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "assigned",
+              "en_route",
+              "on_scene",
+              "closed"
+            ],
+            "title": "Status"
+          },
+          "asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Id"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "Transition"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "Zone": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "risk": {
+            "type": "string",
+            "title": "Risk"
+          },
+          "coverage": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "weak"
+            ],
+            "title": "Coverage",
+            "default": "normal"
+          },
+          "points": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "risk",
+          "points"
+        ],
+        "title": "Zone"
+      },
+      "ZoneInput": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 3,
+            "title": "Name"
+          },
+          "risk": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "title": "Risk",
+            "default": "medium"
+          },
+          "coverage": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "weak"
+            ],
+            "title": "Coverage",
+            "default": "normal"
+          },
+          "points": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 3,
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "points"
+        ],
+        "title": "ZoneInput"
+      }
+    }
+  }
+}

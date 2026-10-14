@@ -1,0 +1,31 @@
+# Combine with the root compose.yaml after setting approved production values.
+services:
+  postgres:
+    image: ${SEPEHR_POSTGRES_PRODUCTION_IMAGE:?Approved internal image with sha256 digest required}
+  keycloak:
+    image: ${SEPEHR_KEYCLOAK_PRODUCTION_IMAGE:?Approved internal image with sha256 digest required}
+    environment:
+      KC_HOSTNAME: https://${SEPEHR_IDENTITY_HOSTNAME:?Identity hostname required}
+      KC_HOSTNAME_ADMIN: https://${SEPEHR_ADMIN_HOSTNAME:?Management hostname required}:9443
+      KC_PROXY_HEADERS: xforwarded
+  backend:
+    environment:
+      SEPEHR_AUTH_MODE: keycloak
+      SEPEHR_AUTH_ENFORCE_ALL: 'true'
+      SEPEHR_OIDC_ISSUER: https://${SEPEHR_IDENTITY_HOSTNAME}/realms/sepehr
+      SEPEHR_KEYCLOAK_ADMIN_URL: https://${SEPEHR_ADMIN_HOSTNAME}:9443/admin/
+      SEPEHR_FIELD_TAG_BASE_URL: ${SEPEHR_FIELD_TAG_PRODUCTION_URL:-https://${SEPEHR_APP_HOSTNAME}/nfc}
+      SEPEHR_AUDIT_CLIENT_SECRET: ${SEPEHR_AUDIT_CLIENT_SECRET:?Configure the view-events service client first}
+  frontend:
+    ports: !override
+      - '${SEPEHR_PUBLIC_BIND_IP:-127.0.0.1}:443:443'
+      - '${SEPEHR_MANAGEMENT_BIND_IP:?Private management bind address required}:9443:9443'
+    environment:
+      SEPEHR_APP_HOSTNAME: ${SEPEHR_APP_HOSTNAME:?Application hostname required}
+      SEPEHR_IDENTITY_HOSTNAME: ${SEPEHR_IDENTITY_HOSTNAME}
+      SEPEHR_ADMIN_HOSTNAME: ${SEPEHR_ADMIN_HOSTNAME}
+      SEPEHR_MANAGEMENT_CIDR: ${SEPEHR_MANAGEMENT_CIDR:?Private management network required}
+      SEPEHR_RESOURCE_ORIGINS: https://${SEPEHR_IDENTITY_HOSTNAME}
+    volumes:
+      - ./deploy/nginx/production.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ${SEPEHR_TLS_DIR:?TLS certificate directory required}:/etc/sepehr/tls:ro

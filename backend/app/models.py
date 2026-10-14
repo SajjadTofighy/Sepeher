@@ -1,0 +1,1669 @@
+"""Public input and response contracts. Device adapters map into these domain records."""
+
+from datetime import date, datetime, timezone
+from typing import Annotated, Any, Literal
+
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
+
+SEVERITY_LABELS = {"critical": "بحرانی", "high": "زیاد", "medium": "متوسط", "low": "کم", "info": "اطلاعاتی"}
+
+def validate_coordinates(points):
+    """Shared coordinate validation for zones and imported intelligence layers."""
+    if any(len(p) != 2 or not (-180 <= p[0] <= 180 and -85 <= p[1] <= 85) for p in points):
+        raise ValueError("هر نقطه باید طول و عرض جغرافیایی معتبر داشته باشد")
+    return points
+
+
+def validate_polygon(points):
+    """The same polygon validity rules for zones and incident hazard areas."""
+    validate_coordinates(points)
+    if len(set(tuple(p) for p in points)) < 3:
+        raise ValueError("حداقل سه نقطه متفاوت لازم است")
+    area = sum(points[i][0] * points[(i + 1) % len(points)][1]
+               - points[(i + 1) % len(points)][0] * points[i][1] for i in range(len(points)))
+    if abs(area) < 1e-8:
+        raise ValueError("مساحت چندضلعی باید مثبت باشد")
+    return points
+
+
+class EmergencyContact(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    role: str = Field(min_length=1, max_length=100)
+    phone: str = Field(min_length=1, max_length=50)
+
+
+class RiskWeights(BaseModel):
+    incidents: float = Field(default=0.4, ge=0, le=10, allow_inf_nan=False)
+    access: float = Field(default=0.2, ge=0, le=10, allow_inf_nan=False)
+    staleness: float = Field(default=0.3, ge=0, le=10, allow_inf_nan=False)
+    exposure: float = Field(default=0.1, ge=0, le=10, allow_inf_nan=False)
+
+    @model_validator(mode="after")
+    def positive_total(self):
+        if sum(self.model_dump().values()) <= 0:
+            raise ValueError("حداقل یک وزن ریسک باید مثبت باشد")
+        return self
+
+
+def normalize_plate(value):
+    """The same plate identity for reported reads and the operator's allowlist."""
+    value = "".join(value.translate(str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩يك", "01234567890123456789یک")).upper().split()).replace("-", "").replace("\u200c", "")
+    if not value or len(value) > 32 or not value.isalnum():
+        raise ValueError("پلاک باید شامل حروف و ارقام معتبر باشد")
+    return value
+
+
+class HeatProfile(BaseModel):
+    months: list[int] = Field(default_factory=list, max_length=12)
+    restricted_hours: str = 'تمام شبانه‌روز'
+    max_continuous_minutes: int = Field(default=240, ge=1, le=1440)
+    checkin_minutes: int = Field(default=30, ge=1, le=1440)
+
+    @field_validator('months')
+    @classmethod
+    def valid_months(cls, values):
+        if any(v < 1 or v > 12 for v in values) or len(set(values)) != len(values):
+            raise ValueError('ماه‌ها باید یکتا و بین ۱ تا ۱۲ باشند')
+        return values
+
+    @field_validator('restricted_hours')
+    @classmethod
+    def valid_hours(cls, value):
+        from .engine import valid_schedule
+        if not valid_schedule(value):
+            raise ValueError('ساعات گرما باید بازه معتبر باشند')
+        return value
+
+
+class RuntimeSettings(BaseModel):
+    field_location_max_accuracy_m: float = Field(default=100, gt=0, le=1000)
+    field_location_max_speed_kmh: float = Field(default=180, gt=0, le=500)
+    field_clock_skew_seconds: int = Field(default=120, ge=1, le=3600)
+    field_man_down_idle_seconds: int = Field(default=120, ge=10, le=3600)
+    field_man_down_countdown_seconds: int = Field(default=30, ge=5, le=300)
+    field_sos_escalation_seconds: int = Field(default=60, ge=10, le=3600)
+    offline_pbkdf2_iterations: int = Field(default=310000, ge=100000, le=2000000)
+    offline_shift_grace_minutes: int = Field(default=60, ge=0, le=1440)
+    max_offline_minutes: int = Field(default=120, ge=1, le=10080)
+    tour_schedule_max_days: int = Field(default=31, ge=1, le=366)
+    tour_time_jitter_percent: int = Field(default=15, ge=0, le=50)
+    queue_reveal: Literal['all', 'next_n'] = 'next_n'
+    queue_reveal_count: int = Field(default=1, ge=1, le=50)
+    handover_required: bool = False
+    two_person_window_minutes: int = Field(default=15, ge=1, le=120)
+    heat_profile: 'HeatProfile' = Field(default_factory=lambda: HeatProfile())
+    station_sensitivity_labels: list[str] = Field(default_factory=lambda: ["حیاتی", "حساس", "مهم", "قابل حفاظت"], min_length=1, max_length=50)
+
+    @field_validator("station_sensitivity_labels")
+    @classmethod
+    def sensitivity_labels(cls, labels):
+        if len(set(labels)) != len(labels) or any(not v.strip() or len(v) > 80 for v in labels):
+            raise ValueError("برچسب‌های حساسیت باید یکتا و غیرخالی باشند")
+        return labels
+
+    classification_label: str = Field(default="محرمانه", min_length=1, max_length=80)
+    organization: str = Field(default="نفت و گاز آغاجاری", min_length=3, max_length=100)
+    retention_days: int = Field(default=90, ge=7, le=3650)
+    weak_coverage_timeout: int = Field(default=20, ge=1, le=120)
+    normal_coverage_timeout: int = Field(default=5, ge=1, le=120)
+    dedupe_seconds: int = Field(default=60, ge=5, le=3600)
+    intel_tick_seconds: int = Field(default=5, ge=1, le=3600)
+    intel_coverage_buffer_m: float = Field(default=200, ge=0, le=10000, allow_inf_nan=False)
+    intel_coverage_backfill_hours: float = Field(default=72, gt=0, le=8760, allow_inf_nan=False)
+    intel_coverage_stale_hours: float = Field(default=12, gt=0, le=8760, allow_inf_nan=False)
+    intel_coverage_unmanned_stale_hours: float = Field(default=8, gt=0, le=8760, allow_inf_nan=False)
+    intel_coverage_mode: Literal["shadow", "active"] = "shadow"
+    intel_safety_stop_minutes: float = Field(default=3, gt=0, le=120, allow_inf_nan=False)
+    intel_safety_checkin_minutes: float = Field(default=10, gt=0, le=120, allow_inf_nan=False)
+    intel_safety_remote_km: float = Field(default=1, ge=0, le=100, allow_inf_nan=False)
+    intel_safety_normal_hours: str = "06:00–20:00"
+    intel_safety_mode: Literal["shadow", "active"] = "shadow"
+    intel_hazard_approach_km: float = Field(default=2, ge=0, le=100, allow_inf_nan=False)
+    intel_risk_weights: RiskWeights = Field(default_factory=RiskWeights)
+    intel_risk_incident_radius_m: float = Field(default=500, gt=0, le=100000, allow_inf_nan=False)
+    intel_risk_half_life_days: float = Field(default=30, gt=0, le=3650, allow_inf_nan=False)
+    intel_risk_alpha: float = Field(default=2, gt=0, le=10, allow_inf_nan=False)
+    intel_plan_dwell_minutes: float = Field(default=10, ge=0, le=240, allow_inf_nan=False)
+    intel_plan_time_jitter_minutes: float = Field(default=60, ge=0, le=720, allow_inf_nan=False)
+    intel_plan_window_minutes: float = Field(default=30, ge=0, le=240, allow_inf_nan=False)
+    intel_shifts: list[str] = Field(default_factory=lambda: ["06:00–14:00", "14:00–22:00", "22:00–06:00"], min_length=1, max_length=24)
+    intel_pressure_enabled: bool = False
+    intel_pressure_mode: Literal["shadow", "active"] = "shadow"
+    intel_anpr_enabled: bool = False
+    intel_vehicle_allowlist: list[str] = Field(default_factory=list, max_length=10000)
+    intel_anpr_night_hours: str = "22:00–06:00"
+    intel_anpr_repeat_window_minutes: float = Field(default=30, gt=0, le=1440, allow_inf_nan=False)
+    intel_anpr_sensitive_camera_ids: list[str] = Field(default_factory=list, max_length=1000)
+    intel_emergency_contacts: list[EmergencyContact] = Field(default_factory=list, max_length=20)
+    shadow_mode: bool = True
+    maintenance_silence: bool = False
+    gis_mode: Literal["local", "wms", "wfs"] = "local"
+    gis_url: str = Field(default="", max_length=500)
+    gis_layers: str = Field(default="", max_length=500)
+    gis_wms_version: Literal["1.1.1", "1.3.0"] = "1.3.0"
+    gis_wfs_version: Literal["1.1.0", "2.0.0"] = "2.0.0"
+    gis_opacity: float = Field(default=0.7, ge=0, le=1)
+
+    @field_validator("intel_safety_normal_hours", "intel_anpr_night_hours")
+    @classmethod
+    def valid_normal_hours(cls, value):
+        from .engine import valid_schedule
+
+        value = value.strip().translate(str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789"))
+        if not valid_schedule(value):
+            raise ValueError("بازه ساعت باید مانند 06:00–20:00 یا تمام شبانه‌روز باشد")
+        return value
+
+    @field_validator("intel_shifts")
+    @classmethod
+    def valid_shifts(cls, values):
+        from .engine import valid_schedule
+
+        values = [v.strip().translate(str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789")).replace("-", "–") for v in values]
+        if any(not valid_schedule(v) for v in values) or len(set(values)) != len(values):
+            raise ValueError("شیفت‌ها باید بازه‌های معتبر و غیرتکراری مانند 06:00–14:00 باشند")
+        return values
+
+    @field_validator("intel_vehicle_allowlist")
+    @classmethod
+    def valid_allowlist(cls, values):
+        return list(dict.fromkeys(normalize_plate(value) for value in values))
+
+    @field_validator("intel_anpr_sensitive_camera_ids")
+    @classmethod
+    def valid_sensitive_cameras(cls, values):
+        values = [v.strip() for v in values]
+        if any(not v or len(v) > 100 for v in values) or len(set(values)) != len(values):
+            raise ValueError("شناسه دوربین حساس باید معتبر و غیرتکراری باشد")
+        return values
+
+
+class AccessAttributes(BaseModel):
+    road_distance_m: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    village_distance_m: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    heavy_vehicle_access: bool | None = None
+
+
+class Pipeline(AccessAttributes):
+    id: str
+    name: str
+    field: str
+    points: list[list[float]]
+
+
+class Facility(AccessAttributes):
+    id: str
+    name: str
+    kind: Literal["well", "station", "plant", "manifold"]
+    lon: float
+    lat: float
+    radius_m: float
+    unmanned: bool
+    field: str
+
+
+class Segment(AccessAttributes):
+    id: str
+    pipeline_id: str
+    index: int
+    points: list[list[float]]
+    length_m: float
+    field: str
+
+
+class LineGeometry(BaseModel):
+    type: Literal["LineString"]
+    coordinates: list[list[float]] = Field(min_length=2, max_length=10000)
+
+    @field_validator("coordinates")
+    @classmethod
+    def valid_line(cls, points):
+        validate_coordinates(points)
+        if len(set(tuple(p) for p in points)) < 2:
+            raise ValueError("خط باید حداقل دو نقطه متفاوت داشته باشد")
+        return points
+
+
+class PointGeometry(BaseModel):
+    type: Literal["Point"]
+    coordinates: list[float]
+
+    @field_validator("coordinates")
+    @classmethod
+    def valid_point(cls, point):
+        validate_coordinates([point])
+        return point
+
+
+class LayerProperties(AccessAttributes):
+    id: str | None = Field(default=None, min_length=1, max_length=100)
+    name: str = Field(min_length=3, max_length=100)
+    field: str = Field(min_length=1, max_length=100)
+
+
+class FacilityProperties(LayerProperties):
+    kind: Literal["well", "station", "plant", "manifold"]
+    radius_m: float = Field(gt=0, allow_inf_nan=False)
+    unmanned: bool
+
+
+class LineFeature(BaseModel):
+    type: Literal["Feature"]
+    geometry: LineGeometry
+    properties: LayerProperties
+
+
+class PointFeature(BaseModel):
+    type: Literal["Feature"]
+    geometry: PointGeometry
+    properties: FacilityProperties
+
+
+class LayerImport(BaseModel):
+    type: Literal["FeatureCollection"]
+    features: list[LineFeature | PointFeature] = Field(min_length=1, max_length=1000)
+
+
+class LayerImportResult(BaseModel):
+    pipelines: list[Pipeline]
+    facilities: list[Facility]
+    segments: list[Segment]
+
+
+class FindingEvidence(BaseModel):
+    rule: str = Field(min_length=1)
+    thresholds: dict[str, Any]
+    window_from: AwareDatetime
+    window_to: AwareDatetime
+    points: list[tuple[float, float, AwareDatetime]]
+    values: dict[str, Any]
+
+    @field_validator("points")
+    @classmethod
+    def valid_points(cls, points):
+        validate_coordinates([list(p[:2]) for p in points])
+        return points
+
+
+class Finding(BaseModel):
+    id: str
+    kind: str
+    rule_id: str
+    severity: Literal["critical", "high", "medium", "low", "info"]
+    mode: Literal["shadow", "active"] = "shadow"
+    status: Literal["open", "acknowledged", "resolved"] = "open"
+    created_at: str
+    updated_at: str
+    subject_ids: list[str] = Field(min_length=1)
+    summary: str = Field(min_length=1)
+    evidence: FindingEvidence
+    sources: list[str]
+    incident_id: str | None = None
+    can_execute: Literal[False] = False
+
+
+class CoverageItem(BaseModel):
+    id: str
+    kind: Literal["segment", "facility"]
+    status: Literal["ok", "stale", "never"]
+    last_visit: str | None = None
+    last_asset_id: str | None = None
+    age_minutes: float | None = None
+
+
+class CoverageTotals(BaseModel):
+    percent_ok: float
+    by_field: dict[str, float]
+
+
+class Coverage(BaseModel):
+    items: list[CoverageItem]
+    totals: CoverageTotals
+
+
+class SafetyEpisode(BaseModel):
+    asset_id: str
+    state: Literal["idle", "stopped", "check_pending", "confirmed", "escalated"]
+    started_at: str | None = None
+    deadline: str | None = None
+    facility_id: str | None = None
+    reason: str
+
+
+class SafetyStatus(BaseModel):
+    episodes: list[SafetyEpisode]
+
+
+class SafetyConfirmation(BaseModel):
+    note: str | None = Field(default=None, max_length=1000)
+
+
+class DeviceEventInput(BaseModel):
+    type: Literal["sos"]
+    time: AwareDatetime
+
+
+class DeviceEvent(BaseModel):
+    id: str
+    asset_id: str
+    type: Literal["sos"]
+    time: str
+    received_at: str
+    alert_ids: list[str]
+    incident_ids: list[str]
+
+
+class TrackPoint(BaseModel):
+    lon: float
+    lat: float
+    time: str
+
+
+class Asset(BaseModel):
+    keycloak_sub: str | None = None
+    zone_id: str | None = None
+    contractor_id: str | None = None
+    id: str
+    name: str
+    kind: Literal["vehicle", "person"]
+    status: Literal["online", "offline", "warning"]
+    lon: float
+    lat: float
+    speed: float
+    battery: int
+    signal: int
+    field: str
+    mission: str
+    operator: str
+    sim: str
+    carrier: str
+    firmware: str
+    last_seen: str
+    report_interval: int = 30
+    data_package: str = "active"
+    unit: Literal["patrol", "field", "org"] = "patrol"
+    authorized: bool = True
+    capabilities: list[str]
+    track: list[TrackPoint]
+    patrol_base: list[float] | None = None
+
+    @field_validator("patrol_base")
+    @classmethod
+    def valid_base(cls, point):
+        if point is not None:
+            validate_coordinates([point])
+        return point
+
+
+class TimelineEntry(BaseModel):
+    time: str
+    action: str
+    actor: str
+
+
+class HazardAccess(BaseModel):
+    access_points: list[list[float]] = Field(default_factory=list, max_length=100)
+
+    @field_validator("access_points")
+    @classmethod
+    def valid_access(cls, points):
+        return validate_coordinates(points)
+
+
+class HazardCircle(HazardAccess):
+    type: Literal["circle"]
+    center: list[float]
+    radius_m: float = Field(gt=0, le=100000, allow_inf_nan=False)
+
+    @field_validator("center")
+    @classmethod
+    def valid_center(cls, point):
+        validate_coordinates([point])
+        return point
+
+
+class HazardPolygon(HazardAccess):
+    type: Literal["polygon"]
+    points: list[list[float]] = Field(min_length=3, max_length=100)
+
+    @field_validator("points")
+    @classmethod
+    def valid_points(cls, points):
+        return validate_polygon(points)
+
+
+HazardArea = Annotated[HazardCircle | HazardPolygon, Field(discriminator="type")]
+
+
+class IncidentCreation(BaseModel):
+    title: str = Field(min_length=3, max_length=200)
+    severity: Literal["critical", "high", "medium", "low", "info"]
+    lon: float
+    lat: float
+    description: str = Field(min_length=1, max_length=4000)
+
+    @model_validator(mode="after")
+    def valid_location(self):
+        validate_coordinates([[self.lon, self.lat]])
+        return self
+
+
+class Incident(BaseModel):
+    id: str
+    title: str
+    severity: Literal["critical", "high", "medium", "low", "info"]
+    status: Literal[
+        "detected", "confirmed", "assigned", "en_route", "on_scene", "closed"
+    ]
+    zone: str
+    asset_id: str
+    lon: float
+    lat: float
+    created_at: str
+    assigned_to: str | None = None
+    zone_id: str | None = None
+    policy_id: str | None = None
+    eta_minutes: float | None = None
+    arrived_at: str | None = None
+    operator_ack_at: str | None = None
+    description: str
+    timeline: list[TimelineEntry]
+    kind: Literal["patrol_safety", "sos", "process", "pressure_drop", "anpr"] | None = None
+    pressure_context: "PressureContext | None" = None
+    hazard_area: HazardArea | None = None
+    emergency_contacts: list[EmergencyContact] = Field(default_factory=list)
+    backup_patrols: list["NearbyPatrol"] = Field(default_factory=list)
+
+
+class NearbyPatrol(BaseModel):
+    asset_id: str
+    name: str
+    distance_km: float
+    distance_type: Literal["straight_line"]
+    eta_minutes: float
+    lon: float
+    lat: float
+
+
+class PressureContext(BaseModel):
+    event_id: str
+    pipeline_id: str
+    segment_id: str
+    last_visit: CoverageItem
+    nearest_patrol: NearbyPatrol | None = None
+    nearest_patrol_position_source: str | None = None
+
+
+class PipelinePressureInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    pipeline_id: str = Field(min_length=1, max_length=100)
+    chainage_m: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    segment_id: str | None = Field(default=None, min_length=1, max_length=100)
+    time: AwareDatetime
+    pressure_drop_pct: float = Field(gt=0, le=100, allow_inf_nan=False)
+    source: str = Field(min_length=1, max_length=200)
+
+    @model_validator(mode="after")
+    def valid_location(self):
+        if (self.chainage_m is None) == (self.segment_id is None):
+            raise ValueError("دقیقاً یکی از chainage_m یا segment_id لازم است")
+        self.source = self.source.strip()
+        if not self.source or self.source.casefold() in {"demo", "sample", "synthetic", "simulated", "نمونه", "نمایشی", "ساختگی"}:
+            raise ValueError("منبع واقعی اندازه‌گیری لازم است؛ منبع ساختگی پذیرفته نمی‌شود")
+        return self
+
+
+class PipelinePressureEvent(BaseModel):
+    id: str
+    pipeline_id: str
+    segment_id: str
+    chainage_m: float | None = None
+    time: str
+    received_at: str
+    pressure_drop_pct: float
+    source: str
+    lon: float
+    lat: float
+    finding_id: str
+
+
+class PipelinePressureResult(BaseModel):
+    event: PipelinePressureEvent
+    finding: Finding
+    incident: Incident | None = None
+
+
+class PlateReadFields(BaseModel):
+    plate: str = Field(min_length=1, max_length=64)
+    time: AwareDatetime
+    vehicle_class: Literal["heavy", "light", "unknown"]
+
+    @field_validator("plate")
+    @classmethod
+    def valid_plate(cls, value):
+        return normalize_plate(value)
+
+
+class PlateReadInput(PlateReadFields):
+    model_config = ConfigDict(extra="forbid")
+    camera_id: str = Field(min_length=1, max_length=100)
+
+
+class CameraEventInput(BaseModel):
+    """Legacy adapter requires real plate fields; old demo-only payloads are rejected."""
+    model_config = ConfigDict(extra="forbid")
+    event: Literal["intrusion", "fire", "plate"] = "plate"
+    plate: str | None = Field(default=None, min_length=1, max_length=64)
+    time: AwareDatetime | None = None
+    vehicle_class: Literal["heavy", "light", "unknown"] | None = None
+
+    @field_validator("plate")
+    @classmethod
+    def valid_plate(cls, value):
+        return normalize_plate(value) if value is not None else None
+
+
+class PlateReadEvent(BaseModel):
+    id: str
+    type: Literal["plate_read"] = "plate_read"
+    source: Literal["reported"] = "reported"
+    camera_id: str
+    plate: str
+    time: str
+    received_at: str
+    vehicle_class: Literal["heavy", "light", "unknown"]
+    lon: float
+    lat: float
+    sensitive: bool
+    alert_ids: list[str]
+    finding_ids: list[str]
+    incident_ids: list[str]
+
+
+class PlateReadResult(BaseModel):
+    event: PlateReadEvent
+    alerts: list["Alert"]
+    findings: list[Finding]
+    incidents: list[Incident]
+
+
+class HazardAsset(BaseModel):
+    asset_id: str
+    name: str
+    distance_to_boundary_km: float
+    finding_id: str | None = None
+
+
+class ClosureSuggestion(NearbyPatrol):
+    eta_label: Literal["تخمینی"] = "تخمینی"
+    target: list[float]
+    access_point_index: int | None = None
+
+
+class HazardStatus(BaseModel):
+    inside: list[HazardAsset]
+    approaching: list[HazardAsset]
+    closure_suggestions: list[ClosureSuggestion]
+
+
+class IncidentReport(BaseModel):
+    incident: Incident
+    hazard: HazardStatus
+    generated_at: str
+    mock: bool
+
+
+class DeviceEventResult(BaseModel):
+    event: DeviceEvent
+    alerts: list["Alert"]
+    incidents: list[Incident]
+
+
+class Command(BaseModel):
+    id: str
+    asset_id: str
+    command: Literal["position", "ping", "interval", "restart", "beacon", "diagnostics"]
+    channel: Literal["data", "sms"]
+    interval_seconds: int
+    request_id: str
+    status: Literal["sent", "delivered", "executed", "timed_out"]
+    created_at: str
+    updated_at: str
+    epoch: float
+    timeout_seconds: int
+    actor: str
+    mock: bool
+
+
+class PolicyTestResult(BaseModel):
+    matches: int
+    false_positives: int | None
+    samples: int
+    assumptions: str
+    period: str
+    mock: bool
+
+
+class AuditVerification(BaseModel):
+    valid: bool
+    count: int
+    scope: str | None = None
+
+
+class Policy(BaseModel):
+    id: str
+    name: str
+    zone: str
+    subject: str
+    condition: str
+    threshold: int
+    schedule: str
+    action: str
+    severity: str
+    status: Literal["draft", "tested", "shadow", "active"]
+    version: int
+    matches: int
+    false_positives: int
+    approver: str | None = None
+    test_result: PolicyTestResult | None = None
+
+
+class Zone(BaseModel):
+    id: str
+    name: str
+    risk: str
+    coverage: Literal["normal", "weak"] = "normal"
+    points: list[list[float]]
+
+
+class AuditRecord(BaseModel):
+    sub: str | None = None
+    username: str | None = None
+    prev_hash: str
+    id: str
+    time: str
+    actor: str
+    action: str
+    target: str
+    detail: str
+    previous_hash: str
+    hash: str
+
+
+class Checkpoint(BaseModel):
+    name: str
+    visited: bool
+    target_id: str | None = None
+    lon: float | None = None
+    lat: float | None = None
+    due_at: str | None = None
+    visited_at: str | None = None
+
+
+class Mission(BaseModel):
+    id: str
+    name: str
+    asset_id: str
+    zone: str
+    status: str
+    progress: int
+    checkpoints: list[Checkpoint]
+    plan_id: str | None = None
+    plan_window_minutes: float | None = None
+
+
+class RiskFactor(BaseModel):
+    factor: Literal["incidents", "access", "staleness", "exposure"]
+    raw: Any
+    normalized: float
+    weight: float
+    contribution: float
+
+
+class RiskItem(BaseModel):
+    id: str
+    kind: Literal["segment", "facility"]
+    name: str
+    field: str
+    lon: float
+    lat: float
+    score: float
+    breakdown: list[RiskFactor]
+    finding_id: str
+
+
+class RiskStatus(BaseModel):
+    items: list[RiskItem]
+    max_score: float
+    computed_at: str
+
+
+class PatrolPlanInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    shift_start: AwareDatetime
+    shift_end: AwareDatetime
+    asset_ids: list[str] = Field(min_length=1, max_length=50)
+    stops_per_patrol: int = Field(default=3, ge=1, le=50)
+
+    @model_validator(mode="after")
+    def valid_shift(self):
+        if self.shift_end <= self.shift_start or (self.shift_end - self.shift_start).total_seconds() > 7 * 86400:
+            raise ValueError("پایان شیفت باید پس از آغاز و طول شیفت حداکثر هفت روز باشد")
+        if len(set(self.asset_ids)) != len(self.asset_ids):
+            raise ValueError("شناسه گشت‌ها نباید تکراری باشد")
+        return self
+
+
+class PatrolPlanStop(BaseModel):
+    target_id: str
+    kind: Literal["segment", "facility"]
+    name: str
+    field: str
+    lon: float
+    lat: float
+    due_at: str
+    score: float
+    breakdown: list[RiskFactor]
+    finding_id: str
+    mandatory: bool
+
+
+class PlannedPatrol(BaseModel):
+    asset_id: str
+    base: list[float]
+    stops: list[PatrolPlanStop]
+
+
+class PatrolPlan(BaseModel):
+    id: str
+    status: Literal["draft", "approved", "discarded"]
+    shift_start: str
+    shift_end: str
+    created_at: str
+    approved_at: str | None = None
+    discarded_at: str | None = None
+    patrols: list[PlannedPatrol]
+    settings_snapshot: dict[str, Any]
+    mission_ids: list[str]
+    warnings: list[str]
+    finding_id: str
+    can_execute: Literal[False] = False
+
+
+class FieldMetric(BaseModel):
+    name: str
+    events: int
+    coverage: float
+
+
+class Alert(BaseModel):
+    id: str
+    time: str
+    policy_id: str
+    policy: str
+    asset_id: str
+    zone: str
+    severity: str
+    mode: Literal["shadow", "active"]
+    routed: bool
+    reason: str
+    clock: str
+    incident_id: str | None = None
+    mission_id: str | None = None
+    target_id: str | None = None
+    checkpoint_index: int | None = None
+    due_at: str | None = None
+    event_id: str | None = None
+    camera_id: str | None = None
+    plate: str | None = None
+    finding_id: str | None = None
+
+
+class Summary(BaseModel):
+    online: int
+    total: int
+    offline: int = 0
+    warning: int = 0
+    maintenance: int = 0
+    critical: int
+    open_incidents: int
+    closed_incidents: int = 0
+    missions: int
+    policy_alerts: int = 0
+    shadow_alerts: int = 0
+    active_policies: int = 0
+    hot_zone: str = ""
+    coverage: float
+    response_minutes: float
+    availability: float
+    trend: list[int]
+    cycle: list[float]
+    cycle_measured: list[bool] = []
+    cycle_samples: list[int] = []
+    fields: list[FieldMetric]
+    mock: bool
+
+
+class Bootstrap(BaseModel):
+    assets: list[Asset]
+    incidents: list[Incident]
+    zones: list[Zone]
+    policies: list[Policy]
+    missions: list[Mission]
+    commands: list[Command]
+    audit: list[AuditRecord]
+    alerts: list[Alert] = []
+    pipelines: list[Pipeline]
+    facilities: list[Facility]
+    summary: Summary
+    meta: dict[str, str]
+
+
+class ShiftReportLine(BaseModel):
+    text: str
+    source_ids: list[str] = Field(min_length=1)
+
+
+class ShiftReportSection(BaseModel):
+    title: str
+    partial: bool
+    notes: list[str]
+    counts: dict[str, int | float | None]
+    lines: list[ShiftReportLine]
+
+
+class ShiftReport(BaseModel):
+    window_from: str
+    window_to: str
+    timezone: Literal["Asia/Tehran"] = "Asia/Tehran"
+    generated_at: str
+    data_since: str
+    data_source_id: str
+    partial: bool
+    headlines: list[ShiftReportLine]
+    sections: dict[Literal["incidents", "coverage", "trackers", "commands", "compliance", "safety", "findings"], ShiftReportSection]
+    can_execute: Literal[False] = False
+
+
+class AssistantAnswer(BaseModel):
+    answer: str
+    sources: list[str]
+    mock: bool
+    can_execute: bool
+
+
+class ZoneInput(BaseModel):
+    name: str = Field(min_length=3, max_length=100)
+    risk: Literal["high", "medium", "low"] = "medium"
+    coverage: Literal["normal", "weak"] = "normal"
+    points: list[list[float]] = Field(min_length=3, max_length=100)
+
+    @field_validator("points")
+    @classmethod
+    def valid_polygon(cls, points):
+        return validate_polygon(points)
+
+
+class AssetSettings(BaseModel):
+    carrier: Literal["همراه اول", "ایرانسل"]
+    sim: str = Field(min_length=4, max_length=30)
+    report_interval: int = Field(ge=5, le=3600)
+    data_package: Literal["active", "expiring", "expired"] = "active"
+
+
+class Camera(BaseModel):
+    id: str
+    name: str
+    zone: str
+    lon: float
+    lat: float
+    status: Literal["online", "offline"]
+    analysis: str
+
+
+
+class Transition(BaseModel):
+    status: Literal["confirmed", "assigned", "en_route", "on_scene", "closed"]
+    asset_id: str | None = None
+    note: str = Field(default="", max_length=1000)
+
+
+
+class PolicyInput(BaseModel):
+    name: str = Field(min_length=3, max_length=120)
+    zone: str
+    subject: Literal["vehicle", "person", "all"] = "vehicle"
+    condition: Literal[
+        "geofence_entry",
+        "unknown_vehicle",
+        "route_deviation",
+        "after_hours",
+        "long_stop",
+        "connection_lost",
+        "tamper",
+        "gps_jump",
+        "sos",
+        "missed_checkpoint",
+        "correlated_events",
+        "camera_event",
+    ] = "geofence_entry"
+    threshold: int = Field(default=1, ge=1, le=3600)
+    schedule: str = Field(default="تمام شبانه‌روز", max_length=100)
+    action: Literal["create_incident", "notify", "suggest_patrol", "log_only"] = (
+        "create_incident"
+    )
+    severity: Literal["critical", "high", "medium", "low", "info"] = "high"
+
+    @field_validator("schedule")
+    @classmethod
+    def schedule_format(cls, value):
+        value = value.strip().translate(str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789"))
+        from .engine import valid_schedule
+
+        if not valid_schedule(value):
+            raise ValueError("بازه زمانی باید مانند 22:00–06:00 یا تمام شبانه‌روز باشد")
+        return value
+
+
+class PolicyStatus(BaseModel):
+    status: Literal["shadow", "active", "draft"]
+
+
+
+class CommandInput(BaseModel):
+    asset_id: str
+    command: Literal["position", "ping", "interval", "restart", "beacon", "diagnostics"]
+    channel: Literal["data", "sms"] = "data"
+    interval_seconds: int = Field(default=30, ge=5, le=3600)
+    request_id: str = Field(min_length=1, max_length=100)
+
+
+
+class PositionInput(BaseModel):
+    lon: float = Field(ge=-180, le=180, allow_inf_nan=False)
+    lat: float = Field(ge=-85.051129, le=85.051129, allow_inf_nan=False)
+    time: AwareDatetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    speed: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+
+
+class SignedQueueRecord(BaseModel):
+    kind: Literal['sos', 'duress', 'man_down', 'scan', 'position']
+    device_id: str = Field(min_length=1, max_length=100)
+    client_id: str = Field(min_length=1, max_length=100)
+    captured_at: str = Field(min_length=20, max_length=40)
+    previous_device_time: str | None = Field(default=None, min_length=20, max_length=40)
+    payload: dict[str, Any]
+    signature: str = Field(pattern=r'^[0-9a-f]{64}$')
+
+    @field_validator('captured_at', 'previous_device_time')
+    @classmethod
+    def aware_queue_time(cls, value):
+        if value is not None:
+            try:
+                parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
+            except ValueError as exc:
+                raise ValueError('زمان صف باید ISO با منطقه زمانی باشد') from exc
+            if parsed.tzinfo is None:
+                raise ValueError('زمان صف باید منطقه زمانی داشته باشد')
+        return value
+
+
+class PositionBatchInput(BaseModel):
+    records: list[SignedQueueRecord] = Field(min_length=1, max_length=100)
+
+
+class PositionBatchResult(BaseModel):
+    accepted: list[TrackPoint]
+    clock_regressed_client_ids: list[str]
+
+
+
+class Question(BaseModel):
+    question: str = Field(min_length=2, max_length=1000)
+
+
+class Principal(BaseModel):
+    model_config = {"frozen": True}
+    sub: str
+    username: str
+    roles: tuple[str, ...]
+    zone_ids: tuple[str, ...] = ()
+    contractor_id: str | None = None
+    mode: Literal["keycloak", "demo"] = "keycloak"
+
+
+class ErrorDetail(BaseModel):
+    code: str
+    message: str
+
+
+class AccessError(BaseModel):
+    detail: ErrorDetail | str
+
+
+class AuthConfiguration(BaseModel):
+    classification_label: str
+    mode: Literal["keycloak", "demo"]
+    issuer: str
+    client_id: str
+    admin_url: str
+    idle_seconds: int
+
+
+class PermissionMatrix(BaseModel):
+    permissions: dict[str, list[str]]
+    enforce_all: bool
+
+
+class IdentityInput(BaseModel):
+    sub: str = Field(min_length=1, max_length=200, pattern=r"^\S+$")
+
+
+class GuardRecord(BaseModel):
+    id: str
+    name: str
+    keycloak_sub: str | None = None
+    zone_id: str | None = None
+    contractor_id: str | None = None
+
+
+class GuardCredentialInput(BaseModel):
+    pin: str = Field(min_length=6, max_length=12, pattern=r"^[0-9]+$")
+    duress_pin: str = Field(min_length=6, max_length=12, pattern=r"^[0-9]+$")
+
+    @model_validator(mode="after")
+    def distinct_pins(self):
+        if self.pin == self.duress_pin:
+            raise ValueError("رمز عادی و رمز اضطرار باید متفاوت باشند")
+        return self
+
+
+class EnrollmentCodeInput(BaseModel):
+    owner_sub: str = Field(min_length=1, max_length=200)
+    ttl_seconds: int = Field(default=300, ge=30, le=600)
+
+
+class EnrollmentCode(BaseModel):
+    code: str
+    expires_at: str
+
+
+class DeviceEnrollmentInput(BaseModel):
+    code: str = Field(min_length=16, max_length=200)
+    label: str = Field(min_length=1, max_length=100)
+
+
+class DeviceRecord(BaseModel):
+    id: str
+    label: str
+    owner_sub: str
+    status: Literal["active", "revoked"]
+    ex_certified: bool
+    registered_at: str
+    last_seen: str | None = None
+
+
+class EnrolledDevice(DeviceRecord):
+    device_secret: str
+
+
+class DeviceCertificationInput(BaseModel):
+    ex_certified: bool
+
+
+class ScopedInput(BaseModel):
+    zone_id: str = Field(min_length=1, max_length=100)
+    contractor_id: str = Field(min_length=1, max_length=100)
+
+
+class TourRouteInput(ScopedInput):
+    name: str = Field(min_length=1, max_length=100)
+    guard_id: str = Field(min_length=1, max_length=100)
+    station_ids: list[str] = Field(default_factory=list, max_length=100)
+    order_mode: Literal['fixed', 'randomized'] = 'fixed'
+    fixed_first: str | None = None
+    fixed_last: str | None = None
+    must_precede: list[tuple[str, str]] = Field(default_factory=list, max_length=100)
+
+    @model_validator(mode='after')
+    def valid_order(self):
+        ids = self.station_ids
+        if len(set(ids)) != len(ids) or (self.fixed_first and self.fixed_first not in ids) or (self.fixed_last and self.fixed_last not in ids):
+            raise ValueError('ایستگاه‌های مسیر یا قید ابتدا/انتها معتبر نیستند')
+        if self.fixed_first and self.fixed_first == self.fixed_last and len(ids) > 1:
+            raise ValueError('ایستگاه ابتدا و انتها باید متفاوت باشند')
+        if any(a not in ids or b not in ids or a == b for a, b in self.must_precede):
+            raise ValueError('قید تقدم مسیر معتبر نیست')
+        return self
+
+
+class TourRoute(TourRouteInput):
+    id: str
+    created_at: str
+
+
+class ShiftSegment(BaseModel):
+    start: str = Field(pattern=r'^(?:[01][0-9]|2[0-3]):[0-5][0-9]$')
+    duration_minutes: int = Field(ge=1, le=1440)
+
+
+class ShiftCycle(BaseModel):
+    on_days: int = Field(ge=1, le=365)
+    off_days: int = Field(ge=1, le=365)
+    anchor_date: date
+
+
+class ShiftBreak(BaseModel):
+    start_offset_minutes: int = Field(ge=0, le=1440)
+    duration_minutes: int = Field(ge=1, le=1440)
+    label: str = Field(min_length=1, max_length=100)
+
+
+class ShiftPatternInput(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    segments: list[ShiftSegment] = Field(min_length=1, max_length=24)
+    cycle: ShiftCycle | None = None
+    breaks: list[ShiftBreak] = Field(default_factory=list, max_length=24)
+
+    @model_validator(mode='after')
+    def valid_breaks(self):
+        for item in self.breaks:
+            if not any(item.start_offset_minutes + item.duration_minutes <= segment.duration_minutes for segment in self.segments):
+                raise ValueError('استراحت باید در یکی از بخش‌های شیفت جا بگیرد')
+        return self
+
+
+class ShiftPattern(ShiftPatternInput):
+    id: str
+    created_at: str
+
+
+class TourScheduleInput(BaseModel):
+    route_id: str
+    pattern_id: str
+    first_date: date
+    last_date: date
+    tours_per_shift: int = Field(default=1, ge=1, le=12)
+
+
+class TourSchedule(TourScheduleInput, ScopedInput):
+    id: str
+    status: Literal['draft', 'approved']
+    created_at: str
+    approved_at: str | None = None
+
+
+class ScheduledTour(ScopedInput):
+    id: str
+    schedule_id: str
+    route_id: str
+    guard_id: str
+    service_date: date
+    segment_index: int
+    tour_number: int
+    due_at: str
+    ends_at: str
+    station_ids: list[str]
+    status: Literal['queued', 'active', 'completed', 'excused']
+    warnings: list[str]
+    handover_id: str | None = None
+    tour_id: str | None = None
+
+
+class ShiftHandoverInput(ScopedInput):
+    outgoing_guard_id: str
+    incoming_guard_id: str
+    open_items: list[str] = Field(default_factory=list, max_length=100)
+    notes: str = Field(default='', max_length=2000)
+
+
+class ShiftHandover(ShiftHandoverInput):
+    id: str
+    acknowledged_at: str | None = None
+    acknowledged_by: str | None = None
+    created_at: str
+
+
+class EmergencyModeInput(BaseModel):
+    active: bool
+    reason: str = Field(min_length=3, max_length=1000)
+
+
+class EmergencyMode(BaseModel):
+    zone_id: str
+    active: bool
+    reason: str
+    changed_at: str
+    actor_sub: str
+
+
+class DailyTourView(BaseModel):
+    date: date
+    walking: list[ScheduledTour]
+    vehicles: list[PatrolPlan]
+
+
+class TourInput(BaseModel):
+    route_id: str = Field(min_length=1, max_length=100)
+    scheduled_tour_id: str | None = None
+
+
+class TourRecord(ScopedInput):
+    id: str
+    route_id: str
+    guard_id: str
+    owner_sub: str
+    status: Literal["active", "completed"]
+    started_at: str
+    completed_at: str | None = None
+    scheduled_tour_id: str | None = None
+
+
+class CheckInInput(BaseModel):
+    pin: str = Field(min_length=6, max_length=12, pattern=r"^[0-9]+$")
+
+
+class PinUnlockInput(CheckInInput):
+    tour_id: str
+
+
+class PinUnlockResult(BaseModel):
+    unlocked: Literal[True] = True
+    checked_at: str
+
+
+class CheckInRecord(BaseModel):
+    id: str
+    tour_id: str
+    guard_id: str
+    owner_sub: str
+    device_id: str
+    time: str
+    zone_id: str
+    contractor_id: str
+
+
+class TagInput(ScopedInput):
+    label: str = Field(min_length=1, max_length=100)
+
+
+class TagRecord(TagInput):
+    id: str
+    status: Literal["active", "revoked"]
+    key_version: int
+
+
+class FieldMessageInput(BaseModel):
+    tour_id: str = Field(min_length=1, max_length=100)
+    text: str = Field(min_length=1, max_length=2000)
+
+
+class FieldMessage(FieldMessageInput, ScopedInput):
+    id: str
+    owner_sub: str
+    guard_id: str
+    created_at: str
+
+
+class FieldMediaInput(BaseModel):
+    tour_id: str = Field(min_length=1, max_length=100)
+    caption: str = Field(min_length=1, max_length=500)
+    # Phase zero stores metadata only; binary capture/storage is a later phase.
+    media_type: Literal["image", "audio", "video"]
+
+
+class FieldMedia(FieldMediaInput, ScopedInput):
+    id: str
+    owner_sub: str
+    guard_id: str
+    created_at: str
+
+
+class ApprovalInput(BaseModel):
+    action: Literal["rotate_tag_key", "revoke_tag", "delete_route", "change_classification"]
+    target_id: str = Field(min_length=1, max_length=100)
+    classification_label: str | None = Field(default=None, min_length=1, max_length=80)
+
+    @model_validator(mode="after")
+    def classification_payload(self):
+        if (self.action == "change_classification") != (self.classification_label is not None):
+            raise ValueError("برچسب فقط برای درخواست تغییر طبقه‌بندی الزامی است")
+        return self
+
+
+class ApprovalRecord(ApprovalInput):
+    id: str
+    requested_by: str
+    approved_by: str | None = None
+    status: Literal["pending", "approved", "rejected"]
+    requested_at: str
+    decided_at: str | None = None
+    expected_version: str
+
+
+class ExportInput(BaseModel):
+    name: str = Field(min_length=1, max_length=150)
+
+
+class ExportAuthorization(BaseModel):
+    classification_label: str
+    audit_id: str
+    generated_at: str
+
+
+class RoleChangeEvent(BaseModel):
+    time: str
+    operation: str
+    resource_path: str
+    actor_id: str | None = None
+
+
+class FieldZoneInput(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    points: list[list[float]] = Field(min_length=3, max_length=1000)
+    media_capture_allowed: bool = True
+    emergency_contacts: list[EmergencyContact] = Field(default_factory=list, max_length=20)
+
+    @field_validator('points')
+    @classmethod
+    def polygon(cls, value):
+        return validate_polygon(value)
+
+
+class FieldZone(FieldZoneInput):
+    id: str
+
+
+class StationInput(ScopedInput):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(min_length=1, max_length=100)
+    station_type: str = Field(default='checkpoint', min_length=1, max_length=80)
+    sensitivity: str = Field(min_length=1, max_length=80)
+    lon: float = Field(ge=-180, le=180, allow_inf_nan=False)
+    lat: float = Field(ge=-85, le=85, allow_inf_nan=False)
+    hazards: list[Literal['h2s', 'flammable', 'ex_zone_1', 'ex_zone_2', 'heat', 'other']] = Field(default_factory=list, max_length=6)
+    min_dwell_seconds: int = Field(default=0, ge=0, le=86400)
+    two_person_required: bool = False
+    media_capture_allowed: bool | None = None
+    tag_mode: Literal['nfc_sun', 'nfc_counter', 'qr_hmac', 'code'] = 'qr_hmac'
+    tag_uid: str | None = Field(default=None, pattern=r'^[0-9A-Fa-f]{14}$')
+
+    @model_validator(mode='after')
+    def uid_required(self):
+        if self.tag_mode in ('nfc_sun', 'nfc_counter') and not self.tag_uid:
+            raise ValueError('شناسه UID برای تگ NFC لازم است')
+        return self
+
+
+class Station(StationInput):
+    id: str
+    media_capture_allowed: bool
+    tag_status: Literal['planned', 'installed', 'damaged', 'revoked']
+    tag_revision: int
+    created_at: str
+
+
+class StationTaskInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    kind: Literal['number', 'choice', 'seal', 'audio']
+    label: str = Field(min_length=1, max_length=200)
+    required: bool = True
+    min: float | None = Field(default=None, allow_inf_nan=False)
+    max: float | None = Field(default=None, allow_inf_nan=False)
+    unit: str | None = Field(default=None, min_length=1, max_length=40)
+    options: list[str] | None = Field(default=None, min_length=1, max_length=50)
+    expected_value: str | None = Field(default=None, min_length=1, max_length=100)
+
+    @model_validator(mode='after')
+    def configuration(self):
+        fields = {key for key in ('min', 'max', 'unit', 'options', 'expected_value') if getattr(self, key) is not None}
+        expected = {'number': {'min', 'max', 'unit'}, 'choice': {'options'}, 'seal': {'expected_value'}, 'audio': set()}[self.kind]
+        if fields != expected:
+            raise ValueError('پیکربندی وظیفه با نوع آن سازگار نیست')
+        if self.kind == 'number' and self.min > self.max:
+            raise ValueError('حداقل باید کمتر یا برابر حداکثر باشد')
+        if self.options and (len(set(self.options)) != len(self.options) or any(not o.strip() or len(o) > 100 for o in self.options)):
+            raise ValueError('گزینه‌ها باید یکتا و غیرخالی باشند')
+        return self
+
+
+class StationTask(StationTaskInput):
+    id: str
+    station_id: str
+    created_at: str
+
+
+class SealReplacement(BaseModel):
+    expected_value: str = Field(min_length=1, max_length=100)
+    reason: str = Field(min_length=3, max_length=1000)
+
+
+class SealChange(SealReplacement):
+    id: str
+    station_id: str
+    task_id: str
+    previous_value: str
+    actor_sub: str
+    time: str
+
+
+class StationScan(BaseModel):
+    payload: str = Field(min_length=1, max_length=2000)
+    lon: float | None = Field(default=None, ge=-180, le=180, allow_inf_nan=False)
+    lat: float | None = Field(default=None, ge=-85, le=85, allow_inf_nan=False)
+    accuracy_m: float | None = Field(default=None, ge=0, le=100000, allow_inf_nan=False)
+    device_time: AwareDatetime | None = None
+    anchor_server_time: AwareDatetime | None = None
+    anchor_device_time: AwareDatetime | None = None
+    client_id: str | None = Field(default=None, min_length=1, max_length=100)
+    gas_detector_confirmed: bool = False
+    previous_device_time: AwareDatetime | None = None
+
+    @model_validator(mode='after')
+    def paired_anchor(self):
+        if (self.anchor_server_time is None) != (self.anchor_device_time is None):
+            raise ValueError('دو زمان لنگر باید با هم ارسال شوند')
+        if (self.lon is None) != (self.lat is None):
+            raise ValueError('طول و عرض جغرافیایی باید با هم ارسال شوند')
+        return self
+
+
+class TagVerification(BaseModel):
+    station_id: str
+    tag_revision: int
+    kid: str
+    assurance: Literal['قوی', 'ضعیف', 'ایستا']
+    counter: int | None = None
+
+
+class StationTagSheet(BaseModel):
+    code: str
+    svg: str
+    classification_label: str
+    audit_id: str
+
+
+class SunProvisioning(BaseModel):
+    kid: str
+    uid: str
+    meta_key: str
+    file_key: str
+    # MACInput begins at the literal tag= parameter and ends before cmac value.
+    url_template: str
+    ndef_hex: str
+    picc_data_offset: int
+    mac_input_offset: int
+    mac_offset: int
+
+
+class StationVisitInput(StationScan):
+    tour_id: str = Field(min_length=1, max_length=100)
+
+
+class ManualScanInput(StationVisitInput):
+    payload: Literal['manual'] = 'manual'
+    reason: str = Field(min_length=3, max_length=1000)
+    uid: str | None = Field(default=None, pattern=r'^[0-9A-Fa-f]{14}$')
+
+
+class ScanEvidence(BaseModel):
+    tag: Literal['sun_valid', 'counter_ok', 'hmac_valid', 'uid_only', 'manual', 'replay']
+    location: Literal['verified', 'unverified', 'unavailable', 'implausible']
+    sequence: Literal['in_order', 'out_of_order']
+    dwell: Literal['ok', 'too_short']
+    clock: Literal['ok', 'skewed', 'regressed', 'unknown']
+
+
+class ScanRecord(ScopedInput):
+    id: str
+    station_id: str
+    tour_id: str
+    visit_id: str | None = None
+    owner_sub: str
+    device_id: str
+    client_id: str | None = None
+    received_at: str
+    device_time: str | None = None
+    lon: float | None = None
+    lat: float | None = None
+    accuracy_m: float | None = None
+    evidence: ScanEvidence
+    trust_level: Literal['high', 'medium', 'low']
+    status: Literal['accepted', 'pending_review', 'rejected']
+    review_sub: str | None = None
+    reviewed_at: str | None = None
+    reason: str = ''
+    hazard_flags: list[str] = Field(default_factory=list)
+    offline_flags: list[Literal['offline_too_long', 'clock_regressed']] = Field(default_factory=list)
+
+
+class ManualReviewInput(BaseModel):
+    approved: bool
+    reason: str = Field(min_length=3, max_length=1000)
+
+
+class StationVisit(ScopedInput):
+    status: Literal["active", "completed", "cancelled"] = "active"
+    id: str
+    station_id: str
+    tour_id: str
+    owner_sub: str
+    device_id: str
+    arrived_at: str
+    completed_at: str | None = None
+    second_sub: str | None = None
+    assurance: Literal['قوی', 'ضعیف', 'ایستا', 'دستی']
+    task_ids: list[str]
+    min_dwell_seconds: int
+    two_person_required: bool
+    media_capture_allowed: bool
+    tag_revision: int
+    scan_id: str | None = None
+    trust_level: Literal['high', 'medium', 'low'] | None = None
+    hazard_flags: list[str] = Field(default_factory=list)
+    offline_flags: list[Literal['offline_too_long', 'clock_regressed']] = Field(default_factory=list)
+
+
+class StationTaskAnswer(BaseModel):
+    value: str | Annotated[float, Field(strict=True, allow_inf_nan=False)] | None = None
+    media_id: str | None = Field(default=None, min_length=1, max_length=100)
+
+
+class StationTaskResult(BaseModel):
+    id: str
+    visit_id: str
+    task_id: str
+    value: str | float | None
+    media_id: str | None
+    anomaly: bool
+    evidence: str
+    recorded_at: str
+
+
+class StationTagStatusInput(BaseModel):
+    tag_status: Literal['damaged']
+    reason: str = Field(min_length=3, max_length=1000)
+
+
+class StationVisitCancel(BaseModel):
+    reason: str = Field(min_length=3, max_length=1000)
+
+
+class FieldSafetyInput(BaseModel):
+    tour_id: str
+    type: Literal['sos', 'man_down']
+    client_id: str = Field(min_length=1, max_length=100)
+    motionless_seconds: int | None = Field(default=None, ge=0, le=86400)
+    fall_detected: bool = False
+
+
+class FieldSafetyReceipt(BaseModel):
+    id: str
+    server_received_at: str
+    incident_id: str | None = None
+    operator_ack_at: str | None = None
+
+
+class FieldSafetyAlert(ScopedInput):
+    id: str
+    tour_id: str
+    guard_id: str
+    owner_sub: str
+    type: Literal['sos', 'man_down', 'duress']
+    created_at: str
+    incident_id: str | None = None
+    operator_ack_at: str | None = None
+    escalation: Literal['operator', 'shift_supervisor', 'security_officer']
+    finding_id: str | None = None
+    auth_expired: bool = False
+    clock_regressed: bool = False
+    can_execute: Literal[False] = False
+
+
+class MusterInput(BaseModel):
+    zone_id: str
+    contractor_id: str | None = None
+    reason: str = Field(min_length=3, max_length=1000)
+
+
+class MusterParticipant(BaseModel):
+    guard_id: str
+    owner_sub: str
+    response: Literal['safe', 'need_help'] | None = None
+    responded_at: str | None = None
+
+
+class Muster(ScopedInput):
+    id: str
+    reason: str
+    created_at: str
+    actor_sub: str
+    participants: list[MusterParticipant]
+    unanswered_guard_ids: list[str]
+
+
+class MusterNotice(BaseModel):
+    id: str
+    zone_id: str
+    reason: str
+    created_at: str
+    response: Literal['safe', 'need_help'] | None = None
+
+
+class MusterResponseInput(BaseModel):
+    response: Literal['safe', 'need_help']
+
+
+class MusterResponse(BaseModel):
+    muster_id: str
+    response: Literal['safe', 'need_help']
+    responded_at: str
+
+
+class TourReport(BaseModel):
+    classification_label: str
+    generated_at: str
+    tours: list[TourRecord]
+    checkins: list[CheckInRecord]
+    station_visits: list[StationVisit]
+    task_results: list[StationTaskResult]
