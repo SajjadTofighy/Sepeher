@@ -171,3 +171,82 @@ def test_basemap_is_internal_only(client):
     # The approved origin is the one the browser's CSP admits.
     csp = client.get("/api/v1/health").headers["content-security-policy"]
     assert "https://gis.example.org" in csp and "openfreemap" not in csp and "openstreetmap" not in csp
+
+
+def fresh_report(client, asset, lon, lat):
+    point = dict(lon=lon, lat=lat, time=(client.clock["now"] - timedelta(seconds=5)).isoformat(), accuracy_m=5)
+    assert client.post(f"/api/v1/assets/{asset}/positions", json=point).status_code == 201
+
+
+def new_incident(client, lon=49.75, lat=30.75):
+    incident = store.create_incident("رخداد آزمون اعزام", "high", "آزمایش", store.lookup("assets", "AST-012"), "نمونه", "ثبت")
+    incident.update(lon=lon, lat=lat)
+    assert client.post(f"/api/v1/incidents/{incident['id']}/transition", json=dict(status="confirmed")).status_code == 200
+    return incident
+
+
+def test_dispatch_options_rank_fresh_patrols_and_explain_exclusions(client):
+    incident = new_incident(client)
+    patrols = [a for a in store.state["assets"] if a["kind"] == "vehicle" and a.get("unit", "patrol") == "patrol"
+               and a["status"] != "offline" and a["id"] != incident["asset_id"]]
+    near, far = patrols[0]["id"], patrols[1]["id"]
+    fresh_report(client, near, 49.76, 30.75)
+    fresh_report(client, far, 49.90, 30.75)
+    options = client.get(f"/api/v1/incidents/{incident['id']}/dispatch-options").json()
+    assert [r["asset_id"] for r in options["suggestions"]][:2] == [near, far]
+    assert all(r["position_state"] == "fresh" and not r["needs_confirmation"] for r in options["suggestions"])
+    assert len(options["suggestions"]) <= 3
+    # Simulated or stale positions are never ranked as live; they wait for operator confirmation.
+    assert all(r["needs_confirmation"] for r in options["needs_confirmation"])
+    assert {r["asset_id"] for r in options["needs_confirmation"]}.isdisjoint({near, far})
+    assert "شبکه راه" in options["eta_basis"]
+    offline = next((a for a in store.state["assets"] if a["kind"] == "vehicle" and a["status"] == "offline"), None)
+    reasons = {x["asset_id"]: x["reason"] for x in options["excluded"]}
+    if offline:
+        assert reasons[offline["id"]] == "بدون ارتباط"
+    assert client.post(f"/api/v1/incidents/{incident['id']}/transition", json=dict(status="assigned", asset_id=near)).status_code == 200
+    other = new_incident(client)
+    busy = {x["asset_id"]: x["reason"] for x in client.get(f"/api/v1/incidents/{other['id']}/dispatch-options").json()["excluded"]}
+    assert busy[near] == f"مشغول حادثه {incident['id']}"
+
+
+def test_two_operators_cannot_assign_the_same_patrol(client):
+    first, second = new_incident(client), new_incident(client)
+    patrol = next(a["id"] for a in store.state["assets"] if a["kind"] == "vehicle" and a.get("unit", "patrol") == "patrol"
+                  and a["status"] != "offline" and a["id"] != first["asset_id"])
+    results, barrier = [], threading.Barrier(2)
+
+    def assign(incident):
+        barrier.wait()
+        results.append(client.post(f"/api/v1/incidents/{incident['id']}/transition",
+                                   json=dict(status="assigned", asset_id=patrol)).status_code)
+
+    workers = [threading.Thread(target=assign, args=(i,)) for i in (first, second)]
+    [w.start() for w in workers]
+    [w.join(timeout=30) for w in workers]
+    assert sorted(results) == [200, 409]
+    assert sum(i.get("assigned_to") == patrol and i["status"] == "assigned" for i in store.state["incidents"]) == 1
+
+
+def test_communication_gap_layer_separates_offline_queue_from_silence(client):
+    now = client.clock["now"]
+    path = "/api/v1/assets/AST-001/positions"
+    # Observed on time but received an hour later: queued offline, evidence of no network here.
+    for step in range(4):
+        point = dict(lon=49.80, lat=30.80, time=(now - timedelta(minutes=60) + timedelta(seconds=30 * step)).isoformat(), accuracy_m=5)
+        assert client.post(path, json=point).status_code == 201
+    # Then a 40-minute silence starting at a different place; its cause is unknown.
+    for when, lon in ((now - timedelta(minutes=50), 49.90), (now - timedelta(minutes=10), 49.90)):
+        assert client.post(path, json=dict(lon=lon, lat=30.80, time=when.isoformat(), accuracy_m=5)).status_code == 201
+    layer = client.get("/api/v1/intel/communication-gaps", params=dict(hours=2, cell_m=500)).json()
+    by_lon = {round(c["lon"], 2): c for c in layer["cells"]}
+    queued, silent = by_lon[49.8], by_lon[49.9]
+    assert queued["offline_samples"] == 4 and queued["silences"] == 1  # the gap after the queued burst starts here
+    assert silent["silences"] == 1 and silent["silence_minutes"] == 40.0 and silent["offline_samples"] >= 1
+    assert all(c["confidence"] == "low" for c in layer["cells"])  # few samples: never presented as certain
+    finding = store.lookup("findings", queued["finding_id"])
+    assert finding["kind"] == "communication_gap" and finding["mode"] == "shadow" and finding["can_execute"] is False
+    events = silent["offline_samples"] + silent["silences"]
+    assert (silent["finding_id"] is not None) == (events >= store.state["settings"]["intel_comm_gap_min_events"])
+    for bad in (dict(hours=0), dict(hours=500), dict(cell_m=10)):
+        assert client.get("/api/v1/intel/communication-gaps", params=bad).status_code == 422
