@@ -437,3 +437,22 @@ Cache Storage پوسته، IndexedDB رمز‌شده با AES-GCM/PBKDF2، نگ�
 | GET | `/audit/security-dossier` | فقط `auditor`؛ `SecurityDossier` شامل سامانه و حالت احراز، همه مسیرهای `/api/v1` با `authentication` (`public`، `device_signature`، `required`، `optional_unless_enforce_all`)، مجوز و نقش‌ها، سربرگ‌های امنیتی، تنظیمات امنیتی، رمزنگاری، مخازن داده با شخصی‌بودن و نگهداری و تعداد، سلامت زنجیره ممیزی و ریسک‌های باقی‌مانده؛ با `audit_id` ممیزی می‌شود. |
 | GET | `/audit/security-dossier/letter` | فقط `auditor`؛ HTML قابل چاپ پیش‌نویس نامه استعلام الزام و دامنه ارزیابی افتا بدون منبع بیرونی، `Cache-Control: no-store`؛ ممیزی می‌شود. |
 
+## تصویر عملیاتی، کیفیت موقعیت و فرمان مأموریت مکانی
+
+| Method | Path | رفتار |
+|---|---|---|
+| POST | `/assets/{id}/positions` | ورودی اختیاری `accuracy_m` (null یعنی نامعلوم، هرگز صفر)، `fix_source`، `sequence`؛ پاسخ `PositionReceipt` با `received_at`، `created`، `live` و `flags`؛ زمان آینده بیش از `field_clock_skew_seconds` برابر 422 |
+| GET | `/assets/{id}/observations` | مشاهدات خام با شواهد کیفیت، شامل نقاط پذیرفته‌نشده برای نمایش زنده؛ ممیزی می‌شود |
+| GET | `/bootstrap` | دنباله مسیر هر تجهیز به `map_trail_points` محدود است؛ ممیزی فقط ۵۰۰ رکورد اخیر؛ `meta.cursor` و `meta.audit_total` |
+| GET | `/changes?cursor=&wait=` | تغییرات پس از cursor (assets، incidents، alerts، missions، commands، removed، summary)؛ long-poll تا ۲۵ ثانیه؛ `reset=true` یعنی بارگذاری دوباره bootstrap |
+| GET | `/events` | SSE همان دفتر تغییرات؛ ادامه از Last-Event-ID یا `cursor`؛ رویدادهای ready، changes و reset |
+| GET | `/map/features?bbox=w,s,e,n&layers=&limit=` | عوارض داخل محدوده (WGS84، طول اول)، با `total` و `truncated` |
+| GET | `/tracks?since=&until=&asset_id=...&limit_per_asset=` | تاریخچه بازپخش برای چند تجهیز با سقف کل ۱۰۰هزار نقطه؛ ممیزی می‌شود |
+| POST | `/mission-commands/preview` | گروه‌های eligible، needs_review، outside و cannot_receive و `snapshot_id` برای Point، LineString یا Polygon با `radius_m` |
+| POST | `/mission-commands` | ایجاد با `idempotency_key` (تکرار همان محتوا 200، محتوای دیگر 409)؛ تغییر مخاطبان پس از پیش‌نمایش 409 `recipients_changed` |
+| GET | `/mission-commands`، `/mission-commands/{id}` | فهرست و جزئیات در حوزه؛ انقضای مهلت پذیرش هنگام خواندن و در worker اعمال می‌شود |
+| POST | `/mission-commands/{id}/cancel` | `{reason, revision}`؛ revision قدیمی 409 |
+| GET | `/tour/mission-commands` | صندوق نگهبان؛ دریافت توسط دستگاه ثبت‌شده، رسید delivered است |
+| POST | `/tour/mission-commands/{id}/events` | `{event_id, action, note, lon, lat}` با action یکی از acknowledge/reject/start/complete/fail؛ تکرار event_id بی‌اثر؛ اقدام پس از پایان 409 `command_closed` و ثبت در سابقه |
+
+تنظیم `basemap_style_url` فقط آدرس HTTP(S) بدون اطلاعات ورود و روی مبدأ مصوب SEPEHR_GIS_ORIGINS را می‌پذیرد. `/health` بدون قفل وضعیت پاسخ می‌دهد.
