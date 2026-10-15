@@ -989,6 +989,49 @@
         }
       }
     },
+    "/api/v1/incidents/{id}/dispatch-options": {
+      "get": {
+        "tags": [
+          "incidents"
+        ],
+        "summary": "Dispatch Options",
+        "description": "Top three fresh-position patrols by ETA; old or simulated positions listed apart for confirmation.",
+        "operationId": "dispatch_options_api_v1_incidents__id__dispatch_options_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchOptions"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/incidents/{id}/report": {
       "get": {
         "tags": [
@@ -2666,6 +2709,63 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PatrolPlan"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/intel/communication-gaps": {
+      "get": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Communication Gaps",
+        "operationId": "communication_gaps_api_v1_intel_communication_gaps_get",
+        "parameters": [
+          {
+            "name": "hours",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 168,
+              "minimum": 1,
+              "default": 24,
+              "title": "Hours"
+            }
+          },
+          {
+            "name": "cell_m",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 5000,
+              "minimum": 100,
+              "default": 500,
+              "title": "Cell M"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommGapLayer"
                 }
               }
             }
@@ -15020,6 +15120,27 @@
             "type": "number",
             "title": "Lat"
           },
+          "position_state": {
+            "type": "string",
+            "title": "Position State",
+            "default": "unknown"
+          },
+          "position_age_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Age Seconds"
+          },
+          "needs_confirmation": {
+            "type": "boolean",
+            "title": "Needs Confirmation",
+            "default": false
+          },
           "eta_label": {
             "type": "string",
             "const": "تخمینی",
@@ -15057,6 +15178,110 @@
           "target"
         ],
         "title": "ClosureSuggestion"
+      },
+      "CommGapCell": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "lon": {
+            "type": "number",
+            "title": "Lon"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "cell_m": {
+            "type": "number",
+            "title": "Cell M"
+          },
+          "samples": {
+            "type": "integer",
+            "title": "Samples"
+          },
+          "offline_samples": {
+            "type": "integer",
+            "title": "Offline Samples"
+          },
+          "silences": {
+            "type": "integer",
+            "title": "Silences"
+          },
+          "silence_minutes": {
+            "type": "number",
+            "title": "Silence Minutes"
+          },
+          "assets": {
+            "type": "integer",
+            "title": "Assets"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium"
+            ],
+            "title": "Confidence"
+          },
+          "finding_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finding Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "lon",
+          "lat",
+          "cell_m",
+          "samples",
+          "offline_samples",
+          "silences",
+          "silence_minutes",
+          "assets",
+          "confidence"
+        ],
+        "title": "CommGapCell"
+      },
+      "CommGapLayer": {
+        "properties": {
+          "cells": {
+            "items": {
+              "$ref": "#/components/schemas/CommGapCell"
+            },
+            "type": "array",
+            "title": "Cells"
+          },
+          "window_from": {
+            "type": "string",
+            "title": "Window From"
+          },
+          "window_to": {
+            "type": "string",
+            "title": "Window To"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cells",
+          "window_from",
+          "window_to",
+          "method"
+        ],
+        "title": "CommGapLayer"
       },
       "Command": {
         "properties": {
@@ -16245,6 +16470,72 @@
           "registered_at"
         ],
         "title": "DeviceRecord"
+      },
+      "DispatchExclusion": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "name",
+          "reason"
+        ],
+        "title": "DispatchExclusion"
+      },
+      "DispatchOptions": {
+        "properties": {
+          "suggestions": {
+            "items": {
+              "$ref": "#/components/schemas/NearbyPatrol"
+            },
+            "type": "array",
+            "title": "Suggestions"
+          },
+          "needs_confirmation": {
+            "items": {
+              "$ref": "#/components/schemas/NearbyPatrol"
+            },
+            "type": "array",
+            "title": "Needs Confirmation"
+          },
+          "excluded": {
+            "items": {
+              "$ref": "#/components/schemas/DispatchExclusion"
+            },
+            "type": "array",
+            "title": "Excluded"
+          },
+          "eta_basis": {
+            "type": "string",
+            "title": "Eta Basis"
+          },
+          "computed_at": {
+            "type": "string",
+            "title": "Computed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "suggestions",
+          "needs_confirmation",
+          "excluded",
+          "eta_basis",
+          "computed_at"
+        ],
+        "title": "DispatchOptions",
+        "description": "Explainable dispatch suggestion; the operator confirms before any assignment."
       },
       "DossierCrypto": {
         "properties": {
@@ -20591,6 +20882,27 @@
           "lat": {
             "type": "number",
             "title": "Lat"
+          },
+          "position_state": {
+            "type": "string",
+            "title": "Position State",
+            "default": "unknown"
+          },
+          "position_age_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Age Seconds"
+          },
+          "needs_confirmation": {
+            "type": "boolean",
+            "title": "Needs Confirmation",
+            "default": false
           }
         },
         "type": "object",
@@ -23252,6 +23564,13 @@
             "minimum": 0.0,
             "title": "Map Trail Points",
             "default": 60
+          },
+          "intel_comm_gap_min_events": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Intel Comm Gap Min Events",
+            "default": 3
           },
           "integrity_mode": {
             "type": "string",

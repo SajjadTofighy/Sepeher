@@ -21,6 +21,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { api, fa } from "../../api";
 import type {
   Asset,
+  CommGapLayer,
   Coverage,
   Data,
   Incident,
@@ -70,6 +71,7 @@ const layerNames = {
   coverage: "محدوده‌های پوشش ضعیف",
   patrolCoverage: "پوشش گشت خطوط",
   hazard: "محدوده خطر حوادث",
+  commGaps: "شکاف ارتباطی",
   risk: "ریسک",
   heat: "نقشه حرارتی",
   cameras: "دوربین‌های نمونه",
@@ -105,6 +107,7 @@ function MapContent(props: Props) {
       coverage: false,
       patrolCoverage: false,
       hazard: true,
+      commGaps: false,
       risk: false,
       heat: false,
       cameras: false,
@@ -131,6 +134,28 @@ function MapContent(props: Props) {
   const internalStyle = settings.data?.basemap_style_url || "";
   // Public demo tiles exist only in development builds; production uses internal or schematic maps.
   const publicBasemap = process.env.NODE_ENV !== "production" && !internalStyle;
+  const commGaps = useQuery({
+    queryKey: ["intel", "communication-gaps"],
+    queryFn: () => api<CommGapLayer>("/intel/communication-gaps"),
+    enabled: layers.commGaps,
+    refetchInterval: 60000,
+  });
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !ready) return;
+    const shapes = collection((commGaps.data?.cells || []).filter((c) => c.offline_samples + c.silences > 0).map((c) =>
+      feature({ type: "Point", coordinates: [c.lon, c.lat] },
+        { id: c.id, weight: c.offline_samples + c.silences, low: c.confidence === "low" })));
+    if (!m.getSource("comm-gaps")) {
+      m.addSource("comm-gaps", { type: "geojson", data: shapes });
+      m.addLayer({ id: "comm-gaps", type: "circle", source: "comm-gaps", paint: {
+        "circle-color": ["case", ["get", "low"], "#9aa7b3", "#e9b873"],
+        "circle-opacity": 0.55,
+        "circle-radius": ["min", 28, ["+", 8, ["*", 2, ["get", "weight"]]]],
+        "circle-stroke-color": "#09131c", "circle-stroke-width": 1 } });
+    } else (m.getSource("comm-gaps") as GeoJSONSource).setData(shapes);
+    m.setLayoutProperty("comm-gaps", "visibility", layers.commGaps ? "visible" : "none");
+  }, [ready, commGaps.data, layers.commGaps]);
   const coverage = useQuery({
     queryKey: ["intel", "coverage"],
     queryFn: ({ signal }) =>

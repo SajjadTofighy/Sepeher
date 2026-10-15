@@ -13,7 +13,7 @@ import { api,fa,labels,timeFa } from "../../api";
 import type { Act } from "../../shared/lib/actions";
 import { download } from "../../shared/lib/download";
 import { Badge,Modal } from "../../shared/ui/primitives";
-import type { Data,Incident,NearbyPatrol } from "../../types";
+import type { Data,Incident,NearbyPatrol, DispatchOptions } from "../../types";
 import { printIncidentReport } from "./printReport";
 import HazardDetails from "./HazardDetails";
 const flow = [
@@ -42,13 +42,16 @@ export default function IncidentPanel({
   onDrawHazard: () => void;
 }) {
   const [nearby, setNearby] = useState<NearbyPatrol[]>([]),
+    [options, setOptions] = useState<DispatchOptions | null>(null),
     [chosen, setChosen] = useState(""),
     [note, setNote] = useState("");
   useEffect(() => {
-    api<NearbyPatrol[]>(`/incidents/${i.id}/nearby`)
+    api<DispatchOptions>(`/incidents/${i.id}/dispatch-options`)
       .then((r) => {
-        setNearby(r);
-        setChosen(r[0]?.asset_id || "");
+        setOptions(r);
+        const rows = [...r.suggestions, ...r.needs_confirmation];
+        setNearby(rows);
+        setChosen(r.suggestions[0]?.asset_id || "");
       })
       .catch(() => setNearby([]));
     setNote("");
@@ -106,7 +109,7 @@ export default function IncidentPanel({
               بر ساعت؛ شبکه راه قابل مسیریابی هنوز در دسترس نیست.
             </p>
             <div className="nearby-list">
-              {nearby.slice(0, 3).map((a) => (
+              {nearby.map((a) => (
                 <label
                   key={a.asset_id}
                   className={chosen === a.asset_id ? "chosen" : ""}
@@ -123,10 +126,17 @@ export default function IncidentPanel({
                   <span>
                     ~{fa(Math.round(a.eta_minutes))} دقیقه ·{" "}
                     {fa(a.distance_km)} کیلومتر مستقیم
+                    {a.needs_confirmation && " · موقعیت تازه نیست؛ پیش از اعزام تأیید کنید"}
                   </span>
                 </label>
               ))}
             </div>
+            {!!options?.excluded.length && (
+              <details>
+                <summary>گشت‌های کنارگذاشته ({fa(options.excluded.length)})</summary>
+                <ul>{options.excluded.map((x) => <li key={x.asset_id}>{x.name}: {x.reason}</li>)}</ul>
+              </details>
+            )}
           </div>
           {i.assigned_to && (
             <p className="assigned-banner">

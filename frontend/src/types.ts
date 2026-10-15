@@ -111,3 +111,5 @@ export type MissionCommandPreview = Schemas["MissionCommandPreview"];
 export type CommandCandidate = Schemas["CommandCandidate"];
 export type ChangeSet = Schemas["ChangeSet"];
 export type TrackBatch = Schemas["TrackBatch"];
+export type DispatchOptions = Schemas["DispatchOptions"];
+export type CommGapLayer = Schemas["CommGapLayer"];

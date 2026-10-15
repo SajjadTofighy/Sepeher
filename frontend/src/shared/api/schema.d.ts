@@ -401,6 +401,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/incidents/{id}/dispatch-options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Dispatch Options
+         * @description Top three fresh-position patrols by ETA; old or simulated positions listed apart for confirmation.
+         */
+        get: operations["dispatch_options_api_v1_incidents__id__dispatch_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/incidents/{id}/report": {
         parameters: {
             query?: never;
@@ -1046,6 +1066,23 @@ export interface paths {
         put?: never;
         /** Discard Patrol Plan */
         post: operations["discard_patrol_plan_api_v1_intel_patrol_plans__id__discard_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intel/communication-gaps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Communication Gaps */
+        get: operations["communication_gaps_api_v1_intel_communication_gaps_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3229,6 +3266,18 @@ export interface components {
             /** Lat */
             lat: number;
             /**
+             * Position State
+             * @default unknown
+             */
+            position_state: string;
+            /** Position Age Seconds */
+            position_age_seconds?: number | null;
+            /**
+             * Needs Confirmation
+             * @default false
+             */
+            needs_confirmation: boolean;
+            /**
              * Eta Label
              * @default تخمینی
              * @constant
@@ -3238,6 +3287,45 @@ export interface components {
             target: number[];
             /** Access Point Index */
             access_point_index?: number | null;
+        };
+        /** CommGapCell */
+        CommGapCell: {
+            /** Id */
+            id: string;
+            /** Lon */
+            lon: number;
+            /** Lat */
+            lat: number;
+            /** Cell M */
+            cell_m: number;
+            /** Samples */
+            samples: number;
+            /** Offline Samples */
+            offline_samples: number;
+            /** Silences */
+            silences: number;
+            /** Silence Minutes */
+            silence_minutes: number;
+            /** Assets */
+            assets: number;
+            /**
+             * Confidence
+             * @enum {string}
+             */
+            confidence: "low" | "medium";
+            /** Finding Id */
+            finding_id?: string | null;
+        };
+        /** CommGapLayer */
+        CommGapLayer: {
+            /** Cells */
+            cells: components["schemas"]["CommGapCell"][];
+            /** Window From */
+            window_from: string;
+            /** Window To */
+            window_to: string;
+            /** Method */
+            method: string;
         };
         /** Command */
         Command: {
@@ -3668,6 +3756,31 @@ export interface components {
             registered_at: string;
             /** Last Seen */
             last_seen?: string | null;
+        };
+        /** DispatchExclusion */
+        DispatchExclusion: {
+            /** Asset Id */
+            asset_id: string;
+            /** Name */
+            name: string;
+            /** Reason */
+            reason: string;
+        };
+        /**
+         * DispatchOptions
+         * @description Explainable dispatch suggestion; the operator confirms before any assignment.
+         */
+        DispatchOptions: {
+            /** Suggestions */
+            suggestions: components["schemas"]["NearbyPatrol"][];
+            /** Needs Confirmation */
+            needs_confirmation: components["schemas"]["NearbyPatrol"][];
+            /** Excluded */
+            excluded: components["schemas"]["DispatchExclusion"][];
+            /** Eta Basis */
+            eta_basis: string;
+            /** Computed At */
+            computed_at: string;
         };
         /** DossierCrypto */
         DossierCrypto: {
@@ -5195,6 +5308,18 @@ export interface components {
             lon: number;
             /** Lat */
             lat: number;
+            /**
+             * Position State
+             * @default unknown
+             */
+            position_state: string;
+            /** Position Age Seconds */
+            position_age_seconds?: number | null;
+            /**
+             * Needs Confirmation
+             * @default false
+             */
+            needs_confirmation: boolean;
         };
         /**
          * PaperScanInput
@@ -6190,6 +6315,11 @@ export interface components {
              * @default 60
              */
             map_trail_points: number;
+            /**
+             * Intel Comm Gap Min Events
+             * @default 3
+             */
+            intel_comm_gap_min_events: number;
             /**
              * Integrity Mode
              * @default shadow
@@ -8511,6 +8641,37 @@ export interface operations {
             };
         };
     };
+    dispatch_options_api_v1_incidents__id__dispatch_options_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DispatchOptions"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     report_api_v1_incidents__id__report_get: {
         parameters: {
             query?: never;
@@ -9734,6 +9895,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PatrolPlan"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    communication_gaps_api_v1_intel_communication_gaps_get: {
+        parameters: {
+            query?: {
+                hours?: number;
+                cell_m?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommGapLayer"];
                 };
             };
             /** @description Validation Error */

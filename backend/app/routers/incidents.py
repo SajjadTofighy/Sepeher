@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 
-from ..core.models import HazardArea, Incident, IncidentCreation, IncidentReport, NearbyPatrol, Transition
+from ..core.models import DispatchOptions, HazardArea, Incident, IncidentCreation, IncidentReport, NearbyPatrol, Transition
 from ..core import sim, store
 from ..security import authz
 from ..field import safety as field_safety
@@ -168,9 +168,38 @@ def nearby_patrols(item):
                 eta_minutes=eta_minutes(km),
                 lon=a["lon"],
                 lat=a["lat"],
+                position_state=a.get("position_state", "unknown"),
+                position_age_seconds=a.get("position_age_seconds"),
+                needs_confirmation=a.get("position_state") != "fresh",
             )
         )
     return sorted(rows, key=lambda x: x["distance_km"])
+
+
+def exclusion_reason(a, item):
+    """Why a patrol is not offered; mirrors dispatchable() so the explanation cannot drift."""
+    if not patrol_vehicle(a):
+        return "عضو واحد گشت خودرویی نیست"
+    if a["id"] == item["asset_id"]:
+        return "خود تجهیز درگیر حادثه است"
+    if a["status"] == "offline":
+        return "بدون ارتباط"
+    busy = next((i for i in state["incidents"] if i.get("assigned_to") == a["id"] and i["status"] != "closed" and i["id"] != item["id"]), None)
+    return f"مشغول حادثه {busy['id']}" if busy else "نامشخص"
+
+
+@router.get("/api/v1/incidents/{id}/dispatch-options", response_model=DispatchOptions)
+def dispatch_options(id: str):
+    """Top three fresh-position patrols by ETA; old or simulated positions listed apart for confirmation."""
+    item = lookup("incidents", id)
+    store.refresh_tracks()
+    rows = sorted(nearby_patrols(item), key=lambda r: r["eta_minutes"])
+    excluded = [dict(asset_id=a["id"], name=a["name"], reason=exclusion_reason(a, item))
+                for a in state["assets"] if patrol_vehicle(a) and not dispatchable(a, item)]
+    return dict(suggestions=[r for r in rows if not r["needs_confirmation"]][:3],
+                needs_confirmation=[r for r in rows if r["needs_confirmation"]], excluded=excluded,
+                eta_basis=f"تخمینی: فاصله مستقیم × {ROAD_FACTOR} با سرعت {PATROL_KMH} کیلومتر بر ساعت؛ شبکه راه در دسترس نیست",
+                computed_at=now())
 
 
 @router.get("/api/v1/incidents/{id}/report", response_model=IncidentReport)

@@ -5,11 +5,12 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, Query
 
 from ..core import store
-from ..intel import coverage, findings, safety, hazard, risk, patrol, patrol_game
+from ..intel import comm_gaps, coverage, findings, safety, hazard, risk, patrol, patrol_game
 from ..intel import ingest
 from ..intel.geo import derive_segments
 from ..core.models import Coverage, Finding, HazardStatus, LayerImport, LayerImportResult, LineFeature, PatrolPlan, PatrolPlanInput, RiskStatus, SafetyConfirmation, SafetyEpisode, SafetyStatus, Segment
 from ..core.models import PipelinePressureInput, PipelinePressureResult, PlateReadInput, PlateReadResult
+from ..core.models import CommGapLayer
 from ..core.models import PatrolGameApproval, PatrolStrategy, RiskEvent, RiskEventImport, RiskEventImportResult
 
 router = APIRouter(route_class=store.StateRoute, tags=["intel"])
@@ -152,3 +153,8 @@ def approve_patrol_plan(id: str):
 @router.post("/api/v1/intel/patrol-plans/{id}/discard", response_model=PatrolPlan)
 def discard_patrol_plan(id: str):
     return patrol.discard(id)
+
+
+@router.get("/api/v1/intel/communication-gaps", response_model=CommGapLayer)
+def communication_gaps(hours: int = Query(default=24, ge=1, le=168), cell_m: int = Query(default=500, ge=100, le=5000)):
+    return comm_gaps.layer(hours, cell_m)

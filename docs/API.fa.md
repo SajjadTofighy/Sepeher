@@ -456,3 +456,6 @@ Cache Storage پوسته، IndexedDB رمز‌شده با AES-GCM/PBKDF2، نگ�
 | POST | `/tour/mission-commands/{id}/events` | `{event_id, action, note, lon, lat}` با action یکی از acknowledge/reject/start/complete/fail؛ تکرار event_id بی‌اثر؛ اقدام پس از پایان 409 `command_closed` و ثبت در سابقه |
 
 تنظیم `basemap_style_url` فقط آدرس HTTP(S) بدون اطلاعات ورود و روی مبدأ مصوب SEPEHR_GIS_ORIGINS را می‌پذیرد. `/health` بدون قفل وضعیت پاسخ می‌دهد.
+| GET | `/incidents/{id}/dispatch-options` | حداکثر سه گشت با موقعیت تازه بر حسب ETA تخمینی؛ گشت‌های دارای موقعیت کهنه/شبیه‌سازی جدا در `needs_confirmation`؛ `excluded` با دلیل (غیرگشت، بدون ارتباط، مشغول حادثه)؛ تخصیص همچنان با تأیید اپراتور و در قفل سراسری اتمی است |
+| GET | `/intel/communication-gaps?hours=&cell_m=` | سلول‌های شبکه متریک با samples، offline_samples (رکورد دریافت‌شده دیرتر از فاصله مشاهده = نبود شبکه)، silences (علت نامعلوم) و اطمینان؛ سلول با رخداد ≥ `intel_comm_gap_min_events` یافته سایه `communication_gap` می‌سازد |
+

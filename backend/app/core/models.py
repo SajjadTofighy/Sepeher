@@ -212,6 +212,8 @@ class RuntimeSettings(BaseModel):
     max_json_body_bytes: int = Field(default=2097152, ge=65536, le=16777216)
     # Live trail length sent with the operational picture; full history comes from the track API.
     map_trail_points: int = Field(default=60, ge=0, le=500)
+    # Evidence needed before a communication-gap cell raises a (shadow) finding.
+    intel_comm_gap_min_events: int = Field(default=3, ge=1, le=1000)
     model_config = ConfigDict(extra='forbid')
     integrity_mode: Literal['shadow', 'active'] = 'shadow'
     integrity_window_hours: float = Field(default=24, gt=0, le=720, allow_inf_nan=False)
@@ -688,6 +690,45 @@ class NearbyPatrol(BaseModel):
     eta_minutes: float
     lon: float
     lat: float
+    position_state: str = "unknown"
+    position_age_seconds: float | None = None
+    needs_confirmation: bool = False
+
+
+class DispatchExclusion(BaseModel):
+    asset_id: str
+    name: str
+    reason: str
+
+
+class DispatchOptions(BaseModel):
+    """Explainable dispatch suggestion; the operator confirms before any assignment."""
+    suggestions: list[NearbyPatrol]
+    needs_confirmation: list[NearbyPatrol]
+    excluded: list[DispatchExclusion]
+    eta_basis: str
+    computed_at: str
+
+
+class CommGapCell(BaseModel):
+    id: str
+    lon: float
+    lat: float
+    cell_m: float
+    samples: int
+    offline_samples: int
+    silences: int
+    silence_minutes: float
+    assets: int
+    confidence: Literal["low", "medium"]
+    finding_id: str | None = None
+
+
+class CommGapLayer(BaseModel):
+    cells: list[CommGapCell]
+    window_from: str
+    window_to: str
+    method: str
 
 
 class PressureContext(BaseModel):
