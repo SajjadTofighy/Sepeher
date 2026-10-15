@@ -686,7 +686,7 @@ class NearbyPatrol(BaseModel):
     asset_id: str
     name: str
     distance_km: float
-    distance_type: Literal["straight_line"]
+    distance_type: Literal["straight_line", "road"]
     eta_minutes: float
     lon: float
     lat: float
@@ -2763,3 +2763,19 @@ class MissionCommandCancel(BaseModel):
     model_config = ConfigDict(extra='forbid')
     reason: str = Field(min_length=3, max_length=500)
     revision: int = Field(ge=1)
+
+
+class RoadRoute(BaseModel):
+    """Fastest drive over the offline road graph; access_km is the off-road leg to the nearest road node."""
+    distance_km: float
+    eta_minutes: float
+    access_km: float
+    path: list[list[float]]
+    source: str
+
+
+class RoadNetworkStatus(BaseModel):
+    source: str
+    nodes: int
+    edges: int
+    max_snap_km: float

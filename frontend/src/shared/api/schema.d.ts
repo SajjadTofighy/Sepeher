@@ -1106,6 +1106,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/routing/network": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Network */
+        get: operations["network_api_v1_routing_network_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/routing/route": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Route */
+        get: operations["route_api_v1_routing_route_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tour/exceptions": {
         parameters: {
             query?: never;
@@ -3256,9 +3290,9 @@ export interface components {
             distance_km: number;
             /**
              * Distance Type
-             * @constant
+             * @enum {string}
              */
-            distance_type: "straight_line";
+            distance_type: "straight_line" | "road";
             /** Eta Minutes */
             eta_minutes: number;
             /** Lon */
@@ -5299,9 +5333,9 @@ export interface components {
             distance_km: number;
             /**
              * Distance Type
-             * @constant
+             * @enum {string}
              */
-            distance_type: "straight_line";
+            distance_type: "straight_line" | "road";
             /** Eta Minutes */
             eta_minutes: number;
             /** Lon */
@@ -6270,6 +6304,33 @@ export interface components {
              * @default 0.1
              */
             exposure: number;
+        };
+        /** RoadNetworkStatus */
+        RoadNetworkStatus: {
+            /** Source */
+            source: string;
+            /** Nodes */
+            nodes: number;
+            /** Edges */
+            edges: number;
+            /** Max Snap Km */
+            max_snap_km: number;
+        };
+        /**
+         * RoadRoute
+         * @description Fastest drive over the offline road graph; access_km is the off-road leg to the nearest road node.
+         */
+        RoadRoute: {
+            /** Distance Km */
+            distance_km: number;
+            /** Eta Minutes */
+            eta_minutes: number;
+            /** Access Km */
+            access_km: number;
+            /** Path */
+            path: number[][];
+            /** Source */
+            source: string;
         };
         /** RoleChangeEvent */
         RoleChangeEvent: {
@@ -9959,6 +10020,60 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ShiftReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    network_api_v1_routing_network_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoadNetworkStatus"];
+                };
+            };
+        };
+    };
+    route_api_v1_routing_route_get: {
+        parameters: {
+            query: {
+                from_lon: number;
+                from_lat: number;
+                to_lon: number;
+                to_lat: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoadRoute"];
                 };
             };
             /** @description Validation Error */

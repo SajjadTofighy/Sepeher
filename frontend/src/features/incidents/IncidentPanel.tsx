@@ -125,7 +125,7 @@ export default function IncidentPanel({
                   <strong>{a.name}</strong>
                   <span>
                     ~{fa(Math.round(a.eta_minutes))} دقیقه ·{" "}
-                    {fa(a.distance_km)} کیلومتر مستقیم
+                    {fa(a.distance_km)} کیلومتر {a.distance_type === "road" ? "روی شبکه راه" : "مستقیم"}
                     {a.needs_confirmation && " · موقعیت تازه نیست؛ پیش از اعزام تأیید کنید"}
                   </span>
                 </label>

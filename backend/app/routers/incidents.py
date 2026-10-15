@@ -1,14 +1,14 @@
 from fastapi import APIRouter, HTTPException
 
 from ..core.models import DispatchOptions, HazardArea, Incident, IncidentCreation, IncidentReport, NearbyPatrol, Transition
-from ..core import sim, store
+from ..core import roads, sim, store
 from ..security import authz
 from ..field import safety as field_safety
 from ..core.engine import point_in_polygon
 from ..core.store import audit, lookup, now, plan_for, state, StateRoute
 
-# No routable road network yet (design §15): ETA is an explicit estimate from straight-line
-# distance, a road-winding factor and an average patrol speed.
+# Fallback when a point is off the offline road network (core/roads.py): ETA is an explicit estimate
+# from straight-line distance, a road-winding factor and an average patrol speed.
 ROAD_FACTOR = 1.3
 PATROL_KMH = 45
 # Demo playback compresses the drive so the dispatch is visible within a presentation.
@@ -17,6 +17,18 @@ DEMO_TIME_COMPRESSION = 5
 
 def eta_minutes(km):
     return round(km * ROAD_FACTOR / PATROL_KMH * 60, 1)
+
+
+def travel(origins, destination):
+    """Fastest drive per origin over the offline road graph; straight-line estimate where no road route exists."""
+    rows = []
+    for origin, route in zip(origins, roads.network().to_destination(origins, destination)):
+        if route:
+            rows.append(dict(distance_km=route["distance_km"], eta_minutes=route["eta_minutes"], distance_type="road"))
+        else:
+            km = sim.distance_km(origin, destination)
+            rows.append(dict(distance_km=round(km, 2), eta_minutes=eta_minutes(km), distance_type="straight_line"))
+    return rows
 
 
 def patrol_vehicle(a):
@@ -117,8 +129,7 @@ def transition(id: str, p: Transition):
         if not dispatchable(a, item):
             raise HTTPException(409, "گشت انتخابی آماده اعزام نیست")
         item["assigned_to"] = p.asset_id
-        km = sim.distance_km([a["lon"], a["lat"]], [item["lon"], item["lat"]])
-        item["eta_minutes"] = eta_minutes(km)
+        item["eta_minutes"] = travel([[a["lon"], a["lat"]]], [item["lon"], item["lat"]])[0]["eta_minutes"]
         sim.dispatch(
             plan_for(a),
             [item["lon"], item["lat"]],
@@ -154,26 +165,22 @@ def nearby(id: str):
 
 def nearby_patrols(item):
     """Shared backup suggestions; eligibility and ETA stay identical to the API."""
-    rows = []
-    for a in state["assets"]:
-        if not dispatchable(a, item):
-            continue
-        km = sim.distance_km([a["lon"], a["lat"]], [item["lon"], item["lat"]])
-        rows.append(
-            dict(
-                asset_id=a["id"],
-                name=a["name"],
-                distance_km=round(km, 2),
-                distance_type="straight_line",
-                eta_minutes=eta_minutes(km),
-                lon=a["lon"],
-                lat=a["lat"],
-                position_state=a.get("position_state", "unknown"),
-                position_age_seconds=a.get("position_age_seconds"),
-                needs_confirmation=a.get("position_state") != "fresh",
-            )
+    patrols = [a for a in state["assets"] if dispatchable(a, item)]
+    trips = travel([[a["lon"], a["lat"]] for a in patrols], [item["lon"], item["lat"]])
+    rows = [
+        dict(
+            asset_id=a["id"],
+            name=a["name"],
+            **trip,
+            lon=a["lon"],
+            lat=a["lat"],
+            position_state=a.get("position_state", "unknown"),
+            position_age_seconds=a.get("position_age_seconds"),
+            needs_confirmation=a.get("position_state") != "fresh",
         )
-    return sorted(rows, key=lambda x: x["distance_km"])
+        for a, trip in zip(patrols, trips)
+    ]
+    return sorted(rows, key=lambda x: x["eta_minutes"])
 
 
 def exclusion_reason(a, item):
@@ -188,6 +195,15 @@ def exclusion_reason(a, item):
     return f"مشغول حادثه {busy['id']}" if busy else "نامشخص"
 
 
+def eta_basis(rows):
+    graph = roads.network()
+    label = "شبکه راه شماتیک (غیرواقعی)" if graph.source == "schematic" else f"شبکه راه آفلاین ({graph.source})"
+    text = f"سریع‌ترین مسیر روی {label} با سرعت مجاز هر رده راه"
+    if any(r["distance_type"] == "straight_line" for r in rows):
+        text += f"؛ برای نقاط خارج از شبکه: فاصله مستقیم × {ROAD_FACTOR} با سرعت {PATROL_KMH} کیلومتر بر ساعت"
+    return text
+
+
 @router.get("/api/v1/incidents/{id}/dispatch-options", response_model=DispatchOptions)
 def dispatch_options(id: str):
     """Top three fresh-position patrols by ETA; old or simulated positions listed apart for confirmation."""
@@ -198,7 +214,7 @@ def dispatch_options(id: str):
                 for a in state["assets"] if patrol_vehicle(a) and not dispatchable(a, item)]
     return dict(suggestions=[r for r in rows if not r["needs_confirmation"]][:3],
                 needs_confirmation=[r for r in rows if r["needs_confirmation"]], excluded=excluded,
-                eta_basis=f"تخمینی: فاصله مستقیم × {ROAD_FACTOR} با سرعت {PATROL_KMH} کیلومتر بر ساعت؛ شبکه راه در دسترس نیست",
+                eta_basis=eta_basis(rows),
                 computed_at=now())
 
 

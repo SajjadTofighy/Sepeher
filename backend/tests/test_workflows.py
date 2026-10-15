@@ -133,10 +133,10 @@ def test_mission_and_assistant(reset):
     assert set(answer["sources"]) <= ids
 
 
-def test_nearby_sorted_straight_line_and_scenario(reset):
+def test_nearby_sorted_by_road_eta_and_scenario(reset):
     rows = reset.get("/api/v1/incidents/INC-824/nearby").json()
-    assert all(r["distance_type"] == "straight_line" for r in rows)
-    assert [r["distance_km"] for r in rows] == sorted(r["distance_km"] for r in rows)
+    assert {r["distance_type"] for r in rows} <= {"road", "straight_line"} and any(r["distance_type"] == "road" for r in rows)
+    assert [r["eta_minutes"] for r in rows] == sorted(r["eta_minutes"] for r in rows)
     assert all(r["asset_id"] != "AST-006" for r in rows)
     i = reset.post("/api/v1/demo/scenario").json()
     assert i["severity"] == "critical" and i["status"] == "detected"

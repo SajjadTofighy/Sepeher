@@ -2850,6 +2850,104 @@
         }
       }
     },
+    "/api/v1/routing/network": {
+      "get": {
+        "tags": [
+          "routing"
+        ],
+        "summary": "Network",
+        "operationId": "network_api_v1_routing_network_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoadNetworkStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/routing/route": {
+      "get": {
+        "tags": [
+          "routing"
+        ],
+        "summary": "Route",
+        "operationId": "route_api_v1_routing_route_get",
+        "parameters": [
+          {
+            "name": "from_lon",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 180,
+              "minimum": -180,
+              "title": "From Lon"
+            }
+          },
+          {
+            "name": "from_lat",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 90,
+              "minimum": -90,
+              "title": "From Lat"
+            }
+          },
+          {
+            "name": "to_lon",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 180,
+              "minimum": -180,
+              "title": "To Lon"
+            }
+          },
+          {
+            "name": "to_lat",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 90,
+              "minimum": -90,
+              "title": "To Lat"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoadRoute"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tour/exceptions": {
       "get": {
         "tags": [
@@ -15105,7 +15203,10 @@
           },
           "distance_type": {
             "type": "string",
-            "const": "straight_line",
+            "enum": [
+              "straight_line",
+              "road"
+            ],
             "title": "Distance Type"
           },
           "eta_minutes": {
@@ -20868,7 +20969,10 @@
           },
           "distance_type": {
             "type": "string",
-            "const": "straight_line",
+            "enum": [
+              "straight_line",
+              "road"
+            ],
             "title": "Distance Type"
           },
           "eta_minutes": {
@@ -23467,6 +23571,74 @@
         "additionalProperties": false,
         "type": "object",
         "title": "RiskWeights"
+      },
+      "RoadNetworkStatus": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "nodes": {
+            "type": "integer",
+            "title": "Nodes"
+          },
+          "edges": {
+            "type": "integer",
+            "title": "Edges"
+          },
+          "max_snap_km": {
+            "type": "number",
+            "title": "Max Snap Km"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "nodes",
+          "edges",
+          "max_snap_km"
+        ],
+        "title": "RoadNetworkStatus"
+      },
+      "RoadRoute": {
+        "properties": {
+          "distance_km": {
+            "type": "number",
+            "title": "Distance Km"
+          },
+          "eta_minutes": {
+            "type": "number",
+            "title": "Eta Minutes"
+          },
+          "access_km": {
+            "type": "number",
+            "title": "Access Km"
+          },
+          "path": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Path"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "distance_km",
+          "eta_minutes",
+          "access_km",
+          "path",
+          "source"
+        ],
+        "title": "RoadRoute",
+        "description": "Fastest drive over the offline road graph; access_km is the off-road leg to the nearest road node."
       },
       "RoleChangeEvent": {
         "properties": {

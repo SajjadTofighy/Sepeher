@@ -323,3 +323,23 @@ def seed():
         sim={},
         engine={},
     )
+
+
+def schematic_roads():
+    """Synthetic schematic road network (not real infrastructure) used when no offline OSM extract is configured.
+
+    A main east-west road, parallel service roads, north-south connectors and a one-way access spur."""
+    def road(name, highway, points, oneway=False):
+        return dict(type="Feature", properties=dict(name=name, highway=highway, oneway="yes" if oneway else "no", schematic=True),
+                    geometry=dict(type="LineString", coordinates=points))
+    def line(lons, lats):
+        return [[round(lon, 2), round(lat, 2)] for lon, lat in zip(lons, lats)]
+    roads = [road("محور اصلی شماتیک", "primary", line([49.60 + 0.01 * i for i in range(66)], [30.78] * 66))]
+    for lat in (30.66, 30.72, 30.84, 30.90):
+        roads.append(road(f"جاده سرویس شماتیک {lat}", "tertiary", line([49.62 + 0.01 * i for i in range(56)], [lat] * 56)))
+    for k in range(12):
+        lon = 49.62 + 0.04 * k
+        roads.append(road(f"رابط شماتیک {k + 1}", "secondary", line([lon] * 35, [30.60 + 0.01 * i for i in range(35)])))
+    roads.append(road("جاده دسترسی شماتیک شرق", "unclassified", [[50.06, 30.66], [50.12, 30.64], [50.18, 30.62], [50.20, 30.65]]))
+    roads.append(road("ورودی یک‌طرفه شماتیک", "service", [[49.88, 30.78], [49.88, 30.79], [49.88, 30.80]], oneway=True))
+    return dict(type="FeatureCollection", features=roads)

@@ -331,9 +331,9 @@ async def events(request: Request, cursor: str | None = Query(default=None, max_
     return StreamingResponse(generate(), media_type="text/event-stream", headers={"Cache-Control": "no-store"})
 
 
-from .routers import assistant, commands, configuration, incidents, intel, missions, policies, positions, reports
+from .routers import assistant, commands, configuration, incidents, intel, missions, policies, positions, reports, routing
 
-for module in (incidents, commands, policies, missions, assistant, configuration, positions, intel, reports):
+for module in (incidents, commands, policies, missions, assistant, configuration, positions, intel, reports, routing):
     app.include_router(module.router)
 
 from .routers import field
