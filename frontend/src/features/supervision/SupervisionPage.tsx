@@ -4,7 +4,7 @@ import { useState } from "react";
 import { api, fa, labels, parseResponse, sessionHeaders, timeFa } from "../../api";
 import { escapePrintText, openPrintWindow, writePrintReport } from "../../shared/lib/print";
 import { tehranInputISO, tehranLocalInput, tehranTime } from "../../shared/lib/time";
-import { Badge, PanelTitle } from "../../shared/ui/primitives";
+import { Badge } from "../../shared/ui/primitives";
 import type { ExceptionBoard, GuardDetailReport, GuardRecord, PaperScanInput, PatrolReport, PilotMetrics, ScanRecord, ScheduledTour } from "../../types";
 
 type Tab = "exceptions" | "stations" | "report" | "guard" | "paper" | "pilot";
@@ -18,9 +18,6 @@ export default function SupervisionPage() {
   const critical = board.data?.items.filter((i) => i.severity === "critical").length || 0;
   return (
     <section className="supervision">
-      <PanelTitle title="نظارت استثنامحور گشت پیاده" sub="فقط موارد نیازمند اقدام؛ همه خروجی‌ها شواهد دارند و هیچ اقدامی خودکار انجام نمی‌شود">
-        {board.data && <span className="classification-chip">{board.data.classification_label}</span>}
-      </PanelTitle>
       <div className="comms-tabs" role="tablist">
         {([["exceptions", "تابلوی استثنا", AlertOctagon, board.data?.items.length || 0], ["stations", "وضعیت ایستگاه‌ها", MapPinCheck, 0],
           ["report", "گزارش گشت", ClipboardCheck, 0], ["guard", "نمای فردی", UserSearch, 0],

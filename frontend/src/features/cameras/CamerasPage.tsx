@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Camera, Cpu, Eye, Link2, MapPin, RadioTower, ScanLine, VideoOff } from "lucide-react";
+import { Activity, Camera, Link2, MapPin, ScanLine, VideoOff } from "lucide-react";
 import { api, fa } from "../../api";
-import { Badge } from "../../shared/ui/primitives";
+import { Badge, StatStrip } from "../../shared/ui/primitives";
 import type { Camera as CameraRecord } from "../../types";
 export default function CamerasPage() {
   const q = useQuery({
@@ -13,16 +13,11 @@ export default function CamerasPage() {
   const offline = cameras.filter((c) => c.status === "offline").length;
   return (
     <section className="cameras-workspace">
-      <header className="cameras-hero">
-        <div><span className="cameras-kicker"><ScanLine size={12}/> VIDEO INTELLIGENCE</span><h1>دوربین‌ها و IVA <i/></h1><p>پایش وضعیت دوربین‌ها و تحلیل رخدادهای تصویری در زنجیره فرماندهی</p></div>
-        <div className="video-engine"><span><Cpu size={20}/></span><div><b>موتور تحلیل آماده</b><small>IVA PROCESSING ENGINE</small></div></div>
-      </header>
-      <div className="camera-kpis">
-        <article className="camera-kpi total"><span><Camera size={20}/></span><div><small>کل دوربین‌ها</small><b>{q.isPending ? "—" : fa(cameras.length)}</b><p>حسگر تصویری ثبت‌شده</p></div></article>
-        <article className="camera-kpi online"><span><RadioTower size={20}/></span><div><small>برخط</small><b>{q.isPending ? "—" : fa(online)}</b><p>جریان ارتباطی پایدار</p></div></article>
-        <article className="camera-kpi offline"><span><VideoOff size={20}/></span><div><small>قطع ارتباط</small><b>{q.isPending ? "—" : fa(offline)}</b><p>نیازمند بررسی فنی</p></div></article>
-        <article className="camera-kpi analytics"><span><Eye size={20}/></span><div><small>تحلیل تصویری</small><b>IVA</b><p>آماده اتصال سازمانی</p></div></article>
-      </div>
+      <StatStrip items={[
+        { label: "کل دوربین‌ها", value: q.isPending ? "—" : fa(cameras.length) },
+        { label: "برخط", value: q.isPending ? "—" : fa(online), tone: "ok" },
+        { label: "قطع ارتباط", value: q.isPending ? "—" : fa(offline), tone: offline ? "danger" : undefined },
+      ]} />
       <div className="camera-phase-banner">
         <Link2 size={21} />
         <div>
@@ -43,7 +38,7 @@ export default function CamerasPage() {
         </div>
       ) : (
         <section className="camera-registry">
-          <header className="camera-registry-head"><div><span><Camera size={18}/></span><div><b>رجیستری دوربین‌ها</b><small>{fa(cameras.length)} دوربین در سامانه</small></div></div><em><i className="live-dot"/> LIVE STATUS</em></header>
+          <header className="camera-registry-head"><div className="registry-title"><b>دوربین‌ها</b><small>{fa(cameras.length)} مورد</small></div></header>
         <div className="camera-grid">
           {q.data.map((c) => (
             <article className={`camera-card ${c.status}`} key={c.id}>

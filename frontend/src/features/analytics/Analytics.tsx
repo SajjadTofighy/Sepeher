@@ -1,11 +1,10 @@
-import { Activity, BarChart3, CalendarRange, Download, Gauge, ShieldCheck, Sparkles, TrendingUp } from "lucide-react";
+import { CalendarRange, Download, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import ShiftReportView from "./ShiftReportView";
 import { fa } from "../../api";
 import Chart from "../../shared/ui/Chart";
-import { PanelTitle } from "../../shared/ui/primitives";
+import { PanelTitle, StatStrip } from "../../shared/ui/primitives";
 import type { Data } from "../../types";
-import Stats from "./Stats";
 export default function Analytics({
   data,
   onExport,
@@ -20,51 +19,18 @@ export default function Analytics({
   const [view, setView] = useState("metrics");
   const s = data.summary;
   const kpis = [
-    [
-      "هشدارهای سیاست",
-      fa(s.policy_alerts),
-      `${fa(s.shadow_alerts)} در حالت سایه`,
-    ],
-    [
-      "پرونده‌های بسته‌شده",
-      fa(s.closed_incidents),
-      `${fa(s.open_incidents)} پرونده باز`,
-    ],
-    [
-      "تجهیزات نیازمند نگهداری",
-      fa(s.maintenance),
-      "قطع یا بسته داده رو به اتمام",
-    ],
-    [
-      "سیاست‌های فعال",
-      fa(s.active_policies),
-      `از ${fa(data.policies.length)} سیاست تعریف‌شده`,
-    ],
-    ["کانون رخداد", s.hot_zone || "—", "بیشترین پرونده باز"],
+    { label: "تجهیزات برخط", value: `${fa(s.online)} / ${fa(s.total)}`, note: `${fa(s.maintenance)} نیازمند نگهداری` },
+    { label: "پرونده باز", value: fa(s.open_incidents), note: `${fa(s.critical)} بحرانی`, tone: s.critical ? "danger" as const : undefined },
+    { label: "بسته‌شده", value: fa(s.closed_incidents) },
+    { label: "سیاست فعال", value: fa(s.active_policies), note: `${fa(s.policy_alerts)} هشدار · ${fa(s.shadow_alerts)} سایه` },
+    { label: "پوشش گشت", value: `${fa(s.coverage)}٪`, note: s.hot_zone ? `کانون: ${s.hot_zone}` : undefined },
   ];
   const chartText = theme === "light" ? "#4f7181" : "#9ab6c6";
   const chartGrid = theme === "light" ? "#a9c2ca" : "#243b49";
   return (
     <section className="analytics-workspace">
-      <header className="analytics-hero">
-        <div className="analytics-hero-copy">
-          <span className="analytics-kicker"><BarChart3 size={15}/> EXECUTIVE INTELLIGENCE</span>
-          <h2>داشبورد مدیریتی عملیات</h2>
-          <p>نمای یکپارچه آمادگی، ریسک و عملکرد شیفت برای تصمیم‌گیری سریع مدیریتی</p>
-          <div className="analytics-live-state"><span><i className="live-dot"/> داده عملیاتی همگام</span><small>آخرین وضعیت تجمیع‌شده سامانه</small></div>
-        </div>
-        <div className="analytics-hero-score">
-          <span><Gauge size={19}/><small>دسترس‌پذیری سامانه</small></span>
-          <strong>{fa(s.availability)}<small>٪</small></strong>
-          <div><i style={{width: `${s.availability}%`}}/></div>
-        </div>
-        <div className="analytics-signal" aria-hidden="true"><i/><i/><i/><i/><i/><i/></div>
-      </header>
-
-      <Stats data={data}/>
 
       <div className="analytics-viewbar">
-        <div><span><Sparkles size={17}/></span><div><b>مرکز تحلیل مدیریت</b><small>انتخاب نمای شاخص‌ها یا گزارش تفصیلی شیفت</small></div></div>
         <div className="settings-tabs analytics-tabs">
         <button
           className={view === "metrics" ? "selected" : ""}
@@ -84,15 +50,7 @@ export default function Analytics({
         <ShiftReportView data={data} onSource={onSource} />
       ) : (
         <>
-          <div className="kpi-strip">
-            {kpis.map(([t, v, m], index) => (
-              <div className={`management-kpi kpi-${index + 1}`} key={t}>
-                <small>{t}</small>
-                <b>{v}</b>
-                <span>{m}</span>
-              </div>
-            ))}
-          </div>
+          <StatStrip items={kpis} />
           <div className="analytics-grid">
             <section className="panel">
               <PanelTitle
@@ -232,13 +190,9 @@ export default function Analytics({
               ))}
             </div>
           </section>
-          <div className="analytics-note">
-            <ShieldCheck size={24} />
-            <p>
-              دسترس‌پذیری نمونه <b>{fa(s.availability)}٪</b> · برای سنجش واقعی
-              پایلوت، اتصال به داده‌های ثبت‌شده و زیرساخت پایش لازم است.
-            </p>
-          </div>
+          <p className="muted page-footnote">
+            دسترس‌پذیری نمونه {fa(s.availability)}٪؛ سنجش واقعی پایلوت به داده‌های ثبت‌شده و زیرساخت پایش نیاز دارد.
+          </p>
         </>
       )}
     </section>

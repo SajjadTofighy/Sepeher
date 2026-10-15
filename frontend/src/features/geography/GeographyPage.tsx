@@ -1,19 +1,14 @@
 import {
   Download,
-  Layers,
-  Globe2,
   MapPin,
   Pencil,
   Plus,
-  ShieldCheck,
-  TriangleAlert,
-  WifiOff,
 } from "lucide-react";
 import { useState } from "react";
 import { api, fa } from "../../api";
 import type { Act } from "../../shared/lib/actions";
 import { download } from "../../shared/lib/download";
-import { Badge, Modal } from "../../shared/ui/primitives";
+import { Badge, Modal, StatStrip } from "../../shared/ui/primitives";
 import type { Asset, Data, Incident, Zone, ZoneInput } from "../../types";
 import OperationalMap from "../command/OperationalMap";
 export default function GeographyPage({
@@ -104,71 +99,49 @@ export default function GeographyPage({
   }
   return (
     <section className="geography-workspace">
-      <header className="geography-hero">
-        <div><span className="geography-kicker"><Globe2 size={12}/> GEOSPATIAL COMMAND</span><h1>محدوده‌ها و ناحیه‌ها <i/></h1><p>مدیریت یکپارچه محدوده‌های حفاظت، پوشش ارتباطی و لایه‌های مکانی</p></div>
-        <div className="geography-actions">
+      <div className="page-toolbar">
             <button
-              className="geo-action export"
+              className="secondary"
               onClick={() => download("sepehr-zones.geojson", geojson())}
             >
               <Download size={16} />
               خروجی GeoJSON
             </button>
-            <button className="geo-action create" onClick={() => edit(null)}>
+            <button className="primary" onClick={() => edit(null)}>
               <Plus size={16} />
               محدوده جدید
             </button>
-        </div>
-      </header>
-      <div className="geography-kpis">
-        <article className="geography-kpi zones"><span><Layers size={20}/></span><div><small>محدوده‌های فعال</small><b>{fa(data.zones.length)}</b><p>ناحیه حفاظتی ثبت‌شده</p></div></article>
-        <article className="geography-kpi high"><span><TriangleAlert size={20}/></span><div><small>حساسیت زیاد</small><b>{fa(data.zones.filter(z => z.risk === "high").length)}</b><p>نیازمند پایش مستمر</p></div></article>
-        <article className="geography-kpi weak"><span><WifiOff size={20}/></span><div><small>پوشش ضعیف</small><b>{fa(data.zones.filter(z => z.coverage === "weak").length)}</b><p>شکاف ارتباطی شناسایی‌شده</p></div></article>
-        <article className="geography-kpi policies"><span><ShieldCheck size={20}/></span><div><small>سیاست‌های مرتبط</small><b>{fa(data.policies.length)}</b><p>قانون حفاظتی فعال</p></div></article>
       </div>
-      <section className="geography-console">
-        <header className="geography-console-head"><div><span><MapPin size={18}/></span><div><b>نقشه اطلاعات مکانی</b><small>محدوده‌ها، تجهیزات و رخدادهای عملیاتی</small></div></div><em>GIS ONLINE <i className="live-dot"/></em></header>
-        <div className="geography-layout">
-          <div className="zone-cards">
-            {data.zones.map((z) => (
-              <article key={z.id} className="zone-card">
-                <div>
-                  <span className="entity-icon">
-                    <Layers size={21} />
-                  </span>
-                  <Badge value={z.risk} />
-                </div>
-                <h3>{z.name}</h3>
-                <p>
-                  {z.id} · {fa(z.points.length)} رأس ·{" "}
-                  {fa(data.policies.filter((p) => p.zone === z.id).length)}{" "}
-                  سیاست مرتبط
-                </p>
-                <button className="secondary full" onClick={() => edit(z)}>
-                  <Pencil size={14} />
-                  ویرایش محدوده
-                </button>
-              </article>
-            ))}
-          </div>
-          <div className="map-card">
-            <OperationalMap
-              focusTargetId={focusTargetId}
-              data={data}
-              theme={theme}
-              onAsset={onAsset}
-              onIncident={onIncident}
-            />
-          </div>
+      <StatStrip items={[
+        { label: "محدوده‌های فعال", value: fa(data.zones.length) },
+        { label: "حساسیت زیاد", value: fa(data.zones.filter(z => z.risk === "high").length) },
+        { label: "پوشش ضعیف", value: fa(data.zones.filter(z => z.coverage === "weak").length) },
+        { label: "سیاست‌ها", value: fa(data.policies.length) },
+      ]} />
+      <div className="geography-layout">
+        <ul className="panel zone-list">
+          {data.zones.map((z) => (
+            <li key={z.id}>
+              <div className="zone-name"><b>{z.name}</b><Badge value={z.risk} /></div>
+              <small dir="auto">
+                {z.id} · {fa(z.points.length)} رأس · {fa(data.policies.filter((p) => p.zone === z.id).length)} سیاست
+              </small>
+              <button className="text-button" onClick={() => edit(z)}>
+                <Pencil size={14} />
+                ویرایش
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="map-card">
+          <OperationalMap
+            focusTargetId={focusTargetId}
+            data={data}
+            theme={theme}
+            onAsset={onAsset}
+            onIncident={onIncident}
+          />
         </div>
-      </section>
-      <div className="geography-note">
-        <ShieldCheck size={22} />
-        <p>
-          نقشهٔ پایه واقعی است؛ محدوده‌های اولیه دادهٔ نمونه هستند. برای
-          واردکردن GeoJSON و اندازه‌گیری، ابزارهای GIS نقشه را باز کنید. اتصال
-          WMS/WFS از «مدیریت سامانه ← اتصال GIS» تنظیم می‌شود.
-        </p>
       </div>
       {editing !== undefined && (
         <Modal

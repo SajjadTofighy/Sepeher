@@ -3,7 +3,6 @@ import { BookOpen, FileText, Printer } from "lucide-react";
 import { useState } from "react";
 import { api } from "../../api";
 import { escapePrintText, openPrintWindow, writePrintReport } from "../../shared/lib/print";
-import { PanelTitle } from "../../shared/ui/primitives";
 import type { AuthConfiguration } from "../../types";
 
 type Guide = { id: string; title: string; audience: string; sections: { heading: string; items: string[] }[] };
@@ -79,9 +78,6 @@ export default function GuidesPage() {
   };
   return (
     <section className="supervision">
-      <PanelTitle title="راهنمای کاربران و فرم پشتیبان" sub="به فارسی ساده؛ قابل چاپ برای آموزش و حالت تنزل‌یافته">
-        {label && <span className="classification-chip">{label}</span>}
-      </PanelTitle>
       {error && <div className="error-banner">{error}</div>}
       <div className="report-cards">
         <article className="report-card">

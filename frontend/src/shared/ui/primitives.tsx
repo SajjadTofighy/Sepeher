@@ -87,3 +87,18 @@ export function PanelTitle({
     </div>
   );
 }
+export type StatItem = { label: string; value: ReactNode; note?: ReactNode; tone?: "danger" | "warn" | "ok" };
+/** One flat row of key figures; replaces per-page KPI cards. */
+export function StatStrip({ items }: { items: StatItem[] }) {
+  return (
+    <dl className="stat-strip">
+      {items.map((item) => (
+        <div key={item.label} className={item.tone}>
+          <dt>{item.label}</dt>
+          <dd>{item.value}</dd>
+          {item.note && <small>{item.note}</small>}
+        </div>
+      ))}
+    </dl>
+  );
+}

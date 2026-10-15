@@ -19,7 +19,7 @@ export default function CommandTable({
 }) {
   return (
     <section className="command-history asset-command-history">
-      <header className="asset-command-head"><span><Command size={18}/></span><div><b>تاریخچه فرمان‌ها</b><small>ارسال ← تحویل ← اجرا؛ پایان مهلت به‌صورت بی‌پاسخ ثبت می‌شود.</small></div><em>{fa(data.commands.length)} فرمان</em></header>
+      <header className="asset-command-head"><div><b>تاریخچه فرمان‌ها</b><small>ارسال ← تحویل ← اجرا؛ پایان مهلت به‌صورت بی‌پاسخ ثبت می‌شود.</small></div><em>{fa(data.commands.length)} فرمان</em></header>
       {!data.commands.length ? (
         <div className="empty">
           <Command size={26} />

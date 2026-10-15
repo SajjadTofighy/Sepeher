@@ -3,7 +3,7 @@ import { Archive, BellRing, FileWarning, Gavel, ImageDown, MessageSquare, Paperc
 import { useEffect, useState } from "react";
 import { api, fa, labels, timeFa } from "../../api";
 import type { Act } from "../../shared/lib/actions";
-import { Badge, Modal, PanelTitle } from "../../shared/ui/primitives";
+import { Badge, Modal } from "../../shared/ui/primitives";
 import type {
   AuthConfiguration, Data, FieldMedia, FieldMessage, FieldReport, FieldZone, GuardRecord, ReportAudience, ReportCategory,
 } from "../../types";
@@ -32,9 +32,6 @@ export default function FieldCommsPage({ data, act, busy }: { data: Data; act: A
   const classification = config.data?.classification_label || "";
   return (
     <section className="field-comms">
-      <PanelTitle title="ارتباط میدانی و زنجیره حفاظت ادله" sub="ارتباط مرکز با نگهبانان، گزارش‌های دسته‌بندی‌شده و زنجیره حفاظت ادله؛ هیچ اقدامی خودکار انجام نمی‌شود">
-        {classification && <span className="classification-chip">{classification}</span>}
-      </PanelTitle>
       <div className="comms-tabs" role="tablist">
         {([["messages", "پیام‌ها", MessageSquare, escalated], ["reports", "گزارش‌های میدانی", FileWarning, unacked], ["media", "رسانه و ادله", Archive, 0]] as const).map(([id, name, Icon, count]) => (
           <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? "current" : ""} onClick={() => setTab(id)}>

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { api, fa, timeFa } from "../../api";
 import type { Act } from "../../shared/lib/actions";
 import { tehranInputISO } from "../../shared/lib/time";
-import { PanelTitle } from "../../shared/ui/primitives";
 import type {
   EventWeights,
   PatrolGameApproval,
@@ -82,14 +81,9 @@ export default function PatrolGamePage({ act, busy }: { act: Act; busy: boolean 
   });
   return (
     <section className="supervision patrol-game">
-      <PanelTitle
-        title="راهبرد گشت پیش‌بینی‌ناپذیر بهینه"
-        sub="بازی امنیتی استکلبرگ با برآورد بیزی نرخ رخداد؛ همه پارامترها مختص سازمان و همه خروجی‌ها پیشنهادی و مستند"
-      >
-        <span className={`classification-chip ${approval.data?.approved ? "" : "flag"}`}>
-          {approval.data?.approved ? "پارامترها تأییدشده" : "پارامترها تأییدنشده"}
-        </span>
-      </PanelTitle>
+      <p className={`status-line ${approval.data?.approved ? "" : "flag"}`}>
+        {approval.data?.approved ? "پارامترهای سازمان تأییدشده است" : "پارامترهای سازمان هنوز تأیید نشده است"}
+      </p>
       <div className="comms-tabs" role="tablist">
         {(
           [

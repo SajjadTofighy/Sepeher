@@ -1,19 +1,14 @@
 import { useEffect, useState } from "react";
 import {
   Activity,
-  CalendarClock,
-  Clock3,
-  Database,
   X,
   ChevronLeft,
   MapPin,
   Pause,
   Play,
-  Route,
-  Sparkles,
 } from "lucide-react";
 import { fa, timeFa } from "../../api";
-import { Badge, IconButton } from "../../shared/ui/primitives";
+import { Badge, IconButton, StatStrip } from "../../shared/ui/primitives";
 import type { Asset, Data, Incident } from "../../types";
 import Map from "./OperationalMap";
 import PatrolSafetyList from "./PatrolSafetyList";
@@ -74,21 +69,12 @@ export default function CommandPage({
   return (
     <div className={isReplay ? "replay-workspace" : undefined}>
       {isReplay && <>
-        <header className="replay-hero">
-          <div className="replay-hero-copy">
-            <span className="replay-kicker"><CalendarClock size={15}/> TEMPORAL OPERATIONS ARCHIVE</span>
-            <h2>تاریخچه و بازپخش عملیات</h2>
-            <p>مرور هماهنگ مسیر موجودیت‌ها و رخدادهای ثبت‌شده روی خط زمان عملیاتی</p>
-          </div>
-          <div className="replay-session-state"><span><i/> داده ثبت‌شده</span><b>{fa(replay)}٪</b><small>موقعیت خط زمان</small></div>
-          <div className="replay-hero-orbit" aria-hidden="true"><Clock3 size={34}/><i/><i/></div>
-        </header>
-        <div className="replay-kpis">
-          <article><span className="cyan"><Route size={17}/></span><div><small>مسیرهای قابل بازپخش</small><b>{fa(data.assets.length)}</b><em>موجودیت ثبت‌شده</em></div></article>
-          <article><span className="green"><Database size={17}/></span><div><small>نقاط موقعیت</small><b>{fa(trackPoints)}</b><em>نمونه زمانی</em></div></article>
-          <article><span className="violet"><Activity size={17}/></span><div><small>رخدادهای آرشیو</small><b>{fa(data.incidents.length)}</b><em>پرونده قابل بررسی</em></div></article>
-          <article><span className="amber"><Clock3 size={17}/></span><div><small>وضعیت بازپخش</small><b>{playing ? "در حال پخش" : "متوقف"}</b><em>{fa(replay)} درصد مسیر</em></div></article>
-        </div>
+        <StatStrip items={[
+          { label: "مسیرهای قابل بازپخش", value: fa(data.assets.length) },
+          { label: "نقاط موقعیت", value: fa(trackPoints) },
+          { label: "رخدادهای آرشیو", value: fa(data.incidents.length) },
+          { label: "موقعیت خط زمان", value: `${fa(replay)}٪` },
+        ]} />
       </>}
       <div className="command-grid command-map-layout">
         <section className={`map-card ${isReplay ? "replay-map-card" : ""}`}>
@@ -103,9 +89,6 @@ export default function CommandPage({
               <span className="count-label">
                 {fa(data.assets.length)} موجودیت
               </span>
-            </div>
-            <div className="map-scope">
-              <MapPin size={14} /> آغاجاری · امیدیه · خوزستان
             </div>
             {!isReplay && !presenting && (
               <ProcessIncidentButton
@@ -142,7 +125,6 @@ export default function CommandPage({
               <section className="floating-events" aria-label="رخدادهای شناور">
                 <div className="event-panel-header">
                   <div>
-                    <span className="eyebrow">PRIORITY FEED</span>
                     <h2>
                       {isReplay ? "رخدادهای ثبت‌شده" : "رخدادهای اولویت‌دار"}{" "}
                       <span>{fa(data.summary.open_incidents)}</span>
@@ -249,32 +231,6 @@ export default function CommandPage({
             </span>
           </div>
         </section>
-      </div>
-      <div className={`command-bottom ${isReplay ? "replay-bottom" : ""}`}>
-        <div className="brief">
-          <div className="spark-icon">
-            <Sparkles size={22} />
-          </div>
-          <div>
-            <h3>
-              {isReplay ? "تحلیل بازه بازپخش" : "خلاصه وضعیت شیفت"} <span>دستیار نمایشی</span>
-            </h3>
-            <p>
-              {isReplay ? `${fa(data.assets.length)} مسیر و ${fa(trackPoints)} نقطه موقعیت در این نمای زمانی قابل بررسی است.` : <>{fa(data.summary.online)} تجهیز متصل است. {fa(data.summary.open_incidents)} پرونده باز، برای بررسی و اقدام در صف قرار دارد.</>}
-            </p>
-          </div>
-          <button className="text-button" onClick={() => setAssistant(true)}>
-            بررسی با سپهر <ChevronLeft size={16} />
-          </button>
-        </div>
-        <div className="shift-status">
-          <Activity size={19} />
-          <div>
-            <strong>{isReplay ? "آرشیو عملیاتی" : "پایش فعال"}</strong>
-            <small>{isReplay ? "نمایش داده ثبت‌شده بدون تغییر منبع" : "به‌روزرسانی اطلاعات هر ۳ ثانیه"}</small>
-          </div>
-          <span className="mini-bars">▂▅▃▇▅▃</span>
-        </div>
       </div>
     </div>
   );

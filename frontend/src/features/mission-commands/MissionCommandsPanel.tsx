@@ -67,7 +67,7 @@ export default function MissionCommandsPanel({ act, busy }: { act: Act; busy: bo
   };
   return (
     <section className="patrol-planner patrol-planner-console">
-      <header className="patrol-planner-head"><div><b>فرمان مأموریت مکانی</b><small>دستور انسانی با رسید تحویل، پذیرش و انجام؛ جدا از فرمان دستگاه</small></div><span>SPATIAL ORDERS</span></header>
+      <header className="patrol-planner-head"><div><b>فرمان مأموریت مکانی</b><small>دستور انسانی با رسید تحویل، پذیرش و انجام؛ جدا از فرمان دستگاه</small></div></header>
       <div className="form-grid">
         <label className="field">طول جغرافیایی<input type="number" step="0.0001" value={lon} onChange={(e) => setLon(+e.target.value)} /></label>
         <label className="field">عرض جغرافیایی<input type="number" step="0.0001" value={lat} onChange={(e) => setLat(+e.target.value)} /></label>

@@ -11,7 +11,7 @@ React → OIDC/PKCE و کلاینت HTTP → IdentityMiddleware و authz → Fas
 - `frontend/src/types.ts`: alias قراردادهای تولیدشده؛ از تکرار DTO دستی جلوگیری می‌کند.
 - `frontend/src/api.ts`: مرز HTTP، خطا و قالب‌بندی فارسی.
 - `frontend/src/App.tsx`: پوسته، ناوبری و اتصال تعاملات صفحه‌ها. داده دامنه در این فایل تعریف نمی‌شود.
-- `frontend/src/styles.css`: توکن‌ها، پوسته، سبک قابلیت‌ها، نقاط شکست و حالت کاهش حرکت.
+- `frontend/src/styles.css` و `soc.css`: سبک پایه قابلیت‌ها، نقاط شکست و حالت کاهش حرکت. `frontend/src/ui.css` آخرین لایه است: توکن‌های رنگ روشن/تیره، پوسته ساده (منوی کناری، نوار بالا، نوار طبقه‌بندی، سرصفحه یکسان)، سطوح تخت با یک سطح حاشیه و کنترل‌ها؛ زیر `#root` محدود است تا بر لایه‌های قبلی غلبه کند. ارقام کلیدی هر صفحه فقط با `StatStrip` در `shared/ui/primitives.tsx` نمایش داده می‌شوند.
 - `backend/app/routers`: endpointهای حوزه‌ای و بررسی ارجاع/وضعیت؛ اعتبارسنجی شکل ورودی در مدل مشترک است.
 - `backend/app/core`: پکیج هسته، مشترک بین همهٔ ماژول‌های دیگر (`routers`، `intel`، `security`، `field`، `tour`). `models.py` تنها مالک قراردادهای ورودی و پاسخ با Pydantic و پیش‌فرض/حدود RuntimeSettings است. `store.py` state نمونه، lookup، ثبت سوابق، شبیه‌سازی فرمان و شاخص‌ها را نگه می‌دارد. `fieldstore.py` SQLite گشت، دستگاه، پیوند هویت، PIN و ممیزی را دارد؛ state کش بازسازی‌شدنی است. `engine.py` سیاست‌های مبتنی بر موقعیت و تصمیم مسیریابی مشترک، `sim.py` شبیه‌سازی حرکت و فاصلهٔ کروی، `tracks.py` تاریخچهٔ GPS پایدار و `seed.py` تنها منبع رکوردهای ساختگی است.
 - `backend/app/security`: `auth.py` (OIDC/RS256)، `authz.py` (مجوز)، `hardening.py` (نرخ/سقف بدنه)، `dossier.py` و `afta_letter.py` (شواهد و نامه افتا).

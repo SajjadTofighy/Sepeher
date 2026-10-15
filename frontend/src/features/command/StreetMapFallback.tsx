@@ -213,17 +213,6 @@ export default function StreetMapFallback({
             </button>
           );
         })}
-      <div className="map-top">
-        <div className="map-location-card">
-          <span className="map-kicker">OMIDIYEH / KHUZESTAN</span>
-          <div>
-            <span className="map-location-dot" />
-            <strong>امیدیه</strong>
-            <span>خوزستان، ایران</span>
-          </div>
-          <small>نقشهٔ معابر و عوارض شهری</small>
-        </div>
-      </div>
       <div className="basemap-switch" role="group" aria-label="سبک نقشه">
         <button
           aria-pressed={mode === "night"}

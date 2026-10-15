@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { Download, FileCheck2, Printer, ShieldCheck, TriangleAlert } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Download, Printer } from "lucide-react";
 import { useState } from "react";
 import { api, fa, parseResponse, sessionHeaders } from "../../api";
 import { openPrintWindow } from "../../shared/lib/print";
-import { Badge, PanelTitle } from "../../shared/ui/primitives";
+import DataTable from "../../shared/ui/DataTable";
+import { Badge, StatStrip } from "../../shared/ui/primitives";
 import type { SecurityDossier } from "../../types";
 
 const AUTH_LABELS: Record<string, string> = {
@@ -13,6 +15,16 @@ const AUTH_LABELS: Record<string, string> = {
   optional_unless_enforce_all: "اختیاری تا فعال‌سازی سراسری",
 };
 
+type Endpoint = SecurityDossier["endpoints"][number];
+const endpointColumns: ColumnDef<Endpoint, unknown>[] = [
+  { header: "روش", accessorKey: "method" },
+  { header: "مسیر", accessorKey: "path", cell: ({ row }) => <span dir="ltr" className="hash">{row.original.path}</span> },
+  { header: "احراز", accessorKey: "authentication", cell: ({ row }) => {
+    const auth = row.original.authentication;
+    return <><Badge value={auth === "required" ? "online" : auth === "public" ? "info" : "warning"} /> {AUTH_LABELS[auth]}</>;
+  } },
+  { header: "نقش‌ها", accessorKey: "roles", enableSorting: false, cell: ({ row }) => row.original.roles.join("، ") || "—" },
+];
 export default function AssessmentPage() {
   const dossier = useQuery({ queryKey: ["assessment", "dossier"], queryFn: () => api<SecurityDossier>("/audit/security-dossier"), retry: false });
   const [error, setError] = useState("");
@@ -46,9 +58,6 @@ export default function AssessmentPage() {
   const endpoints = d.endpoints.filter((e) => !filter || e.authentication === filter);
   return (
     <section className="supervision">
-      <PanelTitle title="پرونده شواهد ارزیابی امنیتی (افتا)" sub="شواهد قابل‌راستی‌آزمایی از سامانه در حال اجرا برای استعلام الزام و دامنه ارزیابی؛ این صفحه نتیجه ارزیابی نیست">
-        <span className="classification-chip">{d.classification_label}</span>
-      </PanelTitle>
       {error && <div className="error-banner">{error}</div>}
       <div className="report-actions">
         <button className="primary" onClick={printLetter}><Printer size={16} />چاپ پیش‌نویس نامه استعلام</button>
@@ -59,37 +68,30 @@ export default function AssessmentPage() {
         <code dir="ltr">python scripts/security_dossier.py --out DIR --base-url URL --token TOKEN --run-tests</code>
         {" "}· ممیزی {d.audit_id} · {d.generated_at_jalali}
       </p>
-      <div className="report-totals">
-        <div><b>{fa(d.endpoints.length)}</b><small>مسیر API</small></div>
-        {Object.entries(counts).map(([k, v]) => <div key={k}><b>{fa(v)}</b><small>{AUTH_LABELS[k] || k}</small></div>)}
-        <div><b className={d.audit_chain.valid ? "ack-done" : "flag"}>{d.audit_chain.valid ? "سالم" : "ناسازگار"}</b><small>زنجیره ممیزی · {fa(d.audit_chain.count)}</small></div>
-        <div><b>{d.system.auth_mode === "keycloak" ? "کیکلاک" : "نمایشی"}</b><small>{d.system.enforce_all ? "احراز سراسری" : "احراز مسیرهای گشت"}</small></div>
-      </div>
-      <div className="supervision-grid">
+      <StatStrip items={[
+        { label: "مسیر API", value: fa(d.endpoints.length) },
+        ...Object.entries(counts).map(([k, v]) => ({ label: AUTH_LABELS[k] || k, value: fa(v) })),
+        { label: "زنجیره ممیزی", value: d.audit_chain.valid ? "سالم" : "ناسازگار", note: `${fa(d.audit_chain.count)} رکورد`, tone: d.audit_chain.valid ? "ok" as const : "danger" as const },
+        { label: "هویت", value: d.system.auth_mode === "keycloak" ? "کیکلاک" : "نمایشی", note: d.system.enforce_all ? "احراز سراسری" : "احراز مسیرهای گشت" },
+      ]} />
+      <div className="assessment-layout">
         <div className="panel comms-list">
-          <h3><ShieldCheck size={16} /> کنترل دسترسی مسیرها</h3>
+          <h3>کنترل دسترسی مسیرها</h3>
           <div className="comms-filters">
             <label className="field">نوع احراز<select value={filter} onChange={(e) => setFilter(e.target.value)}>
               <option value="">همه</option>
               {Object.keys(counts).map((k) => <option key={k} value={k}>{AUTH_LABELS[k] || k}</option>)}
             </select></label>
           </div>
-          <div className="table-wrap"><table>
-            <thead><tr><th>روش</th><th>مسیر</th><th>احراز</th><th>نقش‌ها</th></tr></thead>
-            <tbody>{endpoints.map((e) => (
-              <tr key={e.method + e.path}><td>{e.method}</td><td dir="ltr" className="hash">{e.path}</td>
-                <td><Badge value={e.authentication === "required" ? "online" : e.authentication === "public" ? "info" : "warning"} /> {AUTH_LABELS[e.authentication]}</td>
-                <td>{e.roles.join("، ") || "—"}</td></tr>
-            ))}</tbody>
-          </table></div>
+          <DataTable rows={endpoints} columns={endpointColumns} />
         </div>
         <aside className="panel suspended-list">
-          <h3><TriangleAlert size={16} /> ریسک‌های باقی‌مانده</h3>
+          <h3>ریسک‌های باقی‌مانده</h3>
           <ul>{d.residual_risks.map((r) => <li key={r}><small>{r}</small></li>)}</ul>
         </aside>
       </div>
       <div className="panel comms-list">
-        <h3><FileCheck2 size={16} /> رمزنگاری</h3>
+        <h3>رمزنگاری</h3>
         <div className="table-wrap"><table>
           <thead><tr><th>کاربرد</th><th>الگوریتم</th><th>پیاده‌سازی</th></tr></thead>
           <tbody>{d.cryptography.map((c) => <tr key={c.purpose}><td>{c.purpose}</td><td>{c.algorithm}</td><td>{c.implementation}</td></tr>)}</tbody>

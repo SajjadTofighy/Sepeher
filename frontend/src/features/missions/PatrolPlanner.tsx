@@ -89,7 +89,7 @@ export default function PatrolPlanner({
   };
   return (
     <section className="patrol-planner patrol-planner-console">
-      <header className="patrol-planner-head"><div><b>پیشنهاد برنامه گشت</b><small>راهبرد بهینه بازی امنیتی و برآورد بیزی ریسک · نیازمند تأیید اپراتور</small></div><span>GAME-THEORETIC PLANNER</span></header>
+      <header className="patrol-planner-head"><div><b>پیشنهاد برنامه گشت</b><small>راهبرد بهینه بازی امنیتی و برآورد بیزی ریسک · نیازمند تأیید اپراتور</small></div></header>
       <form
         onSubmit={async (event) => {
           event.preventDefault();

@@ -11,6 +11,7 @@ import { SessionProvider } from "./shared/auth/session";
 import ErrorBoundary from "./app/ErrorBoundary";
 import { queryClient } from "./app/queryClient";
 import "./soc.css";
+import "./ui.css";
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ErrorBoundary>

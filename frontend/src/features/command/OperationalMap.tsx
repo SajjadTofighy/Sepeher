@@ -99,7 +99,7 @@ function MapContent(props: Props) {
   callbacks.current = props;
   const [ready, setReady] = useState(false),
     [failed, setFailed] = useState(false),
-    [showLayers, setShowLayers] = useState(Boolean(props.command)),
+    [showLayers, setShowLayers] = useState(false),
     [layers, setLayers] = useState({
       tracks: true,
       zones: true,
@@ -1034,15 +1034,6 @@ function MapContent(props: Props) {
         aria-label="نقشه واقعی امیدیه، خوزستان؛ OpenStreetMap"
       />
       <div className="map-top">
-        <div className="map-location-card">
-          <span className="map-kicker">AGHAJARI / KHUZESTAN</span>
-          <div>
-            <span className="map-location-dot" />
-            <strong>آغاجاری</strong>
-            <span>امیدیه · خوزستان</span>
-          </div>
-          <small>میدان‌ها، محدوده‌ها و گشت‌های زنده</small>
-        </div>
         <button
           className="map-compass"
           aria-label="تنظیم جهت شمال"
