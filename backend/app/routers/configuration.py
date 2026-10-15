@@ -51,6 +51,24 @@ def get_settings():
     return state["settings"]
 
 
+def approved_gis_url(value):
+    """HTTP(S) without credentials, on an origin the server operator approved (SEPEHR_GIS_ORIGINS).
+
+    The same allowlist feeds the CSP connect-src, so an approved URL is also loadable by the browser.
+    """
+    try:
+        url = urlsplit(value)
+        valid = url.scheme in ("http", "https") and url.hostname and not url.username and not url.password
+    except ValueError:
+        valid = False
+    if not valid:
+        raise HTTPException(422, "آدرس سرویس GIS باید HTTP یا HTTPS و بدون اطلاعات ورود باشد")
+    allowed = {origin.strip() for origin in os.environ.get("SEPEHR_GIS_ORIGINS", "").split(",") if origin.strip()}
+    if f"{url.scheme}://{url.netloc}" not in allowed:
+        raise HTTPException(422, "مبدأ GIS باید در فهرست سرویس‌های داخلی مصوب سرور باشد")
+    return url
+
+
 @router.put("/api/v1/settings", response_model=RuntimeSettings)
 def save_settings(p: RuntimeSettings):
     if p.classification_label != state["settings"]["classification_label"]:
@@ -60,19 +78,13 @@ def save_settings(p: RuntimeSettings):
     if any(id not in {c["id"] for c in state["cameras"]} for id in p.intel_anpr_sensitive_camera_ids):
         raise HTTPException(422, "شناسه دوربین حساس باید در فهرست دوربین‌ها موجود باشد")
     if p.gis_mode != "local":
-        try:
-            url = urlsplit(p.gis_url)
-            valid = url.scheme in ("http", "https") and url.hostname and not url.username and not url.password
-        except ValueError:
-            valid = False
-        if not valid:
-            raise HTTPException(422, "آدرس سرویس GIS باید HTTP یا HTTPS و بدون اطلاعات ورود باشد")
-        allowed = {origin.strip() for origin in os.environ.get("SEPEHR_GIS_ORIGINS", "").split(",") if origin.strip()}
-        if f"{url.scheme}://{url.netloc}" not in allowed:
-            raise HTTPException(422, "مبدأ GIS باید در فهرست سرویس‌های داخلی مصوب سرور باشد")
+        approved_gis_url(p.gis_url)
         if not p.gis_layers.strip():
             raise HTTPException(422, "نام لایهٔ WMS یا نوع عارضهٔ WFS را وارد کنید")
         p.gis_layers = p.gis_layers.strip()
+    if p.basemap_style_url:
+        # The basemap style and everything it references must come from an approved internal origin.
+        approved_gis_url(p.basemap_style_url)
     if any(state["settings"].get(key) != getattr(p, key) for key in ("intel_coverage_buffer_m", "intel_coverage_backfill_hours")):
         state["intel"].pop("coverage", None)
     from ..core import store

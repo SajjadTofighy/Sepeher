@@ -1,4 +1,5 @@
 import time
+from datetime import datetime, timezone
 
 import pytest
 from fastapi.testclient import TestClient
@@ -49,7 +50,9 @@ def test_live_motion_is_deterministic_and_moves(client):
 
 
 def test_reported_gps_overrides_simulation(client):
-    point = dict(lon=49.75, lat=30.75, time="2099-01-01T00:00:00Z", speed=12)
+    # A real report wins over the simulated beat and over newer synthetic seed history.
+    stamp = datetime.fromtimestamp(client.clock.t - 600, timezone.utc).isoformat()
+    point = dict(lon=49.75, lat=30.75, time=stamp, speed=12)
     assert client.post("/api/v1/assets/AST-002/positions", json=point).status_code == 201
     client.clock.t += 120
     asset = next(a for a in client.get("/api/v1/assets").json() if a["id"] == "AST-002")

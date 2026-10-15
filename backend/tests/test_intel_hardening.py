@@ -6,6 +6,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+import pytest
+
 from fastapi.testclient import TestClient
 
 from app.core import store
@@ -138,3 +140,17 @@ def test_realm_baseline_checker_and_dependency_inventory(tmp_path):
     assert {'ecosystem': 'pypi', 'name': 'fastapi', 'version': '0.115.12'}.items() <= next(r for r in rows if r['name'] == 'fastapi').items()
     assert any(r['name'] == 'react' and r['scope'] == 'runtime' and r['version'] for r in rows)
     assert all(r['version'] and r['version'] != 'UNPINNED' for r in rows)
+
+
+def test_audit_cache_follows_commits_and_never_keeps_rolled_back_rows():
+    before = list(store.state["audit"])
+    with pytest.raises(RuntimeError):
+        with store.field.transaction():
+            store.audit("ردیف لغوشونده", "ROLLBACK")
+            raise RuntimeError("rollback")
+    assert store.state["audit"] == before == store.field.audits()
+    with store.field.transaction():
+        store.audit("ردیف ثبت‌شونده", "COMMIT")
+        assert store.state["audit"] == before  # not visible before commit
+    assert store.state["audit"][-1]["target"] == "COMMIT" and store.state["audit"] == store.field.audits()
+    assert store.field.verify_audit()

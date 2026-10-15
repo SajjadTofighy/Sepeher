@@ -145,8 +145,7 @@ def authenticate(authorization):
 def response_metadata(path):
     from ..core import store
     from urllib.parse import quote, urlsplit
-    with store.locked_state():
-        label = store.state["settings"]["classification_label"]
+    label = store.setting("classification_label")
     # RFC 8187 encoding keeps Persian metadata valid in HTTP headers.
     headers = {"X-Classification": "UTF-8''" + quote(label), "X-Server-Time": store.now(),
                "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff",
@@ -185,11 +184,12 @@ class IdentityMiddleware:
         try:
             from . import hardening
             if path.startswith("/api/") and scope["method"] in ("POST", "PUT", "PATCH", "DELETE") and not hardening.raw_body(path):
-                receive = await hardening.bounded_receive(scope, receive, await asyncio.to_thread(hardening.body_limit))
+                receive = await hardening.bounded_receive(scope, receive, hardening.body_limit())
             if not public and (authz.protected(path) or authorization or auth_mode() == "demo"):
                 principal = await asyncio.to_thread(authenticate, authorization)
                 authz.authorize_path(principal, path, scope["method"])
-            await asyncio.to_thread(hardening.check_rate, scope, principal, scope["method"], path)
+            if hardening.category(scope["method"], path):  # only limited categories may audit (blocking I/O)
+                await asyncio.to_thread(hardening.check_rate, scope, principal, scope["method"], path)
             scope.setdefault("state", {})["principal"] = principal
             context = current_principal.set(principal)
             request_context = current_scope.set(scope)

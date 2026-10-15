@@ -76,9 +76,8 @@ def check_rate(scope, principal, method, path):
     name = category(method, path)
     if name is None:
         return
-    with store.locked_state():
-        per_minute = store.state['settings']['rate_limit_per_minute'][name]
-        now = parse_timestamp(store.now()).timestamp()
+    per_minute = store.setting('rate_limit_per_minute', name)
+    now = parse_timestamp(store.now()).timestamp()
     client = (scope.get('client') or ('unknown', 0))[0]
     key = (name, principal.sub if principal else 'ip:' + client)
     if limiter.take(key, per_minute, now):
@@ -93,8 +92,7 @@ def check_rate(scope, principal, method, path):
 
 
 def body_limit():
-    with store.locked_state():
-        return store.state['settings']['max_json_body_bytes']
+    return store.setting('max_json_body_bytes')
 
 
 async def bounded_receive(scope, receive, limit):

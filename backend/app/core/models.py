@@ -210,6 +210,8 @@ class RuntimeSettings(BaseModel):
     patrol_game: PatrolGameSettings = Field(default_factory=PatrolGameSettings)
     rate_limit_per_minute: RateLimits = Field(default_factory=RateLimits)
     max_json_body_bytes: int = Field(default=2097152, ge=65536, le=16777216)
+    # Live trail length sent with the operational picture; full history comes from the track API.
+    map_trail_points: int = Field(default=60, ge=0, le=500)
     model_config = ConfigDict(extra='forbid')
     integrity_mode: Literal['shadow', 'active'] = 'shadow'
     integrity_window_hours: float = Field(default=24, gt=0, le=720, allow_inf_nan=False)
@@ -295,6 +297,9 @@ class RuntimeSettings(BaseModel):
     gis_wms_version: Literal["1.1.1", "1.3.0"] = "1.3.0"
     gis_wfs_version: Literal["1.1.0", "2.0.0"] = "2.0.0"
     gis_opacity: float = Field(default=0.7, ge=0, le=1)
+    # Internal MapLibre style (tiles, glyphs, sprites on approved origins). Empty: schematic map,
+    # no basemap and no network request; public tile services are never used in production.
+    basemap_style_url: str = Field(default="", max_length=500)
 
     @field_validator("intel_safety_normal_hours", "intel_anpr_night_hours")
     @classmethod
@@ -520,6 +525,33 @@ class TrackPoint(BaseModel):
     time: str
 
 
+PositionFlag = Literal["accuracy_unknown", "low_accuracy", "clock_ahead", "late", "implausible_speed"]
+
+
+class PositionReceipt(TrackPoint):
+    """What the server did with one observation: durable first, then accepted for live or history only."""
+    received_at: str
+    created: bool
+    live: bool
+    flags: list[PositionFlag] = Field(default_factory=list)
+
+
+class PositionObservation(BaseModel):
+    """Raw stored observation with its quality evidence; live=false points never moved the live position."""
+    lon: float
+    lat: float
+    time: str
+    speed: float | None
+    source: Literal["reported", "demo"]
+    received_at: str | None
+    accuracy_m: float | None
+    fix_source: str
+    sequence: int | None
+    auth: str | None
+    flags: list[str]
+    live: bool
+
+
 class Asset(BaseModel):
     keycloak_sub: str | None = None
     zone_id: str | None = None
@@ -549,6 +581,13 @@ class Asset(BaseModel):
     patrol_base: list[float] | None = None
     device_profile: str = "generic_data"
     sms_password_set: bool = False
+    # fresh: inside the observation gap; no_fix: the device is talking but sends no position;
+    # stale: nothing recent and silence alone cannot tell power-off from lost coverage.
+    position_state: Literal["fresh", "stale", "no_fix", "unknown", "simulated"] = "unknown"
+    position_age_seconds: float | None = None
+    position_accuracy_m: float | None = None
+    position_flags: list[str] = Field(default_factory=list)
+    last_contact_at: str | None = None
 
     @field_validator("patrol_base")
     @classmethod
@@ -1049,6 +1088,43 @@ class Bootstrap(BaseModel):
     meta: dict[str, str]
 
 
+class ChangeSet(BaseModel):
+    """Entities changed after a cursor. reset=true: reload the snapshot (restart, gap or unknown cursor)."""
+    cursor: str
+    reset: bool
+    assets: list[Asset] = Field(default_factory=list)
+    incidents: list[Incident] = Field(default_factory=list)
+    alerts: list[Alert] = Field(default_factory=list)
+    missions: list[Mission] = Field(default_factory=list)
+    commands: list[Command] = Field(default_factory=list)
+    removed: dict[str, list[str]] = Field(default_factory=dict)
+    summary: Summary | None = None
+    server_time: str
+
+
+class MapFeature(BaseModel):
+    id: str
+    layer: Literal["assets", "incidents", "facilities"]
+    name: str
+    lon: float
+    lat: float
+    status: str
+    kind: str | None = None
+    position_state: str | None = None
+    severity: str | None = None
+
+
+class MapFeatureResult(BaseModel):
+    features: list[MapFeature]
+    total: int
+    truncated: bool
+
+
+class TrackBatch(BaseModel):
+    tracks: dict[str, list[TrackPoint]]
+    truncated: bool
+
+
 class ShiftReportLine(BaseModel):
     text: str
     source_ids: list[str] = Field(min_length=1)
@@ -1203,6 +1279,10 @@ class PositionInput(BaseModel):
     lat: float = Field(ge=-85.051129, le=85.051129, allow_inf_nan=False)
     time: AwareDatetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     speed: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    # Unknown accuracy stays null; it is never treated as 0 m.
+    accuracy_m: float | None = Field(default=None, gt=0, le=100000, allow_inf_nan=False)
+    fix_source: Literal["gnss", "network", "fused", "manual", "unknown"] = "unknown"
+    sequence: int | None = Field(default=None, ge=0, le=2**53)
 
 
 class SignedQueueRecord(BaseModel):
@@ -1234,7 +1314,7 @@ class PositionBatchInput(BaseModel):
 
 
 class PositionBatchResult(BaseModel):
-    accepted: list[TrackPoint]
+    accepted: list[PositionReceipt]
     clock_regressed_client_ids: list[str]
 
 
@@ -2489,3 +2569,156 @@ class RouteCoverageInput(BaseModel):
 
 
 PatrolPlan.model_rebuild()
+
+
+class CommandGeometry(BaseModel):
+    """GeoJSON geometry (WGS84, longitude first) of a spatial mission command."""
+    model_config = ConfigDict(extra='forbid')
+    type: Literal['Point', 'LineString', 'Polygon']
+    coordinates: Any
+
+    @model_validator(mode='after')
+    def valid(self):
+        if self.type == 'Point':
+            validate_coordinates([self.coordinates])
+        elif self.type == 'LineString':
+            if not isinstance(self.coordinates, list) or len(self.coordinates) < 2 or len(self.coordinates) > 500:
+                raise ValueError('خط باید بین ۲ تا ۵۰۰ نقطه داشته باشد')
+            validate_coordinates(self.coordinates)
+        else:
+            if not isinstance(self.coordinates, list) or len(self.coordinates) != 1:
+                raise ValueError('چندضلعی فرمان فقط یک حلقه بیرونی دارد')
+            ring = self.coordinates[0]
+            if not isinstance(ring, list) or len(ring) > 501:
+                raise ValueError('حلقه چندضلعی نامعتبر است')
+            validate_polygon(ring[:-1] if len(ring) > 3 and ring[0] == ring[-1] else ring)
+        return self
+
+
+MissionCommandType = Literal['visit_point', 'inspect_area', 'patrol_line', 'check_alarm', 'presence']
+RecipientStatus = Literal['dispatched', 'delivered', 'acknowledged', 'in_progress', 'completed',
+                          'rejected', 'failed', 'expired', 'cancelled']
+
+
+class MissionCommandPreviewInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    geometry: CommandGeometry
+    radius_m: float = Field(default=0, ge=0, le=20000, allow_inf_nan=False)
+
+
+class CommandCandidate(BaseModel):
+    asset_id: str
+    name: str
+    position_state: str
+    lon: float | None
+    lat: float | None
+    observed_at: str | None
+    distance_m: float | None
+    inside: bool | None
+    can_receive: bool
+    reason: str
+
+
+class MissionCommandPreview(BaseModel):
+    """Who is in the area now. Only fresh positions count as inside; stale/unknown are listed apart."""
+    snapshot_id: str
+    eligible: list[CommandCandidate]
+    needs_review: list[CommandCandidate]
+    outside: list[CommandCandidate]
+    cannot_receive: list[CommandCandidate]
+    computed_at: str
+
+
+class MissionCommandInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    idempotency_key: str = Field(min_length=8, max_length=100)
+    type: MissionCommandType
+    title: str = Field(min_length=3, max_length=120)
+    instructions: str = Field(default='', max_length=2000)
+    priority: Literal['normal', 'urgent'] = 'normal'
+    geometry: CommandGeometry
+    radius_m: float = Field(default=0, ge=0, le=20000, allow_inf_nan=False)
+    recipients: list[str] = Field(min_length=1, max_length=100)
+    snapshot_id: str = Field(min_length=8, max_length=64)
+    ack_ttl_minutes: int = Field(default=15, ge=1, le=1440)
+    due_at: AwareDatetime | None = None
+
+    @field_validator('recipients')
+    @classmethod
+    def distinct(cls, value):
+        if len(set(value)) != len(value):
+            raise ValueError('مخاطب تکراری است')
+        return value
+
+
+class CommandRecipient(BaseModel):
+    asset_id: str
+    name: str
+    status: RecipientStatus
+    snapshot: CommandCandidate
+    delivered_at: str | None = None
+    delivered_device_id: str | None = None
+    acknowledged_at: str | None = None
+    started_at: str | None = None
+    finished_at: str | None = None
+    note: str | None = None
+    evidence: list[float] | None = None
+
+
+class CommandEvent(BaseModel):
+    time: str
+    actor: str
+    asset_id: str | None
+    action: str
+    from_status: str | None
+    to_status: str | None
+    event_id: str | None = None
+    applied: bool
+    detail: str = ''
+
+
+class MissionCommand(BaseModel):
+    """A human spatial order, distinct from a device command; can_execute is always false."""
+    id: str
+    revision: int
+    type: MissionCommandType
+    title: str
+    instructions: str
+    priority: Literal['normal', 'urgent']
+    geometry: CommandGeometry
+    radius_m: float
+    status: str
+    created_at: str
+    created_by: str
+    expires_at: str
+    due_at: str | None
+    overdue: bool = False
+    recipients: list[CommandRecipient]
+    timeline: list[CommandEvent]
+    zone_id: str | None = None
+    contractor_id: str | None = None
+    can_execute: Literal[False] = False
+
+
+class MissionCommandAction(BaseModel):
+    """Field action by the addressed guard; event_id makes retries (double tap, offline resend) idempotent."""
+    model_config = ConfigDict(extra='forbid')
+    event_id: str = Field(min_length=8, max_length=100)
+    action: Literal['acknowledge', 'reject', 'start', 'complete', 'fail']
+    note: str = Field(default='', max_length=1000)
+    lon: float | None = Field(default=None, ge=-180, le=180, allow_inf_nan=False)
+    lat: float | None = Field(default=None, ge=-85, le=85, allow_inf_nan=False)
+
+    @model_validator(mode='after')
+    def reasons(self):
+        if self.action in ('reject', 'fail', 'complete') and len(self.note.strip()) < 3:
+            raise ValueError('برای رد، شکست یا تکمیل مأموریت توضیح لازم است')
+        if (self.lon is None) != (self.lat is None):
+            raise ValueError('طول و عرض جغرافیایی باید با هم ارسال شوند')
+        return self
+
+
+class MissionCommandCancel(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    reason: str = Field(min_length=3, max_length=500)
+    revision: int = Field(ge=1)

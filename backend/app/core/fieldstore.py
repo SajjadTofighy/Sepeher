@@ -95,10 +95,22 @@ class FieldStore:
         with self.connection() as db:
             db.execute("BEGIN IMMEDIATE")
             self.local.connection = db
+            self.local.after_commit = []
             try:
                 yield
             finally:
                 self.local.connection = None
+                callbacks, self.local.after_commit = self.local.after_commit, []
+        # Reached only when the outermost transaction committed; a rollback skips the callbacks.
+        for callback in callbacks:
+            callback()
+
+    def after_commit(self, callback):
+        """Run callback once the surrounding transaction commits (immediately when none is open)."""
+        if getattr(self.local, "connection", None) is None:
+            callback()
+        else:
+            self.local.after_commit.append(callback)
 
     def records(self, kind):
         with self.connection() as db:

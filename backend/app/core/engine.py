@@ -83,6 +83,24 @@ def observation_gap_seconds(asset):
     return max(asset.get("report_interval", Asset.model_fields["report_interval"].default) * 3, 120)
 
 
+def position_state(asset, observed_at, now_iso, contact_at=None):
+    """Freshness of the live position, shared by the map, dispatch and geofence consumers.
+
+    Silence alone cannot separate a powered-off device from lost coverage, so without
+    independent contact evidence an old position is only "stale"; "no_fix" requires the
+    device to be talking while sending no position.
+    """
+    if observed_at is None:
+        return "unknown"
+    limit = observation_gap_seconds(asset)
+    now = parse_timestamp(now_iso)
+    if (now - parse_timestamp(observed_at)).total_seconds() <= limit:
+        return "fresh"
+    if contact_at and (now - parse_timestamp(contact_at)).total_seconds() <= limit:
+        return "no_fix"
+    return "stale"
+
+
 def within_stop_radius(anchor, point):
     return distance_km(anchor, point) * 1000 <= STOP_RADIUS_M
 

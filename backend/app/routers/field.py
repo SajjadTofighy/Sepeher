@@ -47,7 +47,7 @@ def run_field(function, *args, **kwargs):
             field_identity(Request(auth.current_scope.get()))
             return function(*args, **kwargs)
     finally:
-        store.restore_field_state()
+        store.restore_field_state(audit=False)
 
 
 def field_identity(request: Request):
@@ -68,8 +68,12 @@ def device_for(request, principal):
         auth.fail("device_revoked")
     if not hmac.compare_digest(device["owner_sub"].encode(), principal.sub.encode()):
         auth.fail("device_owner_mismatch", 403)
+    stamp = store.now()
     with store.field.connection() as db:
-        db.execute("UPDATE devices SET last_seen=? WHERE id=?", (store.now(), device["id"]))
+        db.execute("UPDATE devices SET last_seen=? WHERE id=?", (stamp, device["id"]))
+    guard = authz.linked_guard(principal)
+    if guard:
+        store.record_contact(guard["id"], stamp)
     return device
 
 

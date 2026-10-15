@@ -70,23 +70,97 @@ def plan_for(asset, at=None):
     return plans[asset["id"]]
 
 
+def _latest(asset):
+    """Latest live observation, re-read only when this process wrote to the asset's track."""
+    if asset.get("synthetic"):
+        return None
+    _attach_track_listener(tracks)  # a replaced store (restore, tests) gets the same listener
+    cache = state.setdefault("track_cache", {})
+    key = (id(tracks), tracks.version(asset["id"]))
+    hit = cache.get(asset["id"])
+    if hit and hit["key"] == key:
+        return hit["latest"]
+    cache[asset["id"]] = dict(key=key, latest=tracks.latest(asset["id"]), reads={})
+    return cache[asset["id"]]["latest"]
+
+
+TRACK_WINDOW = 500
+
+
+@state_locked
+def _track_appended(asset_id, row, version):
+    """Keep the cache equal to what tracks.latest/read would return, without re-reading."""
+    cache = state.setdefault("track_cache", {})
+    entry = cache.get(asset_id)
+    if entry is None or entry["key"] != (id(tracks), version - 1):
+        cache.pop(asset_id, None)
+        return
+    for source, points in entry["reads"].items():
+        if source not in (None, row["source"]):
+            continue
+        point = dict(lon=row["lon"], lat=row["lat"], time=row["time"])
+        if len(points) >= TRACK_WINDOW and point["time"] <= points[0]["time"]:
+            continue  # older than the newest-500 window
+        index = len(points)
+        while index and points[index - 1]["time"] > point["time"]:
+            index -= 1
+        points.insert(index, point)
+        del points[:-TRACK_WINDOW]
+    current = entry["latest"]
+    if row["live"] and (current is None or (row["source"] == "reported" and current["source"] != "reported")
+                        or (row["source"] == current["source"] and row["time"] > current["time"])):
+        entry["latest"] = row
+    entry["key"] = (id(tracks), version)
+
+
+def _attach_track_listener(store_):
+    if _track_appended not in store_.listeners:
+        store_.listeners.append(_track_appended)
+
+
+_attach_track_listener(tracks)
+
+
+def latest_observation(asset):
+    return _latest(asset)
+
+
+def _cached_read(asset, source):
+    entry = state.setdefault("track_cache", {}).get(asset["id"])
+    if entry is None:
+        return tracks.read(asset["id"], source=source)
+    if source not in entry["reads"]:
+        entry["reads"][source] = tracks.read(asset["id"], source=source)
+    return [dict(p) for p in entry["reads"][source]]
+
+
 @state_locked
 def refresh_track(asset, at=None):
-    latest = None if asset.get("synthetic") else tracks.latest(asset["id"])
+    latest = _latest(asset)
     source = _observation_source(asset, latest)
+    contact = state.get("contacts", {}).get(asset["id"])
     if source == "reported":
-        asset["track"] = tracks.read(asset["id"])
+        asset["track"] = _cached_read(asset, "reported")
         asset.update(lon=latest["lon"], lat=latest["lat"], last_seen=latest["time"])
         if latest["speed"] is not None:
             asset["speed"] = latest["speed"]
+        stamp = now()
+        asset.update(position_state=engine.position_state(asset, latest["time"], stamp, contact),
+                     position_age_seconds=max(0.0, (parse_timestamp(stamp) - parse_timestamp(latest["time"])).total_seconds()),
+                     position_accuracy_m=latest["accuracy_m"], position_flags=list(latest["flags"]), last_contact_at=contact)
         return
     if latest:
         asset.update(lon=latest["lon"], lat=latest["lat"])
     if source == "offline":
-        asset["track"] = tracks.read(asset["id"])
+        asset["track"] = _cached_read(asset, None)
+        asset.update(position_state="stale", position_age_seconds=None, position_accuracy_m=None,
+                     position_flags=[], last_contact_at=contact)
         return
-    # Demo-sourced assets move along a deterministic patrol beat until real GPS arrives.
+    # Demo-sourced assets move along a deterministic patrol beat until real GPS arrives;
+    # they are labelled simulated so dispatch and geofence never mistake them for live GPS.
     sim.apply(asset, plan_for(asset, at=at), now=at)
+    asset.update(position_state="simulated", position_age_seconds=None, position_accuracy_m=None,
+                 position_flags=[], last_contact_at=contact)
 
 
 @state_locked
@@ -96,8 +170,10 @@ def observations_since(asset, since_iso):
     The reported stream is bounded to the same latest 500 points the engine sees;
     demo SQLite seed history must not leak into an online simulated beat.
     """
-    latest = None if asset.get("synthetic") else tracks.latest(asset["id"])
-    points = tracks.read(asset["id"]) if _observation_source(asset, latest) != "simulated" else asset.get("track", [])
+    latest = _latest(asset)
+    source = _observation_source(asset, latest)
+    points = (_cached_read(asset, "reported") if source == "reported"
+              else _cached_read(asset, None) if source == "offline" else asset.get("track", []))
     since = parse_timestamp(since_iso)
     return [dict(p) for p in points if parse_timestamp(p["time"]) >= since]
 
@@ -110,8 +186,7 @@ def _observation_source(asset, latest):
 
 def observation_source(asset):
     """Identify precedence changes so incremental consumers can reset their cursors."""
-    latest = None if asset.get("synthetic") else tracks.latest(asset["id"])
-    return _observation_source(asset, latest)
+    return _observation_source(asset, _latest(asset))
 
 
 @state_locked
@@ -136,6 +211,12 @@ def refresh_tracks(now_iso=None, evaluate=True):
             incident["timeline"].append(
                 dict(time=stamp, action="گشت به محل رسید (موقعیت ردیاب)", actor="سرویس موقعیت")
             )
+
+
+@state_locked
+def record_contact(asset_id, stamp=None):
+    """Independent evidence that a device is talking (any authenticated device request)."""
+    state.setdefault("contacts", {})[asset_id] = stamp or now()
 
 
 @state_locked
@@ -201,6 +282,19 @@ def now():
     return datetime.now(timezone.utc).isoformat()
 
 
+def setting(*keys):
+    """Lock-free read of one settings value for request plumbing (middleware, headers).
+
+    A single dict lookup is atomic and settings are replaced wholesale, so no torn value is
+    possible. It must never take state_lock: middleware runs on the event loop, and blocking
+    the loop on that lock stalls every connection while any handler holds it.
+    """
+    value = state["settings"]
+    for key in keys:
+        value = value[key]
+    return value
+
+
 def lookup(collection, id):
     found = next((x for x in state[collection] if x["id"] == id), None)
     if not found:
@@ -221,16 +315,20 @@ def audit(action, target, detail="", actor="اپراتور نمایشی"):
         target=target,
         detail=detail,
     ))
-    station_settings = field.get("settings", "station_sensitivity")
-    if station_settings:
-        state["settings"]["station_sensitivity_labels"] = station_settings["station_sensitivity_labels"]
-    state["audit"] = field.audits()
+    # SQLite is authoritative; the cache grows by the committed row instead of re-reading
+    # the whole chain (that made every audited request O(n) in the audit length). Inside a
+    # transaction the row joins the cache only after commit, so a rollback leaves no phantom.
+    field.after_commit(lambda: state.setdefault("audit", []).append(item))
     return item
 
 
 @state_locked
-def restore_field_state():
-    """SQLite is authoritative; reset and restart never discard field operations."""
+def restore_field_state(audit=True):
+    """SQLite is authoritative; reset and restart never discard field operations.
+
+    audit=False skips re-reading the hash chain: after a field request the audit cache is
+    already exact (rows join it only on commit), and a full reload made every request O(n).
+    """
     links = field.links()
     for asset in state["assets"]:
         if asset["kind"] == "person":
@@ -253,7 +351,8 @@ def restore_field_state():
     tour_settings = field.get('settings', 'tour_phase_two')
     if tour_settings:
         state['settings'].update({k: v for k, v in tour_settings.items() if k != 'id'})
-    state["audit"] = field.audits()
+    if audit or "audit" not in state:
+        state["audit"] = field.audits()
 
 
 @state_locked

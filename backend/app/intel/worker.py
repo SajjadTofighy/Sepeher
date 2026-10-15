@@ -6,7 +6,7 @@ import os
 from contextlib import asynccontextmanager, suppress
 
 from ..core import store
-from ..field import media as field_media, safety as field_safety
+from ..field import media as field_media, mission_commands, safety as field_safety
 from ..core.models import RuntimeSettings
 from . import coverage, safety, hazard, integrity
 from . import shift_report
@@ -23,6 +23,7 @@ def tick(now):
             capability.tick(now)
         field_safety.tick(now)
         field_media.tick(now)
+        mission_commands.expire_due(now)
         store.evaluate_policies(now, coverage_ready=True)
         shift_report.tick(now)
 
