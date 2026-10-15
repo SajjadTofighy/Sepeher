@@ -475,7 +475,7 @@ def decide(id, accepted):
         auth.fail("two_person_required", 403)
     if item["status"] != "pending":
         raise HTTPException(409, "درخواست قبلاً تعیین تکلیف شده است")
-    payload = ApprovalInput.model_validate(item)
+    payload = ApprovalInput.model_validate({key: item[key] for key in ApprovalInput.model_fields if key in item})
     if payload.action == "change_classification":
         authz.require("admin")
     else:

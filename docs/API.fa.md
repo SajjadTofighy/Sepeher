@@ -405,3 +405,15 @@ Cache Storage پوسته، IndexedDB رمز‌شده با AES-GCM/PBKDF2، نگ�
 
 قواعد یکپارچگی (`intel.integrity.*`) در worker با پنجره `integrity_window_hours` اجرا می‌شوند و برای هر موضوع یک Finding دارای شواهد و `can_execute=false` می‌سازند و با رفع شرط بسته می‌شوند: `short_dwell` (لغو بازدید پیش از حداقل توقف، دست‌کم `integrity_short_dwell_count` بار)، `tag_replay` (اسکن رد‌شده با تکرار/پسروی شمارنده)، `tag_distance` (اسکن یک ایستگاه توسط دو نگهبان در `integrity_pair_minutes` با فاصله بیش از `integrity_pair_km`)، `clock` (پسروی ساعت) و `offline_repeat` (دست‌کم `integrity_offline_repeat_count` اسکن offline_too_long). حالت پیش‌فرض `integrity_mode=shadow` است و تصمیم مسیریابی مشترک (`shadow_mode` و `maintenance_silence`) اعمال می‌شود؛ این قواعد در هیچ حالتی پرونده خودکار نمی‌سازند.
 
+## فاز هفت: سخت‌سازی، فرم کاغذی و پایلوت
+
+همه پاسخ‌ها سربرگ‌های امنیتی CSP، HSTS، `X-Frame-Options: DENY`، `Permissions-Policy` و `nosniff` دارند. بدنه JSON بیش از `max_json_body_bytes` با 413 `body_too_large` رد می‌شود. هر فیلد ناشناخته در بدنه 422 با `type=extra_forbidden` است؛ پاسخ 422 فقط `loc`، `msg` و `type` دارد و 500 فقط `internal_error`. ثبت دستگاه، PIN/تأیید حضور، اسکن و آپلود محدودیت نرخ (`rate_limit_per_minute`) دارند و تجاوز 429 `rate_limited` با `Retry-After` است؛ SOS، man_down و صف اضطراری هرگز رد نمی‌شوند و `rate_flagged=true` در هشدار امنیتی می‌گیرند.
+
+| Method | Path | قرارداد و مجوز |
+|---|---|---|
+| POST | `/tour/paper-scans` | `manage` در حوزه؛ `{scheduled_tour_id, station_id, recorded_at, form_serial, notes}` ردیف فرم کاغذی را با `method=paper`، شاهد `tag=paper` و `trust=low` ثبت می‌کند؛ اگر دور در سامانه شروع نشده بود، گشت تکمیل‌شده کاغذی ساخته می‌شود. تکرار همان ردیف idempotent و مقدار متفاوت 409 است؛ ایستگاه خارج از برنامه یا زمان آینده 422. |
+| POST | `/devices/{id}/capabilities` | نگهبان برای دستگاه ثبت‌شده خودش؛ `barcode_detector`، `web_nfc`، `wake_lock`، `device_motion`، `battery_level`، `charging`، شمارنده تمدید توکن و `platform`؛ بدون موقعیت. |
+| GET | `/reports/pilot?window_from=&window_to=` | `export` و نه نگهبان؛ شاخص‌های قابل محاسبه پایلوت هر کدام با مقدار، واحد، تعداد نمونه و روش سنجش، به‌علاوه فهرست سنجش‌های دستی؛ ممیزی می‌شود. |
+
+`ScanRecord.method` یکی از `tag`، `manual` یا `paper` است.
+

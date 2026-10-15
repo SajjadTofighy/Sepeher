@@ -28,7 +28,7 @@ def submit_scan(record: SignedQueueRecord, request: Request):
         raise HTTPException(422, 'نوع رکورد اسکن لازم است')
     guard_device(record, request)
     with store.field.transaction():
-        payload = StationVisitInput.model_validate(record.payload)
+        payload = offline.queued(StationVisitInput, record.payload, exclude=('station_id',))
         if (payload.client_id != record.client_id or payload.device_time is None
                 or parse_timestamp(payload.device_time) != parse_timestamp(record.captured_at)
                 or (parse_timestamp(payload.previous_device_time) if payload.previous_device_time else None)
@@ -46,7 +46,7 @@ def submit_report(record: SignedQueueRecord, request: Request):
         raise HTTPException(422, 'نوع رکورد گزارش لازم است')
     principal, device = guard_device(record, request)
     with store.field.transaction():
-        payload = FieldReportInput.model_validate(record.payload)
+        payload = offline.queued(FieldReportInput, record.payload)
         if payload.client_id != record.client_id:
             raise HTTPException(422, 'شناسه رکورد صف با گزارش سازگار نیست')
         tour = store.field.get('tour', payload.tour_id)
@@ -85,7 +85,7 @@ def submit_emergency(record: SignedQueueRecord, request: Request):
                                                auth_expired=not authenticated, clock_regressed=regressed)
             # A duress receipt must never expose that the silent report was created.
             return dict(id=record.client_id, server_received_at=stamp, incident_id=None, operator_ack_at=None)
-        payload = FieldSafetyInput.model_validate(record.payload)
+        payload = offline.queued(FieldSafetyInput, record.payload)
         if payload.type != record.kind or payload.client_id != record.client_id:
             raise HTTPException(422, 'نوع و شناسه اعلام خطر با رکورد صف سازگار نیست')
         event = field_safety.report(tour, device, payload, stamp,

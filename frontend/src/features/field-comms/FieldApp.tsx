@@ -12,6 +12,9 @@ import { uploadMedia } from "./upload";
 const FIELD_CLIENT = "sepehr-field";
 // Only the non-secret device identifier is remembered; the server binds it to the token's subject.
 const DEVICE_KEY = "sepehr-field-device-id";
+// Pilot evidence: token refreshes since the last capability report, in memory only.
+const refreshCounters = { ok: 0, failed: 0 };
+const REPORT_INTERVAL_MS = 30 * 60 * 1000;
 const CATEGORIES: ReportCategory[] = ["security", "safety_hse", "operations", "damage", "uxo", "drone_sighting", "other"];
 const RESTRICTED: ReportCategory[] = ["damage", "uxo", "drone_sighting"];
 type Capture = { id: string; blob: Blob; kind: "image" | "audio" | "video"; caption: string; progress?: number; error?: string };
@@ -37,7 +40,9 @@ export default function FieldApp() {
   useEffect(() => {
     if (!tokens?.refresh_token || !config.data?.issuer) return;
     const timer = setTimeout(() => {
-      refresh(config.data!.issuer, FIELD_CLIENT, tokens.refresh_token!).then(setTokens).catch((e) => { setTokens(null); setError((e as Error).message); });
+      refresh(config.data!.issuer, FIELD_CLIENT, tokens.refresh_token!)
+        .then((next) => { refreshCounters.ok += 1; setTokens(next); })
+        .catch((e) => { refreshCounters.failed += 1; setTokens(null); setError((e as Error).message); });
     }, Math.max(15, (tokens.expires_in || 300) - 30) * 1000);
     return () => clearTimeout(timer);
   }, [tokens, config.data]);
@@ -57,6 +62,7 @@ export default function FieldApp() {
   if (!deviceId) return <Enroll onEnrolled={(id) => { try { localStorage.setItem(DEVICE_KEY, id); } catch {} setDeviceId(id); }} />;
   return (
     <FieldWorkspace
+      deviceId={deviceId}
       username={principal.data?.username || ""}
       onLogout={() => { setSession(); const id = tokens.id_token; setTokens(null); if (config.data?.issuer) logout(config.data.issuer, FIELD_CLIENT, id); }}
       onDeviceRejected={() => { try { localStorage.removeItem(DEVICE_KEY); } catch {} setDeviceId(""); }}
@@ -110,8 +116,34 @@ function useUrgentAlarm(active: boolean) {
   }, [active]);
 }
 
-function FieldWorkspace({ username, onLogout, onDeviceRejected }: { username: string; onLogout: () => void; onDeviceRejected: () => void }) {
+async function reportCapabilities(deviceId: string) {
+  type Battery = { level: number; charging: boolean };
+  const battery = await ((navigator as Navigator & { getBattery?: () => Promise<Battery> }).getBattery?.().catch(() => undefined));
+  const counts = { ...refreshCounters };
+  await api(`/devices/${deviceId}/capabilities`, "POST", {
+    barcode_detector: "BarcodeDetector" in window,
+    web_nfc: "NDEFReader" in window,
+    wake_lock: "wakeLock" in navigator,
+    device_motion: "DeviceMotionEvent" in window,
+    battery_level: battery ? battery.level : null,
+    charging: battery ? battery.charging : null,
+    auth_refresh_ok: counts.ok,
+    auth_refresh_failed: counts.failed,
+    platform: (navigator.platform || "").slice(0, 60),
+  });
+  refreshCounters.ok -= counts.ok;
+  refreshCounters.failed -= counts.failed;
+}
+
+function FieldWorkspace({ deviceId, username, onLogout, onDeviceRejected }: { deviceId: string; username: string; onLogout: () => void; onDeviceRejected: () => void }) {
   const client = useQueryClient();
+  useEffect(() => {
+    // Pilot measurement only: feature availability, battery and token refresh; never location.
+    const send = () => reportCapabilities(deviceId).catch(() => undefined);
+    send();
+    const timer = setInterval(send, REPORT_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [deviceId]);
   const [notice, setNotice] = useState("");
   const tours = useQuery({ queryKey: ["field-app", "tours"], queryFn: () => api<TourRecord[]>("/tour"), refetchInterval: 15000 });
   const tour = (tours.data || []).find((t) => t.status === "active");

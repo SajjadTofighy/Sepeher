@@ -302,7 +302,8 @@ def arrival(id: str, payload: StationVisitInput, request: Request):
 
 def scan_view(row):
     review = store.field.get('scan_reviews', row['id'])
-    return {**row, 'status': 'accepted' if review and review['approved'] else 'rejected' if review else row['status'],
+    method = row.get('method') or ('manual' if row['evidence']['tag'] in ('manual', 'uid_only') else 'tag')
+    return {**row, 'method': method, 'status': 'accepted' if review and review['approved'] else 'rejected' if review else row['status'],
             'review_sub': review['review_sub'] if review else None,
             'reviewed_at': review['reviewed_at'] if review else None,
             'visit_id': review['visit_id'] if review and review['approved'] else row.get('visit_id')}

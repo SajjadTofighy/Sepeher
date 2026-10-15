@@ -4279,3 +4279,4 @@ td small { display: block; color: var(--muted); }
 .report-totals b { font-size: 20px; }
 .report-totals small { color: var(--muted); }
 @media (max-width: 860px) { .supervision-grid { grid-template-columns: 1fr; } }
+.guide-list { margin: 4px 0 8px; padding-inline-start: 18px; display: grid; gap: 4px; font-size: 13px; line-height: 1.8; }

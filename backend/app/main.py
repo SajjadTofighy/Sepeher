@@ -30,6 +30,17 @@ app = FastAPI(
 )
 app.router.route_class = StateRoute
 app.add_middleware(IdentityMiddleware)
+
+
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error(request, error):
+    # Echo neither submitted values, internal context nor documentation URLs.
+    return JSONResponse(status_code=422, content={"detail": [
+        dict(loc=[str(part) for part in item["loc"]], msg=item["msg"], type=item["type"]) for item in error.errors()]})
 from .store import audit, lookup, now, refresh_commands, refresh_tracks, state, summary
 from . import sim, store
 

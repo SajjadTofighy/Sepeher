@@ -27,12 +27,14 @@ def validate_polygon(points):
 
 
 class EmergencyContact(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     name: str = Field(min_length=1, max_length=100)
     role: str = Field(min_length=1, max_length=100)
     phone: str = Field(min_length=1, max_length=50)
 
 
 class RiskWeights(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     incidents: float = Field(default=0.4, ge=0, le=10, allow_inf_nan=False)
     access: float = Field(default=0.2, ge=0, le=10, allow_inf_nan=False)
     staleness: float = Field(default=0.3, ge=0, le=10, allow_inf_nan=False)
@@ -54,6 +56,7 @@ def normalize_plate(value):
 
 
 class HeatProfile(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     months: list[int] = Field(default_factory=list, max_length=12)
     restricted_hours: str = 'تمام شبانه‌روز'
     max_continuous_minutes: int = Field(default=240, ge=1, le=1440)
@@ -76,6 +79,7 @@ class HeatProfile(BaseModel):
 
 
 class MediaRetention(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     security: int = Field(default=365, ge=1, le=3650)
     safety_hse: int = Field(default=365, ge=1, le=3650)
     operations: int = Field(default=180, ge=1, le=3650)
@@ -90,6 +94,7 @@ def _audiences(*values):
 
 
 class ReportRouting(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     security: list[Literal['security', 'hse', 'operations']] = _audiences('security')
     safety_hse: list[Literal['security', 'hse', 'operations']] = _audiences('security', 'hse', 'operations')
     operations: list[Literal['security', 'hse', 'operations']] = _audiences('security', 'operations')
@@ -106,7 +111,20 @@ class ReportRouting(BaseModel):
         return self
 
 
+class RateLimits(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    enroll: int = Field(default=10, ge=1, le=10000)
+    pin: int = Field(default=10, ge=1, le=10000)
+    scan: int = Field(default=60, ge=1, le=10000)
+    upload: int = Field(default=600, ge=1, le=100000)
+    # Emergency reports beyond this rate are accepted and flagged, never rejected.
+    emergency: int = Field(default=10, ge=1, le=10000)
+
+
 class RuntimeSettings(BaseModel):
+    rate_limit_per_minute: RateLimits = Field(default_factory=RateLimits)
+    max_json_body_bytes: int = Field(default=2097152, ge=65536, le=16777216)
+    model_config = ConfigDict(extra='forbid')
     integrity_mode: Literal['shadow', 'active'] = 'shadow'
     integrity_window_hours: float = Field(default=24, gt=0, le=720, allow_inf_nan=False)
     integrity_short_dwell_count: int = Field(default=3, ge=2, le=100)
@@ -260,6 +278,7 @@ class Segment(AccessAttributes):
 
 
 class LineGeometry(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     type: Literal["LineString"]
     coordinates: list[list[float]] = Field(min_length=2, max_length=10000)
 
@@ -273,6 +292,7 @@ class LineGeometry(BaseModel):
 
 
 class PointGeometry(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     type: Literal["Point"]
     coordinates: list[float]
 
@@ -284,30 +304,35 @@ class PointGeometry(BaseModel):
 
 
 class LayerProperties(AccessAttributes):
+    model_config = ConfigDict(extra='forbid')
     id: str | None = Field(default=None, min_length=1, max_length=100)
     name: str = Field(min_length=3, max_length=100)
     field: str = Field(min_length=1, max_length=100)
 
 
 class FacilityProperties(LayerProperties):
+    model_config = ConfigDict(extra='forbid')
     kind: Literal["well", "station", "plant", "manifold"]
     radius_m: float = Field(gt=0, allow_inf_nan=False)
     unmanned: bool
 
 
 class LineFeature(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     type: Literal["Feature"]
     geometry: LineGeometry
     properties: LayerProperties
 
 
 class PointFeature(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     type: Literal["Feature"]
     geometry: PointGeometry
     properties: FacilityProperties
 
 
 class LayerImport(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     type: Literal["FeatureCollection"]
     features: list[LineFeature | PointFeature] = Field(min_length=1, max_length=1000)
 
@@ -383,10 +408,12 @@ class SafetyStatus(BaseModel):
 
 
 class SafetyConfirmation(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     note: str | None = Field(default=None, max_length=1000)
 
 
 class DeviceEventInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     type: Literal["sos"]
     time: AwareDatetime
 
@@ -461,6 +488,7 @@ class HazardAccess(BaseModel):
 
 
 class HazardCircle(HazardAccess):
+    model_config = ConfigDict(extra='forbid')
     type: Literal["circle"]
     center: list[float]
     radius_m: float = Field(gt=0, le=100000, allow_inf_nan=False)
@@ -473,6 +501,7 @@ class HazardCircle(HazardAccess):
 
 
 class HazardPolygon(HazardAccess):
+    model_config = ConfigDict(extra='forbid')
     type: Literal["polygon"]
     points: list[list[float]] = Field(min_length=3, max_length=100)
 
@@ -486,6 +515,7 @@ HazardArea = Annotated[HazardCircle | HazardPolygon, Field(discriminator="type")
 
 
 class IncidentCreation(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     title: str = Field(min_length=3, max_length=200)
     severity: Literal["critical", "high", "medium", "low", "info"]
     lon: float
@@ -947,6 +977,7 @@ class AssistantAnswer(BaseModel):
 
 
 class ZoneInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     name: str = Field(min_length=3, max_length=100)
     risk: Literal["high", "medium", "low"] = "medium"
     coverage: Literal["normal", "weak"] = "normal"
@@ -959,6 +990,7 @@ class ZoneInput(BaseModel):
 
 
 class AssetSettings(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     carrier: Literal["همراه اول", "ایرانسل", "رایتل"]
     sim: str = Field(min_length=4, max_length=30)
     report_interval: int = Field(ge=5, le=3600)
@@ -999,6 +1031,7 @@ class Camera(BaseModel):
 
 
 class Transition(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     status: Literal["confirmed", "assigned", "en_route", "on_scene", "closed"]
     asset_id: str | None = None
     note: str = Field(default="", max_length=1000)
@@ -1006,6 +1039,7 @@ class Transition(BaseModel):
 
 
 class PolicyInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     name: str = Field(min_length=3, max_length=120)
     zone: str
     subject: Literal["vehicle", "person", "all"] = "vehicle"
@@ -1042,11 +1076,13 @@ class PolicyInput(BaseModel):
 
 
 class PolicyStatus(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     status: Literal["shadow", "active", "draft"]
 
 
 
 class CommandInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     asset_id: str
     command: Literal["position", "ping", "interval", "restart", "beacon", "diagnostics"]
     channel: Literal["data", "sms"] = "data"
@@ -1056,6 +1092,7 @@ class CommandInput(BaseModel):
 
 
 class PositionInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     lon: float = Field(ge=-180, le=180, allow_inf_nan=False)
     lat: float = Field(ge=-85.051129, le=85.051129, allow_inf_nan=False)
     time: AwareDatetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -1063,6 +1100,7 @@ class PositionInput(BaseModel):
 
 
 class SignedQueueRecord(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     kind: Literal['sos', 'duress', 'man_down', 'scan', 'position', 'report']
     device_id: str = Field(min_length=1, max_length=100)
     client_id: str = Field(min_length=1, max_length=100)
@@ -1085,6 +1123,7 @@ class SignedQueueRecord(BaseModel):
 
 
 class PositionBatchInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     records: list[SignedQueueRecord] = Field(min_length=1, max_length=100)
 
 
@@ -1095,6 +1134,7 @@ class PositionBatchResult(BaseModel):
 
 
 class Question(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     question: str = Field(min_length=2, max_length=1000)
 
 
@@ -1132,6 +1172,7 @@ class PermissionMatrix(BaseModel):
 
 
 class IdentityInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     sub: str = Field(min_length=1, max_length=200, pattern=r"^\S+$")
 
 
@@ -1144,6 +1185,7 @@ class GuardRecord(BaseModel):
 
 
 class GuardCredentialInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     pin: str = Field(min_length=6, max_length=12, pattern=r"^[0-9]+$")
     duress_pin: str = Field(min_length=6, max_length=12, pattern=r"^[0-9]+$")
 
@@ -1155,6 +1197,7 @@ class GuardCredentialInput(BaseModel):
 
 
 class EnrollmentCodeInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     owner_sub: str = Field(min_length=1, max_length=200)
     ttl_seconds: int = Field(default=300, ge=30, le=600)
 
@@ -1165,6 +1208,7 @@ class EnrollmentCode(BaseModel):
 
 
 class DeviceEnrollmentInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     code: str = Field(min_length=16, max_length=200)
     label: str = Field(min_length=1, max_length=100)
 
@@ -1184,15 +1228,18 @@ class EnrolledDevice(DeviceRecord):
 
 
 class DeviceCertificationInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     ex_certified: bool
 
 
 class ScopedInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     zone_id: str = Field(min_length=1, max_length=100)
     contractor_id: str = Field(min_length=1, max_length=100)
 
 
 class TourRouteInput(ScopedInput):
+    model_config = ConfigDict(extra='forbid')
     name: str = Field(min_length=1, max_length=100)
     guard_id: str = Field(min_length=1, max_length=100)
     station_ids: list[str] = Field(default_factory=list, max_length=100)
@@ -1214,28 +1261,33 @@ class TourRouteInput(ScopedInput):
 
 
 class TourRoute(TourRouteInput):
+    model_config = ConfigDict(extra='ignore')
     id: str
     created_at: str
 
 
 class ShiftSegment(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     start: str = Field(pattern=r'^(?:[01][0-9]|2[0-3]):[0-5][0-9]$')
     duration_minutes: int = Field(ge=1, le=1440)
 
 
 class ShiftCycle(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     on_days: int = Field(ge=1, le=365)
     off_days: int = Field(ge=1, le=365)
     anchor_date: date
 
 
 class ShiftBreak(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     start_offset_minutes: int = Field(ge=0, le=1440)
     duration_minutes: int = Field(ge=1, le=1440)
     label: str = Field(min_length=1, max_length=100)
 
 
 class ShiftPatternInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     name: str = Field(min_length=1, max_length=100)
     segments: list[ShiftSegment] = Field(min_length=1, max_length=24)
     cycle: ShiftCycle | None = None
@@ -1250,11 +1302,13 @@ class ShiftPatternInput(BaseModel):
 
 
 class ShiftPattern(ShiftPatternInput):
+    model_config = ConfigDict(extra='ignore')
     id: str
     created_at: str
 
 
 class TourScheduleInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     route_id: str
     pattern_id: str
     first_date: date
@@ -1263,6 +1317,7 @@ class TourScheduleInput(BaseModel):
 
 
 class TourSchedule(TourScheduleInput, ScopedInput):
+    model_config = ConfigDict(extra='ignore')
     id: str
     status: Literal['draft', 'approved']
     created_at: str
@@ -1270,6 +1325,7 @@ class TourSchedule(TourScheduleInput, ScopedInput):
 
 
 class ScheduledTour(ScopedInput):
+    model_config = ConfigDict(extra='ignore')
     id: str
     schedule_id: str
     route_id: str
@@ -1287,6 +1343,7 @@ class ScheduledTour(ScopedInput):
 
 
 class ShiftHandoverInput(ScopedInput):
+    model_config = ConfigDict(extra='forbid')
     outgoing_guard_id: str
     incoming_guard_id: str
     open_items: list[str] = Field(default_factory=list, max_length=100)
@@ -1294,6 +1351,7 @@ class ShiftHandoverInput(ScopedInput):
 
 
 class ShiftHandover(ShiftHandoverInput):
+    model_config = ConfigDict(extra='ignore')
     id: str
     acknowledged_at: str | None = None
     acknowledged_by: str | None = None
@@ -1301,6 +1359,7 @@ class ShiftHandover(ShiftHandoverInput):
 
 
 class EmergencyModeInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     active: bool
     reason: str = Field(min_length=3, max_length=1000)
 
@@ -1320,11 +1379,13 @@ class DailyTourView(BaseModel):
 
 
 class TourInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     route_id: str = Field(min_length=1, max_length=100)
     scheduled_tour_id: str | None = None
 
 
 class TourRecord(ScopedInput):
+    model_config = ConfigDict(extra='ignore')
     id: str
     route_id: str
     guard_id: str
@@ -1336,10 +1397,12 @@ class TourRecord(ScopedInput):
 
 
 class CheckInInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     pin: str = Field(min_length=6, max_length=12, pattern=r"^[0-9]+$")
 
 
 class PinUnlockInput(CheckInInput):
+    model_config = ConfigDict(extra='forbid')
     tour_id: str
 
 
@@ -1360,10 +1423,12 @@ class CheckInRecord(BaseModel):
 
 
 class TagInput(ScopedInput):
+    model_config = ConfigDict(extra='forbid')
     label: str = Field(min_length=1, max_length=100)
 
 
 class TagRecord(TagInput):
+    model_config = ConfigDict(extra='ignore')
     id: str
     status: Literal["active", "revoked"]
     key_version: int
@@ -1410,6 +1475,7 @@ class MessageRecipient(BaseModel):
 
 
 class FieldMessage(ScopedInput):
+    model_config = ConfigDict(extra='ignore')
     id: str
     tour_id: str | None
     text: str
@@ -1442,6 +1508,7 @@ class MediaWatermark(BaseModel):
 
 
 class FieldMedia(FieldMediaInput, ScopedInput):
+    model_config = ConfigDict(extra='ignore')
     id: str
     owner_sub: str
     guard_id: str
@@ -1463,6 +1530,7 @@ class FieldMedia(FieldMediaInput, ScopedInput):
 
 
 class MediaUploadInput(FieldMediaInput):
+    model_config = ConfigDict(extra='forbid')
     sha256: str = Field(pattern=r'^[0-9a-f]{64}$')
     size: int = Field(gt=0)
     content_type: str = Field(min_length=3, max_length=100)
@@ -1552,6 +1620,7 @@ class ReportAckInput(BaseModel):
 
 
 class FieldReport(ScopedInput):
+    model_config = ConfigDict(extra='ignore')
     id: str
     tour_id: str
     guard_id: str
@@ -1575,6 +1644,7 @@ class FieldReport(ScopedInput):
 
 
 class ApprovalInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     action: Literal["rotate_tag_key", "revoke_tag", "delete_route", "change_classification"]
     target_id: str = Field(min_length=1, max_length=100)
     classification_label: str | None = Field(default=None, min_length=1, max_length=80)
@@ -1587,6 +1657,7 @@ class ApprovalInput(BaseModel):
 
 
 class ApprovalRecord(ApprovalInput):
+    model_config = ConfigDict(extra='ignore')
     id: str
     requested_by: str
     approved_by: str | None = None
@@ -1597,6 +1668,7 @@ class ApprovalRecord(ApprovalInput):
 
 
 class ExportInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     name: str = Field(min_length=1, max_length=150)
     media_id: str | None = Field(default=None, min_length=1, max_length=100)
 
@@ -1615,6 +1687,7 @@ class RoleChangeEvent(BaseModel):
 
 
 class FieldZoneInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     name: str = Field(min_length=1, max_length=100)
     points: list[list[float]] = Field(min_length=3, max_length=1000)
     media_capture_allowed: bool = True
@@ -1627,6 +1700,7 @@ class FieldZoneInput(BaseModel):
 
 
 class FieldZone(FieldZoneInput):
+    model_config = ConfigDict(extra='ignore')
     id: str
 
 
@@ -1652,6 +1726,7 @@ class StationInput(ScopedInput):
 
 
 class Station(StationInput):
+    model_config = ConfigDict(extra='ignore')
     id: str
     media_capture_allowed: bool
     tag_status: Literal['planned', 'installed', 'damaged', 'revoked']
@@ -1684,17 +1759,20 @@ class StationTaskInput(BaseModel):
 
 
 class StationTask(StationTaskInput):
+    model_config = ConfigDict(extra='ignore')
     id: str
     station_id: str
     created_at: str
 
 
 class SealReplacement(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     expected_value: str = Field(min_length=1, max_length=100)
     reason: str = Field(min_length=3, max_length=1000)
 
 
 class SealChange(SealReplacement):
+    model_config = ConfigDict(extra='ignore')
     id: str
     station_id: str
     task_id: str
@@ -1704,6 +1782,7 @@ class SealChange(SealReplacement):
 
 
 class StationScan(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     payload: str = Field(min_length=1, max_length=2000)
     lon: float | None = Field(default=None, ge=-180, le=180, allow_inf_nan=False)
     lat: float | None = Field(default=None, ge=-85, le=85, allow_inf_nan=False)
@@ -1753,17 +1832,19 @@ class SunProvisioning(BaseModel):
 
 
 class StationVisitInput(StationScan):
+    model_config = ConfigDict(extra='forbid')
     tour_id: str = Field(min_length=1, max_length=100)
 
 
 class ManualScanInput(StationVisitInput):
+    model_config = ConfigDict(extra='forbid')
     payload: Literal['manual'] = 'manual'
     reason: str = Field(min_length=3, max_length=1000)
     uid: str | None = Field(default=None, pattern=r'^[0-9A-Fa-f]{14}$')
 
 
 class ScanEvidence(BaseModel):
-    tag: Literal['sun_valid', 'counter_ok', 'hmac_valid', 'uid_only', 'manual', 'replay']
+    tag: Literal['sun_valid', 'counter_ok', 'hmac_valid', 'uid_only', 'manual', 'replay', 'paper']
     location: Literal['verified', 'unverified', 'unavailable', 'implausible']
     sequence: Literal['in_order', 'out_of_order']
     dwell: Literal['ok', 'too_short']
@@ -1771,7 +1852,9 @@ class ScanEvidence(BaseModel):
 
 
 class ScanRecord(ScopedInput):
+    model_config = ConfigDict(extra='ignore')
     id: str
+    method: Literal['tag', 'manual', 'paper'] = 'tag'
     station_id: str
     tour_id: str
     visit_id: str | None = None
@@ -1794,11 +1877,13 @@ class ScanRecord(ScopedInput):
 
 
 class ManualReviewInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     approved: bool
     reason: str = Field(min_length=3, max_length=1000)
 
 
 class StationVisit(ScopedInput):
+    model_config = ConfigDict(extra='ignore')
     status: Literal["active", "completed", "cancelled"] = "active"
     id: str
     station_id: str
@@ -1821,6 +1906,7 @@ class StationVisit(ScopedInput):
 
 
 class StationTaskAnswer(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     value: str | Annotated[float, Field(strict=True, allow_inf_nan=False)] | None = None
     media_id: str | None = Field(default=None, min_length=1, max_length=100)
 
@@ -1837,15 +1923,18 @@ class StationTaskResult(BaseModel):
 
 
 class StationTagStatusInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     tag_status: Literal['damaged']
     reason: str = Field(min_length=3, max_length=1000)
 
 
 class StationVisitCancel(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     reason: str = Field(min_length=3, max_length=1000)
 
 
 class FieldSafetyInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     tour_id: str
     type: Literal['sos', 'man_down']
     client_id: str = Field(min_length=1, max_length=100)
@@ -1861,6 +1950,7 @@ class FieldSafetyReceipt(BaseModel):
 
 
 class FieldSafetyAlert(ScopedInput):
+    model_config = ConfigDict(extra='ignore')
     id: str
     tour_id: str
     guard_id: str
@@ -1873,10 +1963,12 @@ class FieldSafetyAlert(ScopedInput):
     finding_id: str | None = None
     auth_expired: bool = False
     clock_regressed: bool = False
+    rate_flagged: bool = False
     can_execute: Literal[False] = False
 
 
 class MusterInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     zone_id: str
     contractor_id: str | None = None
     reason: str = Field(min_length=3, max_length=1000)
@@ -1890,6 +1982,7 @@ class MusterParticipant(BaseModel):
 
 
 class Muster(ScopedInput):
+    model_config = ConfigDict(extra='ignore')
     id: str
     reason: str
     created_at: str
@@ -1907,6 +2000,7 @@ class MusterNotice(BaseModel):
 
 
 class MusterResponseInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     response: Literal['safe', 'need_help']
 
 
@@ -1931,6 +2025,7 @@ ExceptionKind = Literal['station_missed', 'station_overdue', 'scan_low_trust', '
 
 
 class ExceptionItem(ScopedInput):
+    model_config = ConfigDict(extra='ignore')
     id: str
     kind: ExceptionKind
     severity: Literal['critical', 'high', 'medium', 'low']
@@ -1944,6 +2039,7 @@ class ExceptionItem(ScopedInput):
 
 
 class SuspendedTour(ScopedInput):
+    model_config = ConfigDict(extra='ignore')
     scheduled_tour_id: str
     guard_id: str
     due_at: str
@@ -1953,6 +2049,7 @@ class SuspendedTour(ScopedInput):
 
 
 class StationStatus(ScopedInput):
+    model_config = ConfigDict(extra='ignore')
     station_id: str
     name: str
     status: Literal['ok', 'unverified', 'never']
@@ -2056,5 +2153,55 @@ class GuardDetailReport(BaseModel):
     checks: list[GuardCheck]
     scans: list['ScanRecord']
     totals: ComplianceTotals
+    audit_id: str
+
+
+class PaperScanInput(BaseModel):
+    """A later entry of the printed backup patrol form; always method=paper and trust=low."""
+    model_config = ConfigDict(extra='forbid')
+    scheduled_tour_id: str = Field(min_length=1, max_length=200)
+    station_id: str = Field(min_length=1, max_length=100)
+    recorded_at: AwareDatetime
+    form_serial: str = Field(min_length=1, max_length=60, pattern=r'^[0-9A-Za-z_-]+$')
+    notes: str = Field(default='', max_length=1000)
+
+
+class DeviceCapabilityInput(BaseModel):
+    """Client-observed browser capabilities and battery for pilot measurement; no location."""
+    model_config = ConfigDict(extra='forbid')
+    barcode_detector: bool
+    web_nfc: bool
+    wake_lock: bool
+    device_motion: bool
+    battery_level: float | None = Field(default=None, ge=0, le=1, allow_inf_nan=False)
+    charging: bool | None = None
+    auth_refresh_ok: int = Field(default=0, ge=0, le=10000)
+    auth_refresh_failed: int = Field(default=0, ge=0, le=10000)
+    platform: str = Field(default='', max_length=60)
+
+
+class DeviceCapabilityReport(DeviceCapabilityInput):
+    model_config = ConfigDict(extra='ignore')
+    id: str
+    device_id: str
+    owner_sub: str
+    reported_at: str
+
+
+class PilotMetric(BaseModel):
+    key: str
+    label: str
+    value: float | None
+    unit: str
+    samples: int
+    method: str
+
+
+class PilotMetrics(BaseModel):
+    classification_label: str
+    generated_at: str
+    period: ReportPeriod
+    metrics: list[PilotMetric]
+    manual_measurements: list[str]
     audit_id: str
 

@@ -188,3 +188,46 @@ API ایستگاه‌ها همیشه احراز هویت و station_read دار�
 ## فاز چهار: مرز صف آفلاین و سرور
 
 `app/offline.py` فقط امضای HMAC رکورد صف با راز دستگاه ثبت‌شده و پرچم زمان را بررسی می‌کند؛ راز در پاسخ عمومی بازنشر نمی‌شود. `/tour/offline/emergency` تنها استثنای middleware برای Bearer منقضی/غایب است: امضای دستگاه فعال و تعلق گشت به `owner_sub` پیش از ثبت بررسی می‌شود. اعلان SOS و man_down به همان `field_safety.py` فاز سه می‌روند؛ duress در پاسخ قابل‌نمایش نگهبان افشا نمی‌شود. `/tour/offline/scans` به همان `stations.arrival` و `/assets/{id}/positions:batch` به همان `record_position` و `TrackStore.append` وصل‌اند؛ مسیرهای معمول آنلاین سازگار مانده‌اند. APIها `Cache-Control: no-store` دارند. IndexedDB، Cache Storage پوسته، CryptoKey و ترتیب تخلیه صف مرز کلاینت مستقل‌اند و در سرور شبیه‌سازی نمی‌شوند. SQLite موقعیت و fieldstore دو مخزن مستقل‌اند؛ بسته موقعیت در خطای میانه اتمیک نیست و retry یکسان لازم است.
+
+## فاز هفت: سخت‌سازی
+
+`IdentityMiddleware` روی همه پاسخ‌ها CSP بدون مبدأ بیرونی (جز issuer و GIS داخلی مصوب در `connect-src`)، `frame-ancestors 'none'`، `form-action 'self'`، HSTS، `X-Content-Type-Options: nosniff`، `Referrer-Policy: no-referrer`، `X-Frame-Options: DENY` و `Permissions-Policy` می‌گذارد که دوربین، میکروفون، موقعیت و NFC را فقط برای همین مبدأ مجاز می‌کند؛ قالب nginx همان سربرگ‌ها را دارد. `app/hardening.py` سطل توکن درون‌حافظه‌ای با ساعت `store.now()` برای ثبت دستگاه، PIN/تأیید حضور، اسکن و آپلود دارد (`RuntimeSettings.rate_limit_per_minute`)؛ اعلام خطر (SOS، man_down و صف اضطراری) هرگز به‌خاطر نرخ رد نمی‌شود و فقط `rate_flagged` و یک ممیزی در دقیقه می‌گیرد. بدنه JSON پیش از احراز هویت با سقف `max_json_body_bytes` خوانده و در صورت تجاوز 413 می‌شود؛ مسیرهای باینری رسانه سقف جداگانه دارند. همه مدل‌های ورودی `extra="forbid"` دارند (آزمون روی همه مسیرها بررسی می‌کند) و مدل‌های پاسخ مشتق از آن‌ها صریحاً `extra="ignore"` هستند تا رفتار پاسخ تغییر نکند. خطای اعتبارسنجی فقط `loc`، `msg` و `type` را بازمی‌گرداند و خطای داخلی فقط کد `internal_error` دارد. شمارنده‌ها حافظه‌ای و تک‌فرایندی‌اند؛ در استقرار چندفرایندی باید محدودیت در پروکسی هم اعمال شود.
+
+`scripts/check_keycloak_realm.py` realm صادرشده را برای PKCE S256، نبود wildcard، خاموشی Direct Access Grants/implicit/ثبت‌نام، Brute Force، چرخش refresh token، سقف عمر توکن و نشست، سیاست رمز، Events/Admin Events و نبود راز بررسی و نسخه کیکلاک (از `compose.yaml` یا ورودی) را با فهرست دستی وصله‌ها مقایسه می‌کند. `scripts/dependency_inventory.py` فهرست وابستگی‌های مستقیم (و با `--all` همه بسته‌های npm) را از `backend/requirements.txt` و `frontend/package-lock.json` با نسخه دقیق برای بازبینی امنیتی می‌دهد. وابستگی‌های مستقیم فعلی: پایتون fastapi 0.115.12، uvicorn 0.34.2، httpx 0.28.1، pytest 8.3.5، PyJWT 2.10.1، cryptography 44.0.3؛ npm اجرایی @fontsource/vazirmatn 5.2.5، @tanstack/react-query 5.83.0، @tanstack/react-table 8.21.3، echarts 5.6.0، lucide-react 0.468.0، maplibre-gl 5.6.2، react و react-dom 19.1.1 و ابزارهای ساخت فهرست‌شده در خروجی اسکریپت.
+
+## مدل تهدید (STRIDE)
+
+طبق AGENTS.md سند جدا ساخته نشد؛ این بخش جایگزین `THREAT-MODEL.fa.md` است.
+
+| تهدید | STRIDE | کنترل پیاده‌شده | آزمون | ریسک باقی‌مانده |
+|---|---|---|---|---|
+| تکرار و شبیه‌سازی تگ | Spoofing | NTAG 424 SUN با CMAC و شمارنده پایدار؛ شمارنده آینه‌شده با برچسب «ضعیف»؛ QR با کلید و revision نسخه‌دار؛ قاعده سایه `tag_replay` و `tag_distance` | `test_sun_provisioning_scans_replay_and_key_change`، `test_counter_mirror_weak_replay_and_restart`، `test_integrity_rules_cloned_tag_shadow_and_resolution` | QR ایستا قابل عکس‌برداری است؛ Web NFC احراز کامل NTAG 424 را ندارد (فاز ۸) |
+| دستکاری ساعت گوشی | Tampering | لنگر `X-Server-Time`، شاهد clock، پرچم `clock_regressed`، قاعده `clock` | `test_scan_evidence_clock_manual_review_and_scope`، `test_signed_scan_offline_flags_and_invalid_signature` | ساعت جلوکشیده در آفلاین کوتاه فقط skew دیده می‌شود |
+| جعل GPS | Spoofing | GPS فقط شاهد کمکی؛ جهش، سرعت ناممکن و دقت ثابت مشکوک «implausible» | `test_gps_anomaly_ex_warning_and_overdue_checkin` | تشخیص mock location در مرورگر ممکن نیست |
+| گوشی گم‌شده | Information disclosure | ابطال دستگاه فوری (`device_revoked`)، دستگاه وابسته به sub، رسانه محدود پس از ارسال حذف می‌شود | `test_device_revocation_ownership_one_time_code_and_expiry`، `test_expired_token_emergency_and_revoked_device` | کش رمزشده IndexedDB (فاز ۴) هنوز ساخته نشده؛ ابطال نشست کیکلاک دستی است |
+| نگهبان تحت اجبار | Spoofing | رمز اضطرار با پاسخ یکسان، duress فقط برای نقش امنیتی و در تابلوی استثنا | `test_checkin_pin_hash_duress_and_rate_limit`، `test_duress_sos_escalation_man_down_and_muster`، `test_access_duress_individual_view_and_audited_csv` | اگر مهاجم PIN عادی را بداند، اجبار پنهان نمی‌ماند |
+| کاربر داخلی مخرب | Repudiation / Elevation | ماتریس مجوز سمت سرور، حوزه از claim، تأیید دونفره تغییرات حساس، نمای فردی محدود و ممیزی هر مشاهده و خروجی، زنجیره هش | `test_two_person_approval_classification_and_replay`، `test_audit_append_only_tampering_persistence_and_identity_reassignment` | حذف انتهای زنجیره بدون مرجع بیرونی (WORM/SOC) تشخیص‌پذیر نیست |
+| ادمین مخرب کیکلاک | Elevation | ادمین محدود، Admin Events، گزارش `audit/role-changes` برای ممیز، کنسول فقط شبکه مدیریت | `test_role_changes_from_service_client_are_filtered_and_audited`، `test_realm_baseline_checker_and_dependency_inventory` | تغییر نقش در کیکلاک تأیید دونفره بومی ندارد |
+| سرقت توکن | Spoofing | توکن کوتاه‌عمر، PKCE، توکن وب فقط در حافظه، پیوند دستگاه با sub، چرخش refresh token | `test_invalid_claims`، `test_device_revocation_ownership_one_time_code_and_expiry` | XSS در همان مبدأ می‌تواند توکن حافظه را بخواند؛ CSP سخت آن را محدود می‌کند |
+| آسیب‌پذیری وصله‌نشده کیکلاک | Elevation | نسخه ثابت، `check_keycloak_realm.py` با فهرست وصله، روند وصله در RUNBOOK | `test_realm_baseline_checker_and_dependency_inventory` | فهرست وصله دستی است و به به‌روزرسانی منظم نیاز دارد |
+| نشت تصاویر خسارت | Information disclosure | رسانه damage/uxo/drone فقط مدیر حراست، غیرقابل خروجی، no-store، حذف از گوشی، ممیزی هر مشاهده | `test_restricted_reports_routing_access_export_and_legal_hold` | عکس از صفحه نمایش قابل جلوگیری نیست |
+| از کار افتادن سرور یا کیکلاک | Denial of service | کش JWKS، صف آفلاین امضاشده، فرم کاغذی با trust کم، پشتیبان و بازیابی با manifest | `test_unavailable_jwks_retains_cached_key`، `test_backup_delete_restore_equality_and_tamper_refusal`، `test_paper_form_entry_is_low_trust_and_not_missed` | HA و تکرار پایگاه پیاده نشده است |
+| DoS روی مسیر اعلام خطر | Denial of service | اعلام خطر هرگز به‌خاطر نرخ رد نمی‌شود و فقط پرچم می‌گیرد؛ سقف بدنه؛ ممیزی یک‌بار در دقیقه | `test_rate_limits_reject_but_never_drop_emergency`، `test_body_ceiling_strict_inputs_and_sanitized_errors` | سیل درخواست امضاشده از دستگاه فعال پذیرفته می‌شود؛ ابطال دستگاه پاسخ است |
+
+## دستورالعمل بهره‌برداری (RUNBOOK)
+
+طبق AGENTS.md سند جدا ساخته نشد؛ این بخش جایگزین `RUNBOOK.fa.md` است.
+
+- **قطع سرور Sepehr:** نگهبانان در اپ ادامه می‌دهند؛ اعلام خطر از صف امضاشده پس از وصل ارسال می‌شود. اگر اپ هم کار نکند، «فرم کاغذی پشتیبان گشت» از صفحه «راهنما و فرم پشتیبان» چاپ و پس از بازگشت از «نظارت ← ورود فرم کاغذی» با شماره سریال ثبت شود (روش کاغذی، اعتماد کم). تماس اضطراری محوطه از فهرست چاپی استفاده شود.
+- **قطع کیکلاک:** توکن‌های معتبر تا پایان عمر و کلید JWKS کش‌شده کار می‌کنند؛ ورود تازه ممکن نیست. اعلام خطر با امضای دستگاه حتی با توکن منقضی پذیرفته می‌شود. وضعیت را به همه شیفت‌ها اعلام و زمان قطع را ثبت کنید.
+- **قطع شبکه میدان:** صف اپ اولویت اضطرار دارد؛ اسکن دیرتر از `max_offline_minutes` پرچم و اعتماد حداکثر متوسط می‌گیرد. تکرار آن قاعده `offline_repeat` را فعال می‌کند.
+- **قطع یا جعل GPS:** اثبات حضور بر تگ است؛ موقعیت «implausible» را بررسی کنید و تصمیم را به GPS وابسته نکنید.
+- **وضعیت اضطرار (حمله هوایی، حادثه):** مسئول حراست از `/tour/emergency/{zone}` فعال می‌کند؛ مهلت‌ها تعلیق و حضورشماری آغاز می‌شود؛ پس از پایان، وضعیت را غیرفعال کنید.
+- **دستگاه گم‌شده:** فوراً `POST /devices/{id}/revoke`؛ سپس در کنسول کیکلاک نشست‌های کاربر را ابطال (Users ← Sessions ← Sign out) و در صورت لزوم رمز را بازنشانی کنید. کد ثبت تازه برای گوشی جایگزین صادر شود.
+- **چرخش کلید تگ:** از صف تأیید دونفره (`rotate_tag_key`) درخواست و توسط نفر دوم تأیید شود؛ برگه خنثی تازه چاپ و نصب، سپس نصب با اسکن نصاب ثبت شود.
+- **ابطال نشست‌های کیکلاک کاربر:** کنسول ادمین فقط از شبکه مدیریت؛ اقدام در Admin Events ثبت و در گزارش `audit/role-changes` برای ممیز دیده می‌شود.
+- **نصب وصله کیکلاک:** فهرست وصله را در فایل advisories به‌روز کنید و `python scripts/check_keycloak_realm.py --advisories advisories.json` اجرا کنید؛ ایمیج تازه را از مخزن داخلی با بررسی هش بکشید، از PostgreSQL پشتیبان بگیرید، در محیط آزمون اجرا و سپس در پنجره نگهداری جایگزین کنید.
+- **پشتیبان‌گیری:** روزانه `python scripts/backup.py --out /secure/backups` (SQLite سازگار با سرویس در حال اجرا و رسانه با manifest sha256) و `pg_dump -Fc -h <db> -U keycloak keycloak > keycloak-<date>.dump`. نسخه‌ها رمزشده و خارج از سرور نگهداری شوند.
+- **بازیابی:** سرویس را متوقف کنید؛ `python scripts/restore.py <backup-dir> --force` (manifest و integrity بررسی می‌شود و در ناسازگاری هیچ چیز بازنویسی نمی‌شود)؛ `pg_restore -c -d keycloak keycloak-<date>.dump`؛ سرویس را آغاز و `GET /api/v1/audit/verify` را با نقش ممیز بررسی کنید. تمرین بازیابی دست‌کم فصلی انجام شود.
+- **آزمون بار:** فقط روی محیط آزمون: `python scripts/load_test.py --base-url ... --token ... --asset-id ... --station-id ... --tag-payload ...`؛ اهداف عددی تا توافق با کارفرما خالی‌اند.
+

@@ -85,7 +85,7 @@ def tag_evidence(station, proof=None, manual=False, replay=False):
 
 
 def trust(evidence, flags=()):
-    if (evidence['tag'] in ('manual', 'replay', 'uid_only') or evidence['location'] == 'implausible'
+    if (evidence['tag'] in ('manual', 'replay', 'uid_only', 'paper') or evidence['location'] == 'implausible'
             or evidence['clock'] == 'regressed' or evidence['sequence'] == 'out_of_order'
             or evidence['dwell'] == 'too_short'):
         return 'low'

@@ -39,7 +39,7 @@ def record_positions_batch(id: str, payload: PositionBatchInput, request: Reques
         if row.kind != 'position' or row.device_id != device['id']:
             raise HTTPException(422, 'رکورد موقعیت یا دستگاه صف نامعتبر است')
         offline.verify(row)
-        point = PositionInput.model_validate(row.payload)
+        point = offline.queued(PositionInput, row.payload)
         if parse_timestamp(point.time) != parse_timestamp(row.captured_at):
             raise HTTPException(422, 'زمان موقعیت با رکورد امضاشده یکسان نیست')
         points.append(point)

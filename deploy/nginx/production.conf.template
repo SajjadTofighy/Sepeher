@@ -14,9 +14,11 @@ server {
     ssl_certificate /etc/sepehr/tls/app/fullchain.pem;
     ssl_certificate_key /etc/sepehr/tls/app/privkey.pem;
     add_header Strict-Transport-Security "max-age=31536000" always;
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self' ${SEPEHR_RESOURCE_ORIGINS}; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self' ${SEPEHR_RESOURCE_ORIGINS}; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" always;
     add_header Referrer-Policy "no-referrer" always;
     add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Permissions-Policy "camera=(self), microphone=(self), geolocation=(self), nfc=(self), payment=(), usb=(), serial=(), bluetooth=(), display-capture=()" always;
     root /usr/share/nginx/html;
     index index.html;
     location /api/ {

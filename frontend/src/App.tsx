@@ -23,6 +23,7 @@ import {
   ShieldCheck,
   Smartphone,
   ListChecks,
+  BookOpen,
   MessagesSquare,
   SlidersHorizontal,
   Sparkles,
@@ -50,6 +51,7 @@ import ConfigurationForm from "./features/settings/ConfigurationForm";
 import FieldApp from "./features/field-comms/FieldApp";
 import FieldCommsPage from "./features/field-comms/FieldCommsPage";
 import SupervisionPage from "./features/supervision/SupervisionPage";
+import GuidesPage from "./features/guides/GuidesPage";
 import SettingsPage from "./features/settings/SettingsPage";
 import { useOperations } from "./shared/api/useOperations";
 import { download } from "./shared/lib/download";
@@ -69,6 +71,7 @@ const nav = [
   { id: "supervision", name: "نظارت استثنامحور گشت", icon: ListChecks },
   { id: "field-comms", name: "پیام، رسانه و گزارش میدانی", icon: MessagesSquare },
   { id: "field", name: "اپ میدانی نگهبان", icon: Smartphone },
+  { id: "guides", name: "راهنما و فرم پشتیبان", icon: BookOpen },
   { id: "audit", name: "گزارش‌ها و پایش", icon: ClipboardList },
   { id: "settings", name: "تنظیمات سامانه", icon: Settings },
 ];
@@ -591,6 +594,7 @@ export default function App() {
           {page === "supervision" && <SupervisionPage />}
           {page === "field-comms" && <FieldCommsPage data={data} act={act} busy={busy} />}
           {page === "field" && <FieldApp />}
+          {page === "guides" && <GuidesPage />}
           {page === "audit" && (
             <AuditPage data={data} act={act} setToast={setToast} />
           )}

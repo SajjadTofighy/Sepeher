@@ -983,6 +983,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tour/paper-scans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Paper Scan
+         * @description Later entry of the printed backup form used while the system or network was down.
+         */
+        post: operations["paper_scan_api_v1_tour_paper_scans_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/devices/{id}/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Capability Report
+         * @description Pilot evidence from the guard's own enrolled device: feature availability, battery, token refresh.
+         */
+        post: operations["capability_report_api_v1_devices__id__capabilities_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/pilot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Pilot Metrics
+         * @description Pilot indicators computable from durable records; the rest are listed as manual measurements.
+         */
+        get: operations["pilot_metrics_api_v1_reports_pilot_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/media/uploads/{id}": {
         parameters: {
             query?: never;
@@ -2956,6 +3016,77 @@ export interface components {
             /** Vehicles */
             vehicles: components["schemas"]["PatrolPlan"][];
         };
+        /**
+         * DeviceCapabilityInput
+         * @description Client-observed browser capabilities and battery for pilot measurement; no location.
+         */
+        DeviceCapabilityInput: {
+            /** Barcode Detector */
+            barcode_detector: boolean;
+            /** Web Nfc */
+            web_nfc: boolean;
+            /** Wake Lock */
+            wake_lock: boolean;
+            /** Device Motion */
+            device_motion: boolean;
+            /** Battery Level */
+            battery_level?: number | null;
+            /** Charging */
+            charging?: boolean | null;
+            /**
+             * Auth Refresh Ok
+             * @default 0
+             */
+            auth_refresh_ok: number;
+            /**
+             * Auth Refresh Failed
+             * @default 0
+             */
+            auth_refresh_failed: number;
+            /**
+             * Platform
+             * @default
+             */
+            platform: string;
+        };
+        /** DeviceCapabilityReport */
+        DeviceCapabilityReport: {
+            /** Barcode Detector */
+            barcode_detector: boolean;
+            /** Web Nfc */
+            web_nfc: boolean;
+            /** Wake Lock */
+            wake_lock: boolean;
+            /** Device Motion */
+            device_motion: boolean;
+            /** Battery Level */
+            battery_level?: number | null;
+            /** Charging */
+            charging?: boolean | null;
+            /**
+             * Auth Refresh Ok
+             * @default 0
+             */
+            auth_refresh_ok: number;
+            /**
+             * Auth Refresh Failed
+             * @default 0
+             */
+            auth_refresh_failed: number;
+            /**
+             * Platform
+             * @default
+             */
+            platform: string;
+            /** Id */
+            id: string;
+            /** Device Id */
+            device_id: string;
+            /** Owner Sub */
+            owner_sub: string;
+            /** Reported At */
+            reported_at: string;
+        };
         /** DeviceCertificationInput */
         DeviceCertificationInput: {
             /** Ex Certified */
@@ -3525,6 +3656,11 @@ export interface components {
              * @default false
              */
             clock_regressed: boolean;
+            /**
+             * Rate Flagged
+             * @default false
+             */
+            rate_flagged: boolean;
             /**
              * Can Execute
              * @default false
@@ -4237,6 +4373,28 @@ export interface components {
             /** Lat */
             lat: number;
         };
+        /**
+         * PaperScanInput
+         * @description A later entry of the printed backup patrol form; always method=paper and trust=low.
+         */
+        PaperScanInput: {
+            /** Scheduled Tour Id */
+            scheduled_tour_id: string;
+            /** Station Id */
+            station_id: string;
+            /**
+             * Recorded At
+             * Format: date-time
+             */
+            recorded_at: string;
+            /** Form Serial */
+            form_serial: string;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+        };
         /** PatrolPlan */
         PatrolPlan: {
             /** Id */
@@ -4360,6 +4518,35 @@ export interface components {
             };
             /** Enforce All */
             enforce_all: boolean;
+        };
+        /** PilotMetric */
+        PilotMetric: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Value */
+            value: number | null;
+            /** Unit */
+            unit: string;
+            /** Samples */
+            samples: number;
+            /** Method */
+            method: string;
+        };
+        /** PilotMetrics */
+        PilotMetrics: {
+            /** Classification Label */
+            classification_label: string;
+            /** Generated At */
+            generated_at: string;
+            period: components["schemas"]["ReportPeriod"];
+            /** Metrics */
+            metrics: components["schemas"]["PilotMetric"][];
+            /** Manual Measurements */
+            manual_measurements: string[];
+            /** Audit Id */
+            audit_id: string;
         };
         /** PinUnlockInput */
         PinUnlockInput: {
@@ -4708,6 +4895,34 @@ export interface components {
             /** Question */
             question: string;
         };
+        /** RateLimits */
+        RateLimits: {
+            /**
+             * Enroll
+             * @default 10
+             */
+            enroll: number;
+            /**
+             * Pin
+             * @default 10
+             */
+            pin: number;
+            /**
+             * Scan
+             * @default 60
+             */
+            scan: number;
+            /**
+             * Upload
+             * @default 600
+             */
+            upload: number;
+            /**
+             * Emergency
+             * @default 10
+             */
+            emergency: number;
+        };
         /** ReportAckInput */
         ReportAckInput: {
             /**
@@ -4841,6 +5056,12 @@ export interface components {
         };
         /** RuntimeSettings */
         RuntimeSettings: {
+            rate_limit_per_minute?: components["schemas"]["RateLimits"];
+            /**
+             * Max Json Body Bytes
+             * @default 2097152
+             */
+            max_json_body_bytes: number;
             /**
              * Integrity Mode
              * @default shadow
@@ -5233,7 +5454,7 @@ export interface components {
              * Tag
              * @enum {string}
              */
-            tag: "sun_valid" | "counter_ok" | "hmac_valid" | "uid_only" | "manual" | "replay";
+            tag: "sun_valid" | "counter_ok" | "hmac_valid" | "uid_only" | "manual" | "replay" | "paper";
             /**
              * Location
              * @enum {string}
@@ -5263,6 +5484,12 @@ export interface components {
             contractor_id: string;
             /** Id */
             id: string;
+            /**
+             * Method
+             * @default tag
+             * @enum {string}
+             */
+            method: "tag" | "manual" | "paper";
             /** Station Id */
             station_id: string;
             /** Tour Id */
@@ -8217,6 +8444,241 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GuardDetailReport"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+        };
+    };
+    paper_scan_api_v1_tour_paper_scans_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaperScanInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScanRecord"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+        };
+    };
+    capability_report_api_v1_devices__id__capabilities_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceCapabilityInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceCapabilityReport"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+        };
+    };
+    pilot_metrics_api_v1_reports_pilot_get: {
+        parameters: {
+            query?: {
+                window_from?: string | null;
+                window_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PilotMetrics"];
                 };
             };
             /** @description Unauthorized */

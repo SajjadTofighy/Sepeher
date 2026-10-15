@@ -149,14 +149,19 @@ def response_metadata(path):
         label = store.state["settings"]["classification_label"]
     # RFC 8187 encoding keeps Persian metadata valid in HTTP headers.
     headers = {"X-Classification": "UTF-8''" + quote(label), "X-Server-Time": store.now(),
-               "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff"}
+               "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff",
+               "Strict-Transport-Security": "max-age=31536000", "X-Frame-Options": "DENY",
+               "Cross-Origin-Opener-Policy": "same-origin", "Cross-Origin-Resource-Policy": "same-origin",
+               # Field capture, location and NFC only for this origin; everything else off.
+               "Permissions-Policy": "camera=(self), microphone=(self), geolocation=(self), nfc=(self), "
+                                     "payment=(), usb=(), serial=(), bluetooth=(), display-capture=()"}
     if path.startswith('/api/v1/'):
         headers['Cache-Control'] = 'no-store'
     if path != "/docs":
         parsed = urlsplit(os.environ.get("SEPEHR_OIDC_ISSUER", ""))
         origins = [f"{parsed.scheme}://{parsed.netloc}"] if parsed.netloc else []
         origins.extend(x.strip() for x in os.environ.get("SEPEHR_GIS_ORIGINS", "").split(",") if x.strip())
-        headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; connect-src 'self'" + (" " + " ".join(origins) if origins else "")
+        headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; connect-src 'self'" + (" " + " ".join(origins) if origins else "")
     if auth_mode() == "demo":
         headers["X-Sepehr-Demo"] = "1"
     return headers
@@ -178,9 +183,13 @@ class IdentityMiddleware:
         principal = None
         started = False
         try:
+            from . import hardening
+            if path.startswith("/api/") and scope["method"] in ("POST", "PUT", "PATCH", "DELETE") and not hardening.raw_body(path):
+                receive = await hardening.bounded_receive(scope, receive, await asyncio.to_thread(hardening.body_limit))
             if not public and (authz.protected(path) or authorization or auth_mode() == "demo"):
                 principal = await asyncio.to_thread(authenticate, authorization)
                 authz.authorize_path(principal, path, scope["method"])
+            await asyncio.to_thread(hardening.check_rate, scope, principal, scope["method"], path)
             scope.setdefault("state", {})["principal"] = principal
             context = current_principal.set(principal)
             request_context = current_scope.set(scope)

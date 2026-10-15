@@ -64,9 +64,10 @@ def authenticated_client(monkeypatch, signing_key, token_factory):
 
 @pytest.fixture(autouse=True)
 def field_database(tmp_path, monkeypatch, track_database):
-    from app import store
+    from app import hardening, store
     from app.fieldstore import FieldStore
     from app.seed import seed
+    hardening.limiter.reset()
     repository = FieldStore(tmp_path / "field.sqlite3")
     monkeypatch.setattr(store, "field", repository)
     store.state.clear()

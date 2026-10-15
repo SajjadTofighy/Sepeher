@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { AlertOctagon, ClipboardCheck, Download, FileSpreadsheet, MapPinCheck, Printer, ShieldAlert, UserSearch } from "lucide-react";
+import { AlertOctagon, ClipboardCheck, Download, FilePen, FileSpreadsheet, Gauge, MapPinCheck, Printer, ShieldAlert, UserSearch } from "lucide-react";
 import { useState } from "react";
 import { api, fa, labels, parseResponse, sessionHeaders, timeFa } from "../../api";
 import { escapePrintText, openPrintWindow, writePrintReport } from "../../shared/lib/print";
 import { tehranInputISO, tehranLocalInput, tehranTime } from "../../shared/lib/time";
 import { Badge, PanelTitle } from "../../shared/ui/primitives";
-import type { ExceptionBoard, GuardDetailReport, GuardRecord, PatrolReport } from "../../types";
+import type { ExceptionBoard, GuardDetailReport, GuardRecord, PaperScanInput, PatrolReport, PilotMetrics, ScanRecord, ScheduledTour } from "../../types";
 
-type Tab = "exceptions" | "stations" | "report" | "guard";
+type Tab = "exceptions" | "stations" | "report" | "guard" | "paper" | "pilot";
 const KINDS = ["station_missed", "station_overdue", "scan_low_trust", "scan_pending_review", "alarm_unacked", "duress_unacked",
   "man_down_unacked", "device_silent", "muster_open", "message_urgent_unacked", "integrity"] as const;
 const persianDate = (value: string) => new Date(value).toLocaleString("fa-IR-u-ca-persian", { timeZone: "Asia/Tehran", dateStyle: "short", timeStyle: "short" });
@@ -23,7 +23,8 @@ export default function SupervisionPage() {
       </PanelTitle>
       <div className="comms-tabs" role="tablist">
         {([["exceptions", "تابلوی استثنا", AlertOctagon, board.data?.items.length || 0], ["stations", "وضعیت ایستگاه‌ها", MapPinCheck, 0],
-          ["report", "گزارش گشت", ClipboardCheck, 0], ["guard", "نمای فردی", UserSearch, 0]] as const).map(([id, name, Icon, count]) => (
+          ["report", "گزارش گشت", ClipboardCheck, 0], ["guard", "نمای فردی", UserSearch, 0],
+          ["paper", "ورود فرم کاغذی", FilePen, 0], ["pilot", "شاخص‌های پایلوت", Gauge, 0]] as const).map(([id, name, Icon, count]) => (
           <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? "current" : ""} onClick={() => setTab(id)}>
             <Icon size={16} />{name}{count > 0 && <em className={critical ? "critical" : ""}>{fa(count)}</em>}
           </button>
@@ -34,6 +35,8 @@ export default function SupervisionPage() {
       {tab === "stations" && <Stations board={board.data} />}
       {tab === "report" && <Report />}
       {tab === "guard" && <GuardView />}
+      {tab === "paper" && <PaperEntry />}
+      {tab === "pilot" && <Pilot />}
     </section>
   );
 }
@@ -228,3 +231,67 @@ function GuardView() {
     </div>
   );
 }
+
+function PaperEntry() {
+  const queue = useQuery({ queryKey: ["supervision", "queue"], queryFn: () => api<ScheduledTour[]>("/tour/queue") });
+  const [form, setForm] = useState({ scheduled_tour_id: "", station_id: "", recorded_at: tehranLocalInput(new Date()), form_serial: "", notes: "" });
+  const [result, setResult] = useState<ScanRecord | null>(null);
+  const [error, setError] = useState("");
+  const scheduled = (queue.data || []).find((q) => q.id === form.scheduled_tour_id);
+  const submit = async () => {
+    setError(""); setResult(null);
+    const body: PaperScanInput = { ...form, recorded_at: tehranInputISO(form.recorded_at) };
+    try { setResult(await api<ScanRecord>("/tour/paper-scans", "POST", body)); } catch (e) { setError((e as Error).message); }
+  };
+  return (
+    <form className="panel comms-list" onSubmit={(e) => { e.preventDefault(); submit(); }}>
+      <p className="muted">ردیف‌های فرم کاغذی پشتیبان (زمان قطع سامانه یا شبکه) با روش «کاغذی» و اعتماد کم ثبت می‌شوند؛ ایستگاه «تأییدنشده» می‌ماند ولی ازدست‌رفته شمرده نمی‌شود. هر ورود ممیزی می‌شود.</p>
+      <div className="comms-filters">
+        <label className="field">دور برنامه‌ریزی‌شده<select required value={form.scheduled_tour_id} onChange={(e) => setForm({ ...form, scheduled_tour_id: e.target.value, station_id: "" })}>
+          <option value="">انتخاب کنید</option>
+          {(queue.data || []).map((q) => <option key={q.id} value={q.id}>{q.guard_id} · {tehranTime(q.due_at)} · {labels[q.status] || q.status}</option>)}
+        </select></label>
+        <label className="field">ایستگاه<select required value={form.station_id} onChange={(e) => setForm({ ...form, station_id: e.target.value })}>
+          <option value="">انتخاب کنید</option>
+          {(scheduled?.station_ids || []).map((id) => <option key={id} value={id}>{id}</option>)}
+        </select></label>
+        <label className="field">زمان روی فرم (تهران)<input type="datetime-local" required value={form.recorded_at} onChange={(e) => setForm({ ...form, recorded_at: e.target.value })} /></label>
+        <label className="field">شماره سریال فرم<input dir="ltr" required pattern="[0-9A-Za-z_\-]+" value={form.form_serial} onChange={(e) => setForm({ ...form, form_serial: e.target.value })} /></label>
+      </div>
+      <label className="field">توضیح<input maxLength={1000} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></label>
+      <button className="primary" disabled={!form.station_id || !form.form_serial}><FilePen size={16} />ثبت ردیف فرم</button>
+      {error && <div className="error-banner">{error}</div>}
+      {result && <p className="ack-done">ثبت شد: {result.id} · روش {result.method} · اعتماد {labels[result.trust_level]}</p>}
+    </form>
+  );
+}
+
+function Pilot() {
+  const { query, inputs } = usePeriod();
+  const [data, setData] = useState<PilotMetrics | null>(null);
+  const [error, setError] = useState("");
+  return (
+    <div className="panel comms-list">
+      <p className="muted">شاخص‌های قابل محاسبه از رکوردهای پایدار، هر کدام با روش سنجش. موارد دستی جدا فهرست شده‌اند. هر دریافت ممیزی می‌شود.</p>
+      {inputs}
+      <div className="report-actions">
+        <button className="primary" onClick={async () => { setError(""); try { setData(await api<PilotMetrics>(`/reports/pilot?${query}`)); } catch (e) { setError((e as Error).message); } }}><Gauge size={16} />محاسبه شاخص‌ها</button>
+      </div>
+      {error && <div className="error-banner">{error}</div>}
+      {data && (
+        <div className="patrol-report">
+          <div className="classification-banner">{data.classification_label} · ممیزی {data.audit_id}</div>
+          <div className="table-wrap"><table>
+            <thead><tr><th>شاخص</th><th>مقدار</th><th>نمونه</th><th>روش سنجش</th></tr></thead>
+            <tbody>{data.metrics.map((m) => (
+              <tr key={m.key}><td>{m.label}</td><td dir="ltr">{m.value === null ? "—" : `${fa(m.value)} ${m.unit === "count" ? "" : m.unit}`}</td><td>{fa(m.samples)}</td><td className="muted">{m.method}</td></tr>
+            ))}</tbody>
+          </table></div>
+          <h3>سنجش دستی در پایلوت</h3>
+          <ul>{data.manual_measurements.map((m) => <li key={m}>{m}</li>)}</ul>
+        </div>
+      )}
+    </div>
+  );
+}
+

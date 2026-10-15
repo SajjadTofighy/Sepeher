@@ -81,7 +81,7 @@ def save_settings(p: RuntimeSettings):
     if any(s["sensitivity"] not in p.station_sensitivity_labels for s in store.field.records("stations")):
         raise HTTPException(409, "برچسب مورد استفاده ایستگاه را نمی‌توان حذف کرد")
     store.field.save("settings", dict(id="station_sensitivity", station_sensitivity_labels=p.station_sensitivity_labels))
-    store.field.save('settings', dict(id='tour_phase_two', **{key: getattr(p, key).model_dump() if key in ('heat_profile', 'media_retention_days', 'report_routing') else getattr(p, key)
+    store.field.save('settings', dict(id='tour_phase_two', **{key: getattr(p, key).model_dump() if key in ('heat_profile', 'media_retention_days', 'report_routing', 'rate_limit_per_minute') else getattr(p, key)
         for key in ('tour_schedule_max_days', 'tour_time_jitter_percent', 'queue_reveal', 'queue_reveal_count',
                     'handover_required', 'two_person_window_minutes', 'heat_profile',
                     'field_location_max_accuracy_m', 'field_location_max_speed_kmh', 'field_clock_skew_seconds',
@@ -92,7 +92,7 @@ def save_settings(p: RuntimeSettings):
                     'media_retention_days', 'report_routing', 'message_urgent_escalation_seconds',
                     'integrity_mode', 'integrity_window_hours', 'integrity_short_dwell_count',
                     'integrity_offline_repeat_count', 'integrity_pair_minutes', 'integrity_pair_km',
-                    'exception_device_silence_minutes')}))
+                    'exception_device_silence_minutes', 'rate_limit_per_minute', 'max_json_body_bytes')}))
     state["settings"] = p.model_dump()
     audit("ذخیره تنظیمات نمایشی", "SETTINGS")
     return p

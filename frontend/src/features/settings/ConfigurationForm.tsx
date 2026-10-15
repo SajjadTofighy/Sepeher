@@ -440,6 +440,21 @@ export default function ConfigurationForm({
                 </label>
               ))}
             </div>
+            <h3>سخت‌سازی (فاز ۷): محدودیت نرخ در دقیقه</h3>
+            <div className="form-grid">
+              {draft.rate_limit_per_minute && ([
+                ["enroll", "ثبت دستگاه"], ["pin", "رمز محلی و تأیید حضور"], ["scan", "اسکن"], ["upload", "آپلود رسانه"],
+                ["emergency", "اعلام خطر (فقط پرچم؛ هرگز رد نمی‌شود)"],
+              ] as const).map(([key, label]) => (
+                <label className="field" key={key}>{label}
+                  <input type="number" min={1} value={draft.rate_limit_per_minute![key]}
+                    onChange={(e) => set("rate_limit_per_minute", { ...draft.rate_limit_per_minute!, [key]: +e.target.value })} />
+                </label>
+              ))}
+              <label className="field">سقف بدنه JSON (بایت)
+                <input type="number" min={65536} max={16777216} value={draft.max_json_body_bytes ?? ""} onChange={(e) => set("max_json_body_bytes", +e.target.value)} />
+              </label>
+            </div>
             <h3>نگهداری رسانه به تفکیک دسته (روز)</h3>
             <div className="form-grid">
               {draft.media_retention_days && (Object.keys(draft.media_retention_days) as (keyof NonNullable<RuntimeSettings["media_retention_days"]>)[]).map((key) => (

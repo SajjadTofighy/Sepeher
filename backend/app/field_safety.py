@@ -26,7 +26,13 @@ def _base(tour, device, kind, stamp, client_id=None):
     return dict(id=new_id('SAFE'), tour_id=tour['id'], guard_id=tour['guard_id'], owner_sub=tour['owner_sub'],
                 device_id=device['id'], zone_id=tour['zone_id'], contractor_id=tour['contractor_id'],
                 type=kind, client_id=client_id, created_at=stamp, incident_id=None, operator_ack_at=None,
-                operator_ack_sub=None, escalation='operator', finding_id=None)
+                operator_ack_sub=None, escalation='operator', finding_id=None, rate_flagged=rate_flagged())
+
+
+def rate_flagged():
+    from .auth import current_scope
+    scope = current_scope.get()
+    return bool(scope and scope.get('state', {}).get('rate_flagged'))
 
 
 def record_duress(tour, device, stamp, *, client_id=None, auth_expired=False, clock_regressed=False):

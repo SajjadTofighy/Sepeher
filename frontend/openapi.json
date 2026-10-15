@@ -2697,6 +2697,329 @@
         ]
       }
     },
+    "/api/v1/tour/paper-scans": {
+      "post": {
+        "tags": [
+          "supervision"
+        ],
+        "summary": "Paper Scan",
+        "description": "Later entry of the printed backup form used while the system or network was down.",
+        "operationId": "paper_scan_api_v1_tour_paper_scans_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaperScanInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanRecord"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/devices/{id}/capabilities": {
+      "post": {
+        "tags": [
+          "supervision"
+        ],
+        "summary": "Capability Report",
+        "description": "Pilot evidence from the guard's own enrolled device: feature availability, battery, token refresh.",
+        "operationId": "capability_report_api_v1_devices__id__capabilities_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceCapabilityInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceCapabilityReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reports/pilot": {
+      "get": {
+        "tags": [
+          "supervision"
+        ],
+        "summary": "Pilot Metrics",
+        "description": "Pilot indicators computable from durable records; the rest are listed as manual measurements.",
+        "operationId": "pilot_metrics_api_v1_reports_pilot_get",
+        "parameters": [
+          {
+            "name": "window_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Window From"
+            }
+          },
+          {
+            "name": "window_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Window To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PilotMetrics"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/media/uploads/{id}": {
       "put": {
         "tags": [
@@ -11928,6 +12251,7 @@
             "title": "Classification Label"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "action",
@@ -12298,6 +12622,7 @@
             "title": "Sms Login"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "carrier",
@@ -12793,6 +13118,7 @@
             "title": "Pin"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "pin"
@@ -13154,6 +13480,7 @@
             "title": "Request Id"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "asset_id",
@@ -13470,6 +13797,172 @@
         ],
         "title": "DailyTourView"
       },
+      "DeviceCapabilityInput": {
+        "properties": {
+          "barcode_detector": {
+            "type": "boolean",
+            "title": "Barcode Detector"
+          },
+          "web_nfc": {
+            "type": "boolean",
+            "title": "Web Nfc"
+          },
+          "wake_lock": {
+            "type": "boolean",
+            "title": "Wake Lock"
+          },
+          "device_motion": {
+            "type": "boolean",
+            "title": "Device Motion"
+          },
+          "battery_level": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Battery Level"
+          },
+          "charging": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Charging"
+          },
+          "auth_refresh_ok": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Auth Refresh Ok",
+            "default": 0
+          },
+          "auth_refresh_failed": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Auth Refresh Failed",
+            "default": 0
+          },
+          "platform": {
+            "type": "string",
+            "maxLength": 60,
+            "title": "Platform",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "barcode_detector",
+          "web_nfc",
+          "wake_lock",
+          "device_motion"
+        ],
+        "title": "DeviceCapabilityInput",
+        "description": "Client-observed browser capabilities and battery for pilot measurement; no location."
+      },
+      "DeviceCapabilityReport": {
+        "properties": {
+          "barcode_detector": {
+            "type": "boolean",
+            "title": "Barcode Detector"
+          },
+          "web_nfc": {
+            "type": "boolean",
+            "title": "Web Nfc"
+          },
+          "wake_lock": {
+            "type": "boolean",
+            "title": "Wake Lock"
+          },
+          "device_motion": {
+            "type": "boolean",
+            "title": "Device Motion"
+          },
+          "battery_level": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Battery Level"
+          },
+          "charging": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Charging"
+          },
+          "auth_refresh_ok": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Auth Refresh Ok",
+            "default": 0
+          },
+          "auth_refresh_failed": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Auth Refresh Failed",
+            "default": 0
+          },
+          "platform": {
+            "type": "string",
+            "maxLength": 60,
+            "title": "Platform",
+            "default": ""
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "device_id": {
+            "type": "string",
+            "title": "Device Id"
+          },
+          "owner_sub": {
+            "type": "string",
+            "title": "Owner Sub"
+          },
+          "reported_at": {
+            "type": "string",
+            "title": "Reported At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "barcode_detector",
+          "web_nfc",
+          "wake_lock",
+          "device_motion",
+          "id",
+          "device_id",
+          "owner_sub",
+          "reported_at"
+        ],
+        "title": "DeviceCapabilityReport"
+      },
       "DeviceCertificationInput": {
         "properties": {
           "ex_certified": {
@@ -13477,6 +13970,7 @@
             "title": "Ex Certified"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "ex_certified"
@@ -13498,6 +13992,7 @@
             "title": "Label"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "code",
@@ -13568,6 +14063,7 @@
             "title": "Time"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "type",
@@ -13713,6 +14209,7 @@
             "title": "Phone"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "name",
@@ -13795,6 +14292,7 @@
             "title": "Reason"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "active",
@@ -13894,6 +14392,7 @@
             "default": 300
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "owner_sub"
@@ -14133,6 +14632,7 @@
             "title": "Media Id"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "name"
@@ -14310,6 +14810,7 @@
             "title": "Unmanned"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "name",
@@ -14534,7 +15035,6 @@
             ]
           }
         },
-        "additionalProperties": false,
         "type": "object",
         "required": [
           "zone_id",
@@ -15133,6 +15633,11 @@
             "title": "Clock Regressed",
             "default": false
           },
+          "rate_flagged": {
+            "type": "boolean",
+            "title": "Rate Flagged",
+            "default": false
+          },
           "can_execute": {
             "type": "boolean",
             "const": false,
@@ -15193,6 +15698,7 @@
             "default": false
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "tour_id",
@@ -15321,6 +15827,7 @@
             "title": "Emergency Contacts"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "name",
@@ -15582,6 +16089,7 @@
             "title": "Duress Pin"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "pin",
@@ -15805,6 +16313,7 @@
             "title": "Radius M"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "type",
@@ -15844,6 +16353,7 @@
             "title": "Points"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "type",
@@ -15913,6 +16423,7 @@
             "default": 30
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "HeatProfile"
       },
@@ -15926,6 +16437,7 @@
             "title": "Sub"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "sub"
@@ -16180,6 +16692,7 @@
             "title": "Description"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "title",
@@ -16240,6 +16753,7 @@
             "title": "Features"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "type",
@@ -16342,6 +16856,7 @@
             "title": "Field"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "name",
@@ -16384,6 +16899,7 @@
             "$ref": "#/components/schemas/LayerProperties"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "type",
@@ -16412,6 +16928,7 @@
             "title": "Coordinates"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "type",
@@ -16432,6 +16949,7 @@
             "title": "Reason"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "approved",
@@ -16577,6 +17095,7 @@
             "title": "Uid"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "tour_id",
@@ -16652,6 +17171,7 @@
             "default": 90
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "MediaRetention"
       },
@@ -17090,6 +17610,7 @@
             "title": "Reason"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "zone_id",
@@ -17222,6 +17743,7 @@
             "title": "Response"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "response"
@@ -17271,6 +17793,50 @@
           "lat"
         ],
         "title": "NearbyPatrol"
+      },
+      "PaperScanInput": {
+        "properties": {
+          "scheduled_tour_id": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Scheduled Tour Id"
+          },
+          "station_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Station Id"
+          },
+          "recorded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Recorded At"
+          },
+          "form_serial": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 1,
+            "pattern": "^[0-9A-Za-z_-]+$",
+            "title": "Form Serial"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Notes",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scheduled_tour_id",
+          "station_id",
+          "recorded_at",
+          "form_serial"
+        ],
+        "title": "PaperScanInput",
+        "description": "A later entry of the printed backup patrol form; always method=paper and trust=low."
       },
       "PatrolPlan": {
         "properties": {
@@ -17586,6 +18152,94 @@
         ],
         "title": "PermissionMatrix"
       },
+      "PilotMetric": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit"
+          },
+          "samples": {
+            "type": "integer",
+            "title": "Samples"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "value",
+          "unit",
+          "samples",
+          "method"
+        ],
+        "title": "PilotMetric"
+      },
+      "PilotMetrics": {
+        "properties": {
+          "classification_label": {
+            "type": "string",
+            "title": "Classification Label"
+          },
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At"
+          },
+          "period": {
+            "$ref": "#/components/schemas/ReportPeriod"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/PilotMetric"
+            },
+            "type": "array",
+            "title": "Metrics"
+          },
+          "manual_measurements": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Manual Measurements"
+          },
+          "audit_id": {
+            "type": "string",
+            "title": "Audit Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "classification_label",
+          "generated_at",
+          "period",
+          "metrics",
+          "manual_measurements",
+          "audit_id"
+        ],
+        "title": "PilotMetrics"
+      },
       "PinUnlockInput": {
         "properties": {
           "pin": {
@@ -17600,6 +18254,7 @@
             "title": "Tour Id"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "pin",
@@ -18063,6 +18718,7 @@
             "$ref": "#/components/schemas/FacilityProperties"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "type",
@@ -18086,6 +18742,7 @@
             "title": "Coordinates"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "type",
@@ -18271,6 +18928,7 @@
             "default": "high"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "name",
@@ -18290,6 +18948,7 @@
             "title": "Status"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "status"
@@ -18353,6 +19012,7 @@
             "title": "Records"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "records"
@@ -18415,6 +19075,7 @@
             "title": "Speed"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "lon",
@@ -18533,11 +19194,54 @@
             "title": "Question"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "question"
         ],
         "title": "Question"
+      },
+      "RateLimits": {
+        "properties": {
+          "enroll": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Enroll",
+            "default": 10
+          },
+          "pin": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Pin",
+            "default": 10
+          },
+          "scan": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Scan",
+            "default": 60
+          },
+          "upload": {
+            "type": "integer",
+            "maximum": 100000.0,
+            "minimum": 1.0,
+            "title": "Upload",
+            "default": 600
+          },
+          "emergency": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Emergency",
+            "default": 10
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "RateLimits"
       },
       "ReportAckInput": {
         "properties": {
@@ -18715,6 +19419,7 @@
             "title": "Other"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "ReportRouting"
       },
@@ -18873,6 +19578,7 @@
             "default": 0.1
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "RiskWeights"
       },
@@ -18912,6 +19618,16 @@
       },
       "RuntimeSettings": {
         "properties": {
+          "rate_limit_per_minute": {
+            "$ref": "#/components/schemas/RateLimits"
+          },
+          "max_json_body_bytes": {
+            "type": "integer",
+            "maximum": 16777216.0,
+            "minimum": 65536.0,
+            "title": "Max Json Body Bytes",
+            "default": 2097152
+          },
           "integrity_mode": {
             "type": "string",
             "enum": [
@@ -19437,6 +20153,7 @@
             "default": 0.7
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "RuntimeSettings"
       },
@@ -19455,6 +20172,7 @@
             "title": "Note"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "SafetyConfirmation"
       },
@@ -19547,7 +20265,8 @@
               "hmac_valid",
               "uid_only",
               "manual",
-              "replay"
+              "replay",
+              "paper"
             ],
             "title": "Tag"
           },
@@ -19615,6 +20334,16 @@
           "id": {
             "type": "string",
             "title": "Id"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "tag",
+              "manual",
+              "paper"
+            ],
+            "title": "Method",
+            "default": "tag"
           },
           "station_id": {
             "type": "string",
@@ -19917,6 +20646,7 @@
             "title": "Contractor Id"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "zone_id",
@@ -19991,6 +20721,7 @@
             "title": "Reason"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "expected_value",
@@ -20098,6 +20829,7 @@
             "title": "Label"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "start_offset_minutes",
@@ -20126,6 +20858,7 @@
             "title": "Anchor Date"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "on_days",
@@ -20249,6 +20982,7 @@
             "default": ""
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "zone_id",
@@ -20347,6 +21081,7 @@
             "title": "Breaks"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "name",
@@ -20519,6 +21254,7 @@
             "title": "Duration Minutes"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "start",
@@ -20582,6 +21318,7 @@
             "title": "Signature"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "kind",
@@ -20716,7 +21453,6 @@
             "title": "Created At"
           }
         },
-        "additionalProperties": false,
         "type": "object",
         "required": [
           "zone_id",
@@ -20967,6 +21703,7 @@
             "title": "Previous Device Time"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "payload"
@@ -21103,6 +21840,7 @@
             "title": "Reason"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "tag_status",
@@ -21210,7 +21948,6 @@
             "title": "Created At"
           }
         },
-        "additionalProperties": false,
         "type": "object",
         "required": [
           "kind",
@@ -21251,6 +21988,7 @@
             "title": "Media Id"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "StationTaskAnswer"
       },
@@ -21592,6 +22330,7 @@
             "title": "Reason"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "reason"
@@ -21718,6 +22457,7 @@
             "title": "Tour Id"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "payload",
@@ -21984,6 +22724,7 @@
             "title": "Label"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "zone_id",
@@ -22127,6 +22868,7 @@
             "title": "Scheduled Tour Id"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "route_id"
@@ -22448,6 +23190,7 @@
             "title": "Must Precede"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "zone_id",
@@ -22566,6 +23309,7 @@
             "default": 1
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "route_id",
@@ -22629,6 +23373,7 @@
             "default": ""
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "status"
@@ -22794,6 +23539,7 @@
             "title": "Points"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "name",
