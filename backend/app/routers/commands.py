@@ -5,8 +5,8 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, Query
 
 from ..field import device_profiles
-from ..models import Command, CommandInput, CommandPreview, DeviceProfile
-from ..store import audit, lookup, now, refresh_commands, state, StateRoute
+from ..core.models import Command, CommandInput, CommandPreview, DeviceProfile
+from ..core.store import audit, lookup, now, refresh_commands, state, StateRoute
 
 router = APIRouter(route_class=StateRoute, tags=["commands"])
 

@@ -8,9 +8,9 @@ import sys
 import pytest
 from fastapi.testclient import TestClient
 
-from app import store
+from app.core import store
 from app.field import media as field_media
-from app.fieldstore import FieldStore
+from app.core.fieldstore import FieldStore
 from app.main import app
 from test_intel_field_media import put, start
 from test_intel_field_safety import setup_field
@@ -54,7 +54,7 @@ def test_backup_delete_restore_equality_and_tamper_refusal(field_database, track
     assert copy.audits() == audits and copy.verify_audit()
     assert copy.get('media', media_id)['sha256'] == hashlib.sha256(body).hexdigest()
     assert (restored_media / 'objects' / f'{media_id}.bin').read_bytes() == body
-    from app.tracks import TrackStore
+    from app.core.tracks import TrackStore
     assert TrackStore(track_db).read('AST-009') == tracks
     with pytest.raises(FileExistsError):
         restore.restore(target, field_db, track_db, restored_media)

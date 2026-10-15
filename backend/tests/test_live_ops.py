@@ -3,9 +3,9 @@ import time
 import pytest
 from fastapi.testclient import TestClient
 
-from app import engine, sim
+from app.core import engine, sim
 from app.main import app
-from app.store import state
+from app.core.store import state
 
 
 class Clock:

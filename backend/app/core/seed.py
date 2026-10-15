@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 from .models import RuntimeSettings
 
-from .intel.geo import derive_segments
+from ..intel.geo import derive_segments
 
 PERSIAN_DIGITS = str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹")
 

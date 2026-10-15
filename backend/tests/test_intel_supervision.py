@@ -1,7 +1,7 @@
 """Phase six: exception board, station verification, integrity rules and patrol reports."""
 from fastapi.testclient import TestClient
 
-from app import store
+from app.core import store
 from app.intel import worker
 from app.main import app
 from test_auth_access import bearer

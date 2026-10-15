@@ -5,9 +5,9 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from fastapi.testclient import TestClient
 
-from app import engine, store
+from app.core import engine, store
 from app.main import app
-from app.seed import seed
+from app.core.seed import seed
 
 
 @pytest.fixture

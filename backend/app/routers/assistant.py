@@ -6,9 +6,9 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter
 
-from ..tracks import parse_timestamp
-from ..models import AssistantAnswer, Question, SEVERITY_LABELS as SEVERITY
-from ..store import state, StateRoute
+from ..core.tracks import parse_timestamp
+from ..core.models import AssistantAnswer, Question, SEVERITY_LABELS as SEVERITY
+from ..core.store import state, StateRoute
 
 router = APIRouter(route_class=StateRoute, tags=["assistant"])
 
@@ -50,7 +50,7 @@ def assistant(p: Question):
         return answer(text, list(dict.fromkeys(id for line in report["headlines"] for id in line["source_ids"])))
     if "پوشش" in q or "بازدید نشده" in q:
         from ..intel.coverage import snapshot
-        from ..store import now
+        from ..core.store import now
 
         gaps = [row for row in snapshot(now())["items"] if row["status"] != "ok"]
         gaps.sort(key=lambda row: (row["status"] != "never", -(row["age_minutes"] or 0), row["id"]))

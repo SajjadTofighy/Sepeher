@@ -4,9 +4,9 @@ import hmac
 
 from fastapi.testclient import TestClient
 
-from app import store
+from app.core import store
 from app.field import media as field_media
-from app.fieldstore import canonical
+from app.core.fieldstore import canonical
 from app.main import app
 from app.intel import worker
 from test_auth_access import bearer, link_and_enroll

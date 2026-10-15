@@ -4,7 +4,7 @@ import sqlite3
 import pytest
 from fastapi.testclient import TestClient
 
-from app import store
+from app.core import store
 from app.field import safety as field_safety
 from app.tour import tags as tour_tags
 from app.main import app

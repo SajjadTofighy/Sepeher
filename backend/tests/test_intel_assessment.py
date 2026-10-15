@@ -7,7 +7,7 @@ import sys
 
 from fastapi.testclient import TestClient
 
-from app import store
+from app.core import store
 from app.main import app
 from test_auth_access import bearer
 

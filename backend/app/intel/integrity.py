@@ -8,9 +8,9 @@ from collections import defaultdict
 from datetime import timedelta
 from itertools import combinations
 
-from .. import store
-from ..sim import distance_km
-from ..tracks import parse_timestamp
+from ..core import store
+from ..core.sim import distance_km
+from ..core.tracks import parse_timestamp
 from . import findings
 
 RULES = {

@@ -120,7 +120,7 @@ def refresh_tracks(now_iso=None, evaluate=True):
     for asset in state["assets"]:
         refresh_track(asset, at=at)
     stamp = now_iso or now()
-    from .intel.shift_report import observe_trackers
+    from ..intel.shift_report import observe_trackers
     observe_trackers(stamp)
     if evaluate:
         evaluate_policies(stamp)
@@ -142,7 +142,7 @@ def refresh_tracks(now_iso=None, evaluate=True):
 def evaluate_policies(stamp, coverage_ready=False):
     # Process arriving GPS before testing checkpoint deadlines in the same tick.
     if not coverage_ready and any(cp.get("target_id") for m in state["missions"] for cp in m["checkpoints"]):
-        from .intel import coverage
+        from ..intel import coverage
         coverage.tick(stamp)
     for asset in state["assets"]:
         engine.evaluate(state, asset, stamp, create_incident, audit)
@@ -179,7 +179,7 @@ def create_incident(title, severity, zone, asset, description, first_action, zon
         timeline=[dict(time=now(), action=first_action, actor=actor)],
     )
     state["incidents"].insert(0, item)
-    from .intel.bayes import persist_incident
+    from ..intel.bayes import persist_incident
     persist_incident(item)
     policy = next((p for p in state["policies"] if p["id"] == policy_id), None)
     if policy and policy["condition"] == "sos":
@@ -190,7 +190,7 @@ def create_incident(title, severity, zone, asset, description, first_action, zon
 
 @state_locked
 def attach_emergency_context(incident, kind):
-    from .routers.incidents import nearby_patrols
+    from ..routers.incidents import nearby_patrols
 
     incident.update(kind=kind, emergency_contacts=deepcopy(state["settings"]["intel_emergency_contacts"]),
                     backup_patrols=nearby_patrols(incident))
@@ -210,7 +210,7 @@ def lookup(collection, id):
 
 @state_locked
 def audit(action, target, detail="", actor="اپراتور نمایشی"):
-    from .security.auth import current_principal
+    from ..security.auth import current_principal
     principal = current_principal.get()
     item = field.append_audit(dict(
         time=now(),
@@ -311,12 +311,12 @@ def begin_data_epoch(stamp=None):
     state["data_since"] = stamp or now()
     entry = audit("آغاز دوره داده‌های عملیاتی", "DATA-EPOCH", state["data_since"], actor="سامانه")
     state["data_source_id"] = entry["id"]
-    from .intel.shift_report import observe_trackers
+    from ..intel.shift_report import observe_trackers
     observe_trackers(state["data_since"])
 
 
 def summary():
-    from .intel.coverage import snapshot
+    from ..intel.coverage import snapshot
 
     coverage = snapshot(now())["totals"]
     active = [x for x in state["incidents"] if x["status"] != "closed"]

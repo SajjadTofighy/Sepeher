@@ -2,10 +2,10 @@
 from datetime import timedelta
 import hashlib
 
-from .. import store
-from ..fieldstore import canonical
-from ..sim import distance_km
-from ..tracks import parse_timestamp
+from ..core import store
+from ..core.fieldstore import canonical
+from ..core.sim import distance_km
+from ..core.tracks import parse_timestamp
 
 
 def sequence_for(tour, station_id):

@@ -7,11 +7,11 @@ from types import SimpleNamespace
 import pytest
 from fastapi.testclient import TestClient
 
-from app import sim, store
+from app.core import sim, store
 from app.intel import coverage, geo, worker
 from app.main import app
 from app.routers.incidents import dispatchable, patrol_vehicle
-from app.seed import seed
+from app.core.seed import seed
 
 
 @pytest.fixture

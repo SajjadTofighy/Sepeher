@@ -10,11 +10,11 @@ import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
-from app import engine, sim, store
+from app.core import engine, sim, store
 from app.intel import coverage, patrol, risk, worker
 from app.main import app
-from app.models import PatrolPlanInput
-from app.seed import seed
+from app.core.models import PatrolPlanInput
+from app.core.seed import seed
 
 
 @pytest.fixture

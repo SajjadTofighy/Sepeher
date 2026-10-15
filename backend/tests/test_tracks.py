@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
 from fastapi.testclient import TestClient
 from app.main import app
-from app import store
-from app.tracks import TrackStore
+from app.core import store
+from app.core.tracks import TrackStore
 
 
 def test_positions_survive_reopen_reset_and_out_of_order_delivery(track_database, monkeypatch):

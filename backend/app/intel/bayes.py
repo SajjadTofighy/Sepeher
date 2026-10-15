@@ -14,8 +14,8 @@ Credible bounds use the regularized incomplete gamma function implemented here
 from datetime import datetime, timezone
 import math
 
-from .. import store
-from ..tracks import parse_timestamp
+from ..core import store
+from ..core.tracks import parse_timestamp
 
 YEAR_DAYS = 365.2425
 FPMIN = 1e-300

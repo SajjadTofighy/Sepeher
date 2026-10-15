@@ -10,11 +10,11 @@ import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from app import engine, sim, store
+from app.core import engine, sim, store
 from app.intel import findings, geo, worker
 from app.main import app
-from app.models import Finding
-from app.seed import seed
+from app.core.models import Finding
+from app.core.seed import seed
 
 
 @pytest.fixture

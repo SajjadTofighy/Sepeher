@@ -10,12 +10,12 @@ from types import SimpleNamespace
 import pytest
 from fastapi.testclient import TestClient
 
-from app import sim, store
+from app.core import sim, store
 from app.tour import schedule as tour_schedule
 from app.intel import bayes, game, patrol, patrol_game, risk
 from app.main import app
-from app.models import PatrolGameSettings, PatrolPlan, PatrolPlanInput, PatrolStrategy
-from app.seed import seed
+from app.core.models import PatrolGameSettings, PatrolPlan, PatrolPlanInput, PatrolStrategy
+from app.core.seed import seed
 
 
 def poisson_cdf_complement(a, x):

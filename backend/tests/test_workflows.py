@@ -5,7 +5,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import pytest
 from app.main import app
 from app.routers import commands
-from app.store import state
+from app.core.store import state
 from fastapi.testclient import TestClient
 
 

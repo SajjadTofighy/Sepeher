@@ -8,10 +8,11 @@ import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from app import main, sim, store
+from app import main
+from app.core import sim, store
 from app.intel import coverage, shift_report, worker
-from app.models import RuntimeSettings, ShiftReport
-from app.seed import seed
+from app.core.models import RuntimeSettings, ShiftReport
+from app.core.seed import seed
 
 
 @pytest.fixture

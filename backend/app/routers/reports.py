@@ -5,9 +5,9 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 from pydantic import AwareDatetime
 
-from .. import store
+from ..core import store
 from ..intel import shift_report
-from ..models import ShiftReport
+from ..core.models import ShiftReport
 
 router = APIRouter(route_class=store.StateRoute, tags=["reports"])
 

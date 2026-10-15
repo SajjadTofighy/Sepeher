@@ -5,9 +5,9 @@ from urllib.parse import urlencode, urlsplit
 import pytest
 from fastapi.testclient import TestClient
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from app import store
+from app.core import store
 from app.tour import qr, tags as tour_tags
-from app.fieldstore import FieldStore
+from app.core.fieldstore import FieldStore
 from app.main import app
 from app.tour.sun import cmac, verify_sun
 from test_auth_access import bearer, create_route, link_and_enroll
@@ -285,7 +285,7 @@ def test_no_tag_state_bypass_and_atomic_replay_rollback(client,token_factory):
 
 
 def test_phase_zero_database_migration_preserves_entities(tmp_path, monkeypatch):
-    from app import fieldstore
+    from app.core import fieldstore
     migrations=fieldstore.MIGRATIONS
     with monkeypatch.context() as patch:
         patch.setattr(fieldstore,'MIGRATIONS',migrations[:2])

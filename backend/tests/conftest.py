@@ -13,9 +13,9 @@ os.environ["SEPEHR_FIELD_DB"] = str(Path(_database_dir.name) / "field.sqlite3")
 
 @pytest.fixture(autouse=True)
 def track_database(tmp_path, monkeypatch):
-    from app import store
-    from app.seed import seed
-    from app.tracks import TrackStore
+    from app.core import store
+    from app.core.seed import seed
+    from app.core.tracks import TrackStore
     repository = TrackStore(tmp_path / "tracks.sqlite3")
     repository.seed_missing(seed()["assets"])
     monkeypatch.setattr(store, "tracks", repository)
@@ -64,10 +64,10 @@ def authenticated_client(monkeypatch, signing_key, token_factory):
 
 @pytest.fixture(autouse=True)
 def field_database(tmp_path, monkeypatch, track_database):
-    from app import store
+    from app.core import store
     from app.security import hardening
-    from app.fieldstore import FieldStore
-    from app.seed import seed
+    from app.core.fieldstore import FieldStore
+    from app.core.seed import seed
     hardening.limiter.reset()
     repository = FieldStore(tmp_path / "field.sqlite3")
     monkeypatch.setattr(store, "field", repository)

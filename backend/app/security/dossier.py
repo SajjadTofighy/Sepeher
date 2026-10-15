@@ -8,7 +8,7 @@ audit-chain health and the documented residual risks. It changes nothing.
 import os
 
 from . import auth, authz
-from .. import store
+from ..core import store
 from ..field.media import jalali_stamp
 
 CRYPTOGRAPHY = (

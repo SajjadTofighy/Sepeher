@@ -2,7 +2,7 @@
 
 import math
 
-from ..sim import EARTH_RADIUS_M, distance_km
+from ..core.sim import EARTH_RADIUS_M, distance_km
 
 
 def project_m(point, reference_lat, reference_lon=0):
@@ -33,7 +33,7 @@ def closest_segment_point(point, a, b):
 
 
 def hazard_contains(point, area):
-    from ..engine import point_in_polygon
+    from ..core.engine import point_in_polygon
 
     if area["type"] == "circle":
         return distance_km(point, area["center"]) * 1000 <= area["radius_m"]

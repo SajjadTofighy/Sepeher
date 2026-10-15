@@ -8,8 +8,8 @@ import threading
 
 from fastapi import HTTPException
 
-from .. import store
-from ..tracks import parse_timestamp
+from ..core import store
+from ..core.tracks import parse_timestamp
 
 # (method, path pattern) -> category; patterns cover every enrollment, PIN, scan and upload entry point.
 CATEGORIES = (

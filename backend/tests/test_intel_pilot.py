@@ -1,7 +1,7 @@
 """Phase seven pilot measurement: device capability reports and computed pilot indicators."""
 from fastapi.testclient import TestClient
 
-from app import store
+from app.core import store
 from app.main import app
 from test_auth_access import bearer
 from test_intel_field_safety import setup_field

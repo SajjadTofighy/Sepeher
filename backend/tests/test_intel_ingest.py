@@ -7,10 +7,11 @@ from types import SimpleNamespace
 import pytest
 from fastapi.testclient import TestClient
 
-from app import engine, main, sim, store
+from app import main
+from app.core import engine, sim, store
 from app.intel import coverage, geo, worker
-from app.models import RuntimeSettings
-from app.seed import seed
+from app.core.models import RuntimeSettings
+from app.core.seed import seed
 
 
 @pytest.fixture
