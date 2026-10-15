@@ -13,6 +13,9 @@ import {
 } from "lucide-react";
 import maplibregl, { type Map as GLMap, type GeoJSONSource } from "maplibre-gl";
 import { useQuery } from "@tanstack/react-query";
+import type { StyleSpecification } from "maplibre-gl";
+// Replaced at build time: the production bundle defines NODE_ENV="production".
+declare const process: { env: { NODE_ENV?: string } };
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { api, fa } from "../../api";
@@ -24,12 +27,14 @@ import type {
   NearbyPatrol,
   PatrolPlan,
   RiskStatus,
+  RuntimeSettings,
   Segment,
 } from "../../types";
 import {
   collection,
   feature,
   mapStyle,
+  schematicStyle,
   operationalBounds,
   OMIDIYEH_CENTER,
   baseLayerIds,
@@ -122,6 +127,10 @@ function MapContent(props: Props) {
   }, [props.theme]);
   const activeBasemap = useRef(basemap);
   activeBasemap.current = basemap;
+  const settings = useQuery({ queryKey: ["settings"], queryFn: () => api<RuntimeSettings>("/settings") });
+  const internalStyle = settings.data?.basemap_style_url || "";
+  // Public demo tiles exist only in development builds; production uses internal or schematic maps.
+  const publicBasemap = process.env.NODE_ENV !== "production" && !internalStyle;
   const coverage = useQuery({
     queryKey: ["intel", "coverage"],
     queryFn: ({ signal }) =>
@@ -277,7 +286,8 @@ function MapContent(props: Props) {
           "circle-stroke-color": "#09131c",
         },
       });
-      m.addLayer({
+      // Line labels need glyphs, which only the public development style provides.
+      if (m.getStyle().glyphs) m.addLayer({
         id: "patrol-plan-label",
         type: "symbol",
         source: "patrol-plan-preview",
@@ -360,7 +370,7 @@ function MapContent(props: Props) {
       }
       m = new maplibregl.Map({
         container: ref.current,
-        style: mapStyle,
+        style: publicBasemap ? mapStyle : schematicStyle,
         center: OMIDIYEH_CENTER,
         zoom: 14,
         minZoom: 2,
@@ -865,8 +875,31 @@ function MapContent(props: Props) {
     );
   }, [layers, ready]);
   useEffect(() => {
+    // Approved internal style: its sources and layers go beneath the operational layers.
+    const m = map.current;
+    if (!m || !ready || !internalStyle) return;
+    let cancelled = false;
+    fetch(internalStyle)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((style: StyleSpecification) => {
+        if (cancelled) return;
+        const first = m.getStyle().layers.find((l) => l.id !== "background")?.id;
+        Object.entries(style.sources).forEach(([id, src]) => { if (!m.getSource(`base-${id}`)) m.addSource(`base-${id}`, src); });
+        style.layers.forEach((layer) => {
+          if (layer.type === "symbol" || m.getLayer(`base-${layer.id}`)) return; // no remote glyphs in the merged style
+          const copy = { ...layer, id: `base-${layer.id}` } as typeof layer & { source?: string };
+          if ("source" in layer && layer.source) copy.source = `base-${layer.source}`;
+          m.addLayer(copy as Parameters<typeof m.addLayer>[0], first);
+        });
+        setTileStatus("ready");
+      })
+      .catch(() => !cancelled && setTileStatus("error"));
+    return () => { cancelled = true; };
+  }, [ready, internalStyle]);
+  useEffect(() => {
     const m = map.current;
     if (!m || !ready) return;
+    if (!publicBasemap) return;
     baseLayerIds.forEach((id) => {
       const visible =
         basemap === "night" &&

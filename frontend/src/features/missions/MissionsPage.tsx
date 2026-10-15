@@ -4,6 +4,7 @@ import type { Act } from "../../shared/lib/actions";
 import { Badge } from "../../shared/ui/primitives";
 import type { Data } from "../../types";
 import PatrolPlanner from "./PatrolPlanner";
+import MissionCommandsPanel from "../mission-commands/MissionCommandsPanel";
 import { useEffect } from "react";
 
 export default function MissionsPage({
@@ -40,6 +41,7 @@ export default function MissionsPage({
       <article className="mission-kpi completed"><span><CheckCircle2 size={20}/></span><div><small>تکمیل‌شده</small><b>{fa(completed)}</b><p>مأموریت خاتمه‌یافته</p></div></article>
     </div>
     <PatrolPlanner data={data} busy={busy} act={act} theme={theme} />
+    <MissionCommandsPanel act={act} busy={busy} />
     <div className="mission-section-head"><span><Route size={18}/></span><div><b>مأموریت‌های جاری</b><small>وضعیت، پیشرفت و ایستگاه‌های عملیاتی</small></div><em>{fa(data.missions.length)} مأموریت</em></div>
     <div className="mission-grid">
       {data.missions.map((m) => (

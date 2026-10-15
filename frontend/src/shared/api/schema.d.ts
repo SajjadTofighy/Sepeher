@@ -38,6 +38,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Changes
+         * @description Long-poll the live picture: returns as soon as something changed, or after ``wait`` seconds.
+         */
+        get: operations["changes_api_v1_changes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/map/features": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Map Features
+         * @description Bounded spatial query: features inside lon/lat bbox (WGS84, lon first), capped by limit.
+         */
+        get: operations["map_features_api_v1_map_features_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tracks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Track Batch
+         * @description History for replay over a window, separate from the live picture and capped in total.
+         */
+        get: operations["track_batch_api_v1_tracks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/assets": {
         parameters: {
             query?: never;
@@ -64,6 +124,26 @@ export interface paths {
         };
         /** Track */
         get: operations["track_api_v1_assets__id__track_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assets/{id}/observations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Observations
+         * @description Raw observations with quality evidence, including points never accepted for live.
+         */
+        get: operations["observations_api_v1_assets__id__observations_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -202,7 +282,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Events */
+        /**
+         * Events
+         * @description SSE of the change journal. Resumes from Last-Event-ID (or ``cursor``); ``reset`` asks for a reload.
+         *
+         *     Locked work runs in a worker thread: the event loop must never wait on the state lock.
+         */
         get: operations["events_api_v1_events_get"];
         put?: never;
         post?: never;
@@ -1106,6 +1191,109 @@ export interface paths {
         get: operations["pilot_metrics_api_v1_reports_pilot_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/mission-commands/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview */
+        post: operations["preview_api_v1_mission_commands_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/mission-commands": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listing */
+        get: operations["listing_api_v1_mission_commands_get"];
+        put?: never;
+        /** Create */
+        post: operations["create_api_v1_mission_commands_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/mission-commands/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detail */
+        get: operations["detail_api_v1_mission_commands__id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/mission-commands/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel */
+        post: operations["cancel_api_v1_mission_commands__id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tour/mission-commands": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Inbox */
+        get: operations["inbox_api_v1_tour_mission_commands_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tour/mission-commands/{id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Act */
+        post: operations["act_api_v1_tour_mission_commands__id__events_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2710,6 +2898,20 @@ export interface components {
              * @default false
              */
             sms_password_set: boolean;
+            /**
+             * Position State
+             * @default unknown
+             * @enum {string}
+             */
+            position_state: "fresh" | "stale" | "no_fix" | "unknown" | "simulated";
+            /** Position Age Seconds */
+            position_age_seconds?: number | null;
+            /** Position Accuracy M */
+            position_accuracy_m?: number | null;
+            /** Position Flags */
+            position_flags?: string[];
+            /** Last Contact At */
+            last_contact_at?: string | null;
         };
         /** AssetSettings */
         AssetSettings: {
@@ -2939,6 +3141,33 @@ export interface components {
             /** Max Bytes */
             max_bytes: number;
         };
+        /**
+         * ChangeSet
+         * @description Entities changed after a cursor. reset=true: reload the snapshot (restart, gap or unknown cursor).
+         */
+        ChangeSet: {
+            /** Cursor */
+            cursor: string;
+            /** Reset */
+            reset: boolean;
+            /** Assets */
+            assets?: components["schemas"]["Asset"][];
+            /** Incidents */
+            incidents?: components["schemas"]["Incident"][];
+            /** Alerts */
+            alerts?: components["schemas"]["Alert"][];
+            /** Missions */
+            missions?: components["schemas"]["Mission"][];
+            /** Commands */
+            commands?: components["schemas"]["Command"][];
+            /** Removed */
+            removed?: {
+                [key: string]: string[];
+            };
+            summary?: components["schemas"]["Summary"] | null;
+            /** Server Time */
+            server_time: string;
+        };
         /** CheckInInput */
         CheckInInput: {
             /** Pin */
@@ -3063,6 +3292,66 @@ export interface components {
              */
             gateway: "none";
         };
+        /** CommandCandidate */
+        CommandCandidate: {
+            /** Asset Id */
+            asset_id: string;
+            /** Name */
+            name: string;
+            /** Position State */
+            position_state: string;
+            /** Lon */
+            lon: number | null;
+            /** Lat */
+            lat: number | null;
+            /** Observed At */
+            observed_at: string | null;
+            /** Distance M */
+            distance_m: number | null;
+            /** Inside */
+            inside: boolean | null;
+            /** Can Receive */
+            can_receive: boolean;
+            /** Reason */
+            reason: string;
+        };
+        /** CommandEvent */
+        CommandEvent: {
+            /** Time */
+            time: string;
+            /** Actor */
+            actor: string;
+            /** Asset Id */
+            asset_id: string | null;
+            /** Action */
+            action: string;
+            /** From Status */
+            from_status: string | null;
+            /** To Status */
+            to_status: string | null;
+            /** Event Id */
+            event_id?: string | null;
+            /** Applied */
+            applied: boolean;
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
+        };
+        /**
+         * CommandGeometry
+         * @description GeoJSON geometry (WGS84, longitude first) of a spatial mission command.
+         */
+        CommandGeometry: {
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "Point" | "LineString" | "Polygon";
+            /** Coordinates */
+            coordinates: unknown;
+        };
         /** CommandInput */
         CommandInput: {
             /** Asset Id */
@@ -3109,6 +3398,33 @@ export interface components {
             gateway: "none";
             /** Note */
             note: string;
+        };
+        /** CommandRecipient */
+        CommandRecipient: {
+            /** Asset Id */
+            asset_id: string;
+            /** Name */
+            name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "dispatched" | "delivered" | "acknowledged" | "in_progress" | "completed" | "rejected" | "failed" | "expired" | "cancelled";
+            snapshot: components["schemas"]["CommandCandidate"];
+            /** Delivered At */
+            delivered_at?: string | null;
+            /** Delivered Device Id */
+            delivered_device_id?: string | null;
+            /** Acknowledged At */
+            acknowledged_at?: string | null;
+            /** Started At */
+            started_at?: string | null;
+            /** Finished At */
+            finished_at?: string | null;
+            /** Note */
+            note?: string | null;
+            /** Evidence */
+            evidence?: number[] | null;
         };
         /** ComplianceTotals */
         ComplianceTotals: {
@@ -4446,6 +4762,39 @@ export interface components {
             /** Uid */
             uid?: string | null;
         };
+        /** MapFeature */
+        MapFeature: {
+            /** Id */
+            id: string;
+            /**
+             * Layer
+             * @enum {string}
+             */
+            layer: "assets" | "incidents" | "facilities";
+            /** Name */
+            name: string;
+            /** Lon */
+            lon: number;
+            /** Lat */
+            lat: number;
+            /** Status */
+            status: string;
+            /** Kind */
+            kind?: string | null;
+            /** Position State */
+            position_state?: string | null;
+            /** Severity */
+            severity?: string | null;
+        };
+        /** MapFeatureResult */
+        MapFeatureResult: {
+            /** Features */
+            features: components["schemas"]["MapFeature"][];
+            /** Total */
+            total: number;
+            /** Truncated */
+            truncated: boolean;
+        };
         /** MediaAttachInput */
         MediaAttachInput: {
             /** Incident Id */
@@ -4602,6 +4951,158 @@ export interface components {
             plan_id?: string | null;
             /** Plan Window Minutes */
             plan_window_minutes?: number | null;
+        };
+        /**
+         * MissionCommand
+         * @description A human spatial order, distinct from a device command; can_execute is always false.
+         */
+        MissionCommand: {
+            /** Id */
+            id: string;
+            /** Revision */
+            revision: number;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "visit_point" | "inspect_area" | "patrol_line" | "check_alarm" | "presence";
+            /** Title */
+            title: string;
+            /** Instructions */
+            instructions: string;
+            /**
+             * Priority
+             * @enum {string}
+             */
+            priority: "normal" | "urgent";
+            geometry: components["schemas"]["CommandGeometry"];
+            /** Radius M */
+            radius_m: number;
+            /** Status */
+            status: string;
+            /** Created At */
+            created_at: string;
+            /** Created By */
+            created_by: string;
+            /** Expires At */
+            expires_at: string;
+            /** Due At */
+            due_at: string | null;
+            /**
+             * Overdue
+             * @default false
+             */
+            overdue: boolean;
+            /** Recipients */
+            recipients: components["schemas"]["CommandRecipient"][];
+            /** Timeline */
+            timeline: components["schemas"]["CommandEvent"][];
+            /** Zone Id */
+            zone_id?: string | null;
+            /** Contractor Id */
+            contractor_id?: string | null;
+            /**
+             * Can Execute
+             * @default false
+             * @constant
+             */
+            can_execute: false;
+        };
+        /**
+         * MissionCommandAction
+         * @description Field action by the addressed guard; event_id makes retries (double tap, offline resend) idempotent.
+         */
+        MissionCommandAction: {
+            /** Event Id */
+            event_id: string;
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "acknowledge" | "reject" | "start" | "complete" | "fail";
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /** Lon */
+            lon?: number | null;
+            /** Lat */
+            lat?: number | null;
+        };
+        /** MissionCommandCancel */
+        MissionCommandCancel: {
+            /** Reason */
+            reason: string;
+            /** Revision */
+            revision: number;
+        };
+        /** MissionCommandInput */
+        MissionCommandInput: {
+            /** Idempotency Key */
+            idempotency_key: string;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "visit_point" | "inspect_area" | "patrol_line" | "check_alarm" | "presence";
+            /** Title */
+            title: string;
+            /**
+             * Instructions
+             * @default
+             */
+            instructions: string;
+            /**
+             * Priority
+             * @default normal
+             * @enum {string}
+             */
+            priority: "normal" | "urgent";
+            geometry: components["schemas"]["CommandGeometry"];
+            /**
+             * Radius M
+             * @default 0
+             */
+            radius_m: number;
+            /** Recipients */
+            recipients: string[];
+            /** Snapshot Id */
+            snapshot_id: string;
+            /**
+             * Ack Ttl Minutes
+             * @default 15
+             */
+            ack_ttl_minutes: number;
+            /** Due At */
+            due_at?: string | null;
+        };
+        /**
+         * MissionCommandPreview
+         * @description Who is in the area now. Only fresh positions count as inside; stale/unknown are listed apart.
+         */
+        MissionCommandPreview: {
+            /** Snapshot Id */
+            snapshot_id: string;
+            /** Eligible */
+            eligible: components["schemas"]["CommandCandidate"][];
+            /** Needs Review */
+            needs_review: components["schemas"]["CommandCandidate"][];
+            /** Outside */
+            outside: components["schemas"]["CommandCandidate"][];
+            /** Cannot Receive */
+            cannot_receive: components["schemas"]["CommandCandidate"][];
+            /** Computed At */
+            computed_at: string;
+        };
+        /** MissionCommandPreviewInput */
+        MissionCommandPreviewInput: {
+            geometry: components["schemas"]["CommandGeometry"];
+            /**
+             * Radius M
+             * @default 0
+             */
+            radius_m: number;
         };
         /** Muster */
         Muster: {
@@ -5294,7 +5795,7 @@ export interface components {
         /** PositionBatchResult */
         PositionBatchResult: {
             /** Accepted */
-            accepted: components["schemas"]["TrackPoint"][];
+            accepted: components["schemas"]["PositionReceipt"][];
             /** Clock Regressed Client Ids */
             clock_regressed_client_ids: string[];
         };
@@ -5311,6 +5812,69 @@ export interface components {
             time?: string;
             /** Speed */
             speed?: number | null;
+            /** Accuracy M */
+            accuracy_m?: number | null;
+            /**
+             * Fix Source
+             * @default unknown
+             * @enum {string}
+             */
+            fix_source: "gnss" | "network" | "fused" | "manual" | "unknown";
+            /** Sequence */
+            sequence?: number | null;
+        };
+        /**
+         * PositionObservation
+         * @description Raw stored observation with its quality evidence; live=false points never moved the live position.
+         */
+        PositionObservation: {
+            /** Lon */
+            lon: number;
+            /** Lat */
+            lat: number;
+            /** Time */
+            time: string;
+            /** Speed */
+            speed: number | null;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "reported" | "demo";
+            /** Received At */
+            received_at: string | null;
+            /** Accuracy M */
+            accuracy_m: number | null;
+            /** Fix Source */
+            fix_source: string;
+            /** Sequence */
+            sequence: number | null;
+            /** Auth */
+            auth: string | null;
+            /** Flags */
+            flags: string[];
+            /** Live */
+            live: boolean;
+        };
+        /**
+         * PositionReceipt
+         * @description What the server did with one observation: durable first, then accepted for live or history only.
+         */
+        PositionReceipt: {
+            /** Lon */
+            lon: number;
+            /** Lat */
+            lat: number;
+            /** Time */
+            time: string;
+            /** Received At */
+            received_at: string;
+            /** Created */
+            created: boolean;
+            /** Live */
+            live: boolean;
+            /** Flags */
+            flags?: ("accuracy_unknown" | "low_accuracy" | "clock_ahead" | "late" | "implausible_speed")[];
         };
         /** PressureContext */
         PressureContext: {
@@ -5621,6 +6185,11 @@ export interface components {
              * @default 2097152
              */
             max_json_body_bytes: number;
+            /**
+             * Map Trail Points
+             * @default 60
+             */
+            map_trail_points: number;
             /**
              * Integrity Mode
              * @default shadow
@@ -5978,6 +6547,11 @@ export interface components {
              * @default 0.7
              */
             gis_opacity: number;
+            /**
+             * Basemap Style Url
+             * @default
+             */
+            basemap_style_url: string;
         };
         /** SafetyConfirmation */
         SafetyConfirmation: {
@@ -7186,6 +7760,15 @@ export interface components {
              */
             tours_per_shift: number;
         };
+        /** TrackBatch */
+        TrackBatch: {
+            /** Tracks */
+            tracks: {
+                [key: string]: components["schemas"]["TrackPoint"][];
+            };
+            /** Truncated */
+            truncated: boolean;
+        };
         /** TrackPoint */
         TrackPoint: {
             /** Lon */
@@ -7321,6 +7904,105 @@ export interface operations {
             };
         };
     };
+    changes_api_v1_changes_get: {
+        parameters: {
+            query: {
+                cursor: string;
+                wait?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChangeSet"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    map_features_api_v1_map_features_get: {
+        parameters: {
+            query: {
+                bbox: string;
+                layers?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MapFeatureResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    track_batch_api_v1_tracks_get: {
+        parameters: {
+            query: {
+                since: string;
+                until: string;
+                asset_id: string[];
+                limit_per_asset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackBatch"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     assets_api_v1_assets_get: {
         parameters: {
             query?: never;
@@ -7363,6 +8045,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TrackPoint"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    observations_api_v1_assets__id__observations_get: {
+        parameters: {
+            query?: {
+                since?: string | null;
+                until?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PositionObservation"][];
                 };
             };
             /** @description Validation Error */
@@ -7518,7 +8235,9 @@ export interface operations {
     };
     events_api_v1_events_get: {
         parameters: {
-            query?: never;
+            query?: {
+                cursor?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -7532,6 +8251,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -8356,7 +9084,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TrackPoint"];
+                    "application/json": components["schemas"]["PositionReceipt"];
                 };
             };
             /** @description Validation Error */
@@ -9516,6 +10244,539 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PilotMetrics"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+        };
+    };
+    preview_api_v1_mission_commands_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MissionCommandPreviewInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MissionCommandPreview"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+        };
+    };
+    listing_api_v1_mission_commands_get: {
+        parameters: {
+            query?: {
+                status?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MissionCommand"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+        };
+    };
+    create_api_v1_mission_commands_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MissionCommandInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MissionCommand"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+        };
+    };
+    detail_api_v1_mission_commands__id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MissionCommand"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+        };
+    };
+    cancel_api_v1_mission_commands__id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MissionCommandCancel"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MissionCommand"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+        };
+    };
+    inbox_api_v1_tour_mission_commands_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MissionCommand"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+        };
+    };
+    act_api_v1_tour_mission_commands__id__events_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MissionCommandAction"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MissionCommand"];
                 };
             };
             /** @description Unauthorized */

@@ -296,6 +296,16 @@ export default function ConfigurationForm({
         {tab === "gis" && (
           <>
             <label className="field">
+              نقشه پایه داخلی (آدرس style سازمان)
+              <input
+                dir="ltr"
+                placeholder="https://gis.internal/styles/base/style.json"
+                value={draft.basemap_style_url ?? ""}
+                onChange={(e) => set("basemap_style_url", e.target.value.trim())}
+              />
+              <small className="muted">فقط مبدأهای مصوب سرور پذیرفته می‌شوند؛ خالی یعنی نقشه شماتیک بدون هیچ درخواست به سرویس عمومی.</small>
+            </label>
+            <label className="field">
               لایهٔ GIS سازمانی روی نقشه
               <select
                 value={draft.gis_mode}

@@ -82,6 +82,12 @@ export default function AssetPanel({
         <b>{a.firmware}</b>
         <span>آخرین ارتباط</span>
         <b>{timeFa(a.last_seen)}</b>
+        <span>کیفیت موقعیت</span>
+        <b>
+          {{ fresh: "تازه", stale: "کهنه", no_fix: "ارتباط بدون موقعیت", unknown: "نامعلوم", simulated: "شبیه‌سازی‌شده" }[a.position_state ?? "unknown"]}
+          {a.position_accuracy_m != null ? ` · دقت ${fa(Math.round(a.position_accuracy_m))} متر` : " · دقت نامعلوم"}
+          {a.position_age_seconds != null && ` · ${fa(Math.round(a.position_age_seconds / 60))} دقیقه پیش`}
+        </b>
       </div>
       <button
         className="secondary full"

@@ -58,6 +58,7 @@ import SupervisionPage from "./features/supervision/SupervisionPage";
 import PatrolGamePage from "./features/patrol-game/PatrolGamePage";
 import GuidesPage from "./features/guides/GuidesPage";
 import SettingsPage from "./features/settings/SettingsPage";
+import { useReplayHistory } from "./features/command/useReplayHistory";
 import { useOperations } from "./shared/api/useOperations";
 import { useSession } from "./shared/auth/session";
 import AssessmentPage from "./features/assessment/AssessmentPage";
@@ -126,6 +127,7 @@ export default function App() {
     [theme, setTheme] = useState<"dark" | "light">(() => localStorage.getItem("sepehr-theme") === "light" ? "light" : "dark"),
     [headerMenu, setHeaderMenu] = useState<"notifications" | "profile" | null>(null),
     [incidentFilter, setIncidentFilter] = useState("all");
+  const replayHistory = useReplayHistory(page === "replay", data);
   const load = async () => {
     await operations.refetch();
   };
@@ -523,7 +525,7 @@ export default function App() {
           )}
           {(page === "command" || page === "replay") && (
             <CommandPage
-              data={data}
+              data={page === "replay" && replayHistory.data ? replayHistory.data : data}
               theme={theme}
               page={page}
               asset={asset || trackAsset}

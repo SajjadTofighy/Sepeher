@@ -8,6 +8,7 @@ import type {
 } from "../../types";
 import { pickMimeType, recordMedia, takePhoto } from "./capture";
 import { uploadMedia } from "./upload";
+import FieldMissionInbox from "../mission-commands/FieldMissionInbox";
 
 // Only the non-secret device identifier is remembered; the server binds it to the token's subject.
 const DEVICE_KEY = "sepehr-field-device-id";
@@ -146,6 +147,7 @@ function FieldWorkspace({ deviceId, username, onLogout, onDeviceRejected }: { de
         <div><b>{username}</b><small>{tour ? `گشت فعال ${tour.id.slice(0, 12)}` : "گشت فعالی ندارید"}</small></div>
         <button className="secondary field-touch" onClick={onLogout}><LogOut size={18} />خروج</button>
       </header>
+      <FieldMissionInbox />
       {pendingUrgent.map((m) => (
         <div key={m.id} className="urgent-banner" role="alert">
           <BellRing size={22} /><p>{m.text}<small>{timeFa(m.created_at)}</small></p>

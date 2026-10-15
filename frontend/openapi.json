@@ -40,6 +40,201 @@
         }
       }
     },
+    "/api/v1/changes": {
+      "get": {
+        "summary": "Changes",
+        "description": "Long-poll the live picture: returns as soon as something changed, or after ``wait`` seconds.",
+        "operationId": "changes_api_v1_changes_get",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "wait",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 25,
+              "minimum": 0,
+              "default": 0,
+              "title": "Wait"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeSet"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/map/features": {
+      "get": {
+        "summary": "Map Features",
+        "description": "Bounded spatial query: features inside lon/lat bbox (WGS84, lon first), capped by limit.",
+        "operationId": "map_features_api_v1_map_features_get",
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^-?\\d+(\\.\\d+)?(,-?\\d+(\\.\\d+)?){3}$",
+              "title": "Bbox"
+            }
+          },
+          {
+            "name": "layers",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "default": "assets,incidents,facilities",
+              "title": "Layers"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 5000,
+              "minimum": 1,
+              "default": 500,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MapFeatureResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tracks": {
+      "get": {
+        "summary": "Track Batch",
+        "description": "History for replay over a window, separate from the live picture and capped in total.",
+        "operationId": "track_batch_api_v1_tracks_get",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "title": "Since"
+            }
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "title": "Until"
+            }
+          },
+          {
+            "name": "asset_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "maxItems": 500,
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "limit_per_asset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 2000,
+              "title": "Limit Per Asset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrackBatch"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/assets": {
       "get": {
         "summary": "Assets",
@@ -134,6 +329,96 @@
                     "$ref": "#/components/schemas/TrackPoint"
                   },
                   "title": "Response Track Api V1 Assets  Id  Track Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets/{id}/observations": {
+      "get": {
+        "summary": "Observations",
+        "description": "Raw observations with quality evidence, including points never accepted for live.",
+        "operationId": "observations_api_v1_assets__id__observations_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Until"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 500,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PositionObservation"
+                  },
+                  "title": "Response Observations Api V1 Assets  Id  Observations Get"
                 }
               }
             }
@@ -308,13 +593,43 @@
     "/api/v1/events": {
       "get": {
         "summary": "Events",
+        "description": "SSE of the change journal. Resumes from Last-Event-ID (or ``cursor``); ``reset`` asks for a reload.\n\nLocked work runs in a worker thread: the event loop must never wait on the state lock.",
         "operationId": "events_api_v1_events_get",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -1472,7 +1787,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TrackPoint"
+                  "$ref": "#/components/schemas/PositionReceipt"
                 }
               }
             }
@@ -3181,6 +3496,671 @@
             }
           }
         }
+      }
+    },
+    "/api/v1/mission-commands/preview": {
+      "post": {
+        "tags": [
+          "mission-commands"
+        ],
+        "summary": "Preview",
+        "operationId": "preview_api_v1_mission_commands_preview_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MissionCommandPreviewInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionCommandPreview"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mission-commands": {
+      "post": {
+        "tags": [
+          "mission-commands"
+        ],
+        "summary": "Create",
+        "operationId": "create_api_v1_mission_commands_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MissionCommandInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionCommand"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "mission-commands"
+        ],
+        "summary": "Listing",
+        "operationId": "listing_api_v1_mission_commands_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(active|dispatched|delivered|acknowledged|in_progress|completed|rejected|failed|expired|cancelled)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MissionCommand"
+                  },
+                  "title": "Response Listing Api V1 Mission Commands Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mission-commands/{id}": {
+      "get": {
+        "tags": [
+          "mission-commands"
+        ],
+        "summary": "Detail",
+        "operationId": "detail_api_v1_mission_commands__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionCommand"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/mission-commands/{id}/cancel": {
+      "post": {
+        "tags": [
+          "mission-commands"
+        ],
+        "summary": "Cancel",
+        "operationId": "cancel_api_v1_mission_commands__id__cancel_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MissionCommandCancel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionCommand"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tour/mission-commands": {
+      "get": {
+        "tags": [
+          "mission-commands"
+        ],
+        "summary": "Inbox",
+        "operationId": "inbox_api_v1_tour_mission_commands_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MissionCommand"
+                  },
+                  "type": "array",
+                  "title": "Response Inbox Api V1 Tour Mission Commands Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/tour/mission-commands/{id}/events": {
+      "post": {
+        "tags": [
+          "mission-commands"
+        ],
+        "summary": "Act",
+        "operationId": "act_api_v1_tour_mission_commands__id__events_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MissionCommandAction"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionCommand"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/media/uploads/{id}": {
@@ -13072,6 +14052,58 @@
             "type": "boolean",
             "title": "Sms Password Set",
             "default": false
+          },
+          "position_state": {
+            "type": "string",
+            "enum": [
+              "fresh",
+              "stale",
+              "no_fix",
+              "unknown",
+              "simulated"
+            ],
+            "title": "Position State",
+            "default": "unknown"
+          },
+          "position_age_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Age Seconds"
+          },
+          "position_accuracy_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Accuracy M"
+          },
+          "position_flags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Position Flags"
+          },
+          "last_contact_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Contact At"
           }
         },
         "type": "object",
@@ -13740,6 +14772,85 @@
         ],
         "title": "CapturePolicy"
       },
+      "ChangeSet": {
+        "properties": {
+          "cursor": {
+            "type": "string",
+            "title": "Cursor"
+          },
+          "reset": {
+            "type": "boolean",
+            "title": "Reset"
+          },
+          "assets": {
+            "items": {
+              "$ref": "#/components/schemas/Asset"
+            },
+            "type": "array",
+            "title": "Assets"
+          },
+          "incidents": {
+            "items": {
+              "$ref": "#/components/schemas/Incident"
+            },
+            "type": "array",
+            "title": "Incidents"
+          },
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/Alert"
+            },
+            "type": "array",
+            "title": "Alerts"
+          },
+          "missions": {
+            "items": {
+              "$ref": "#/components/schemas/Mission"
+            },
+            "type": "array",
+            "title": "Missions"
+          },
+          "commands": {
+            "items": {
+              "$ref": "#/components/schemas/Command"
+            },
+            "type": "array",
+            "title": "Commands"
+          },
+          "removed": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Removed"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Summary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "server_time": {
+            "type": "string",
+            "title": "Server Time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cursor",
+          "reset",
+          "server_time"
+        ],
+        "title": "ChangeSet",
+        "description": "Entities changed after a cursor. reset=true: reload the snapshot (restart, gap or unknown cursor)."
+      },
       "CheckInInput": {
         "properties": {
           "pin": {
@@ -14071,6 +15182,203 @@
         ],
         "title": "Command"
       },
+      "CommandCandidate": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "position_state": {
+            "type": "string",
+            "title": "Position State"
+          },
+          "lon": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lon"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "observed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed At"
+          },
+          "distance_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance M"
+          },
+          "inside": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inside"
+          },
+          "can_receive": {
+            "type": "boolean",
+            "title": "Can Receive"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "name",
+          "position_state",
+          "lon",
+          "lat",
+          "observed_at",
+          "distance_m",
+          "inside",
+          "can_receive",
+          "reason"
+        ],
+        "title": "CommandCandidate"
+      },
+      "CommandEvent": {
+        "properties": {
+          "time": {
+            "type": "string",
+            "title": "Time"
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor"
+          },
+          "asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Id"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "from_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Status"
+          },
+          "to_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To Status"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "applied": {
+            "type": "boolean",
+            "title": "Applied"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "time",
+          "actor",
+          "asset_id",
+          "action",
+          "from_status",
+          "to_status",
+          "applied"
+        ],
+        "title": "CommandEvent"
+      },
+      "CommandGeometry": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "Point",
+              "LineString",
+              "Polygon"
+            ],
+            "title": "Type"
+          },
+          "coordinates": {
+            "title": "Coordinates"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type",
+          "coordinates"
+        ],
+        "title": "CommandGeometry",
+        "description": "GeoJSON geometry (WGS84, longitude first) of a spatial mission command."
+      },
       "CommandInput": {
         "properties": {
           "asset_id": {
@@ -14182,6 +15490,124 @@
           "note"
         ],
         "title": "CommandPreview"
+      },
+      "CommandRecipient": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "dispatched",
+              "delivered",
+              "acknowledged",
+              "in_progress",
+              "completed",
+              "rejected",
+              "failed",
+              "expired",
+              "cancelled"
+            ],
+            "title": "Status"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/CommandCandidate"
+          },
+          "delivered_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivered At"
+          },
+          "delivered_device_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivered Device Id"
+          },
+          "acknowledged_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acknowledged At"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "name",
+          "status",
+          "snapshot"
+        ],
+        "title": "CommandRecipient"
       },
       "ComplianceTotals": {
         "properties": {
@@ -17995,6 +19421,108 @@
         ],
         "title": "ManualScanInput"
       },
+      "MapFeature": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "layer": {
+            "type": "string",
+            "enum": [
+              "assets",
+              "incidents",
+              "facilities"
+            ],
+            "title": "Layer"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "lon": {
+            "type": "number",
+            "title": "Lon"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "position_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position State"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "layer",
+          "name",
+          "lon",
+          "lat",
+          "status"
+        ],
+        "title": "MapFeature"
+      },
+      "MapFeatureResult": {
+        "properties": {
+          "features": {
+            "items": {
+              "$ref": "#/components/schemas/MapFeature"
+            },
+            "type": "array",
+            "title": "Features"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "features",
+          "total",
+          "truncated"
+        ],
+        "title": "MapFeatureResult"
+      },
       "MediaAttachInput": {
         "properties": {
           "incident_id": {
@@ -18419,6 +19947,397 @@
           "checkpoints"
         ],
         "title": "Mission"
+      },
+      "MissionCommand": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "visit_point",
+              "inspect_area",
+              "patrol_line",
+              "check_alarm",
+              "presence"
+            ],
+            "title": "Type"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "instructions": {
+            "type": "string",
+            "title": "Instructions"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "urgent"
+            ],
+            "title": "Priority"
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/CommandGeometry"
+          },
+          "radius_m": {
+            "type": "number",
+            "title": "Radius M"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "created_by": {
+            "type": "string",
+            "title": "Created By"
+          },
+          "expires_at": {
+            "type": "string",
+            "title": "Expires At"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "overdue": {
+            "type": "boolean",
+            "title": "Overdue",
+            "default": false
+          },
+          "recipients": {
+            "items": {
+              "$ref": "#/components/schemas/CommandRecipient"
+            },
+            "type": "array",
+            "title": "Recipients"
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/CommandEvent"
+            },
+            "type": "array",
+            "title": "Timeline"
+          },
+          "zone_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone Id"
+          },
+          "contractor_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contractor Id"
+          },
+          "can_execute": {
+            "type": "boolean",
+            "const": false,
+            "title": "Can Execute",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "revision",
+          "type",
+          "title",
+          "instructions",
+          "priority",
+          "geometry",
+          "radius_m",
+          "status",
+          "created_at",
+          "created_by",
+          "expires_at",
+          "due_at",
+          "recipients",
+          "timeline"
+        ],
+        "title": "MissionCommand",
+        "description": "A human spatial order, distinct from a device command; can_execute is always false."
+      },
+      "MissionCommandAction": {
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Event Id"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "acknowledge",
+              "reject",
+              "start",
+              "complete",
+              "fail"
+            ],
+            "title": "Action"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Note",
+            "default": ""
+          },
+          "lon": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 180.0,
+                "minimum": -180.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lon"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 85.0,
+                "minimum": -85.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "event_id",
+          "action"
+        ],
+        "title": "MissionCommandAction",
+        "description": "Field action by the addressed guard; event_id makes retries (double tap, offline resend) idempotent."
+      },
+      "MissionCommandCancel": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Revision"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "reason",
+          "revision"
+        ],
+        "title": "MissionCommandCancel"
+      },
+      "MissionCommandInput": {
+        "properties": {
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Idempotency Key"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "visit_point",
+              "inspect_area",
+              "patrol_line",
+              "check_alarm",
+              "presence"
+            ],
+            "title": "Type"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 3,
+            "title": "Title"
+          },
+          "instructions": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Instructions",
+            "default": ""
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "urgent"
+            ],
+            "title": "Priority",
+            "default": "normal"
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/CommandGeometry"
+          },
+          "radius_m": {
+            "type": "number",
+            "maximum": 20000.0,
+            "minimum": 0.0,
+            "title": "Radius M",
+            "default": 0
+          },
+          "recipients": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Recipients"
+          },
+          "snapshot_id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 8,
+            "title": "Snapshot Id"
+          },
+          "ack_ttl_minutes": {
+            "type": "integer",
+            "maximum": 1440.0,
+            "minimum": 1.0,
+            "title": "Ack Ttl Minutes",
+            "default": 15
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "idempotency_key",
+          "type",
+          "title",
+          "geometry",
+          "recipients",
+          "snapshot_id"
+        ],
+        "title": "MissionCommandInput"
+      },
+      "MissionCommandPreview": {
+        "properties": {
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "eligible": {
+            "items": {
+              "$ref": "#/components/schemas/CommandCandidate"
+            },
+            "type": "array",
+            "title": "Eligible"
+          },
+          "needs_review": {
+            "items": {
+              "$ref": "#/components/schemas/CommandCandidate"
+            },
+            "type": "array",
+            "title": "Needs Review"
+          },
+          "outside": {
+            "items": {
+              "$ref": "#/components/schemas/CommandCandidate"
+            },
+            "type": "array",
+            "title": "Outside"
+          },
+          "cannot_receive": {
+            "items": {
+              "$ref": "#/components/schemas/CommandCandidate"
+            },
+            "type": "array",
+            "title": "Cannot Receive"
+          },
+          "computed_at": {
+            "type": "string",
+            "title": "Computed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "snapshot_id",
+          "eligible",
+          "needs_review",
+          "outside",
+          "cannot_receive",
+          "computed_at"
+        ],
+        "title": "MissionCommandPreview",
+        "description": "Who is in the area now. Only fresh positions count as inside; stale/unknown are listed apart."
+      },
+      "MissionCommandPreviewInput": {
+        "properties": {
+          "geometry": {
+            "$ref": "#/components/schemas/CommandGeometry"
+          },
+          "radius_m": {
+            "type": "number",
+            "maximum": 20000.0,
+            "minimum": 0.0,
+            "title": "Radius M",
+            "default": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "geometry"
+        ],
+        "title": "MissionCommandPreviewInput"
       },
       "Muster": {
         "properties": {
@@ -20243,7 +22162,7 @@
         "properties": {
           "accepted": {
             "items": {
-              "$ref": "#/components/schemas/TrackPoint"
+              "$ref": "#/components/schemas/PositionReceipt"
             },
             "type": "array",
             "title": "Accepted"
@@ -20293,6 +22212,44 @@
               }
             ],
             "title": "Speed"
+          },
+          "accuracy_m": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100000.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accuracy M"
+          },
+          "fix_source": {
+            "type": "string",
+            "enum": [
+              "gnss",
+              "network",
+              "fused",
+              "manual",
+              "unknown"
+            ],
+            "title": "Fix Source",
+            "default": "unknown"
+          },
+          "sequence": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9007199254740992.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sequence"
           }
         },
         "additionalProperties": false,
@@ -20302,6 +22259,170 @@
           "lat"
         ],
         "title": "PositionInput"
+      },
+      "PositionObservation": {
+        "properties": {
+          "lon": {
+            "type": "number",
+            "title": "Lon"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "time": {
+            "type": "string",
+            "title": "Time"
+          },
+          "speed": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "reported",
+              "demo"
+            ],
+            "title": "Source"
+          },
+          "received_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received At"
+          },
+          "accuracy_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accuracy M"
+          },
+          "fix_source": {
+            "type": "string",
+            "title": "Fix Source"
+          },
+          "sequence": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sequence"
+          },
+          "auth": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auth"
+          },
+          "flags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Flags"
+          },
+          "live": {
+            "type": "boolean",
+            "title": "Live"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lon",
+          "lat",
+          "time",
+          "speed",
+          "source",
+          "received_at",
+          "accuracy_m",
+          "fix_source",
+          "sequence",
+          "auth",
+          "flags",
+          "live"
+        ],
+        "title": "PositionObservation",
+        "description": "Raw stored observation with its quality evidence; live=false points never moved the live position."
+      },
+      "PositionReceipt": {
+        "properties": {
+          "lon": {
+            "type": "number",
+            "title": "Lon"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "time": {
+            "type": "string",
+            "title": "Time"
+          },
+          "received_at": {
+            "type": "string",
+            "title": "Received At"
+          },
+          "created": {
+            "type": "boolean",
+            "title": "Created"
+          },
+          "live": {
+            "type": "boolean",
+            "title": "Live"
+          },
+          "flags": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "accuracy_unknown",
+                "low_accuracy",
+                "clock_ahead",
+                "late",
+                "implausible_speed"
+              ]
+            },
+            "type": "array",
+            "title": "Flags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lon",
+          "lat",
+          "time",
+          "received_at",
+          "created",
+          "live"
+        ],
+        "title": "PositionReceipt",
+        "description": "What the server did with one observation: durable first, then accepted for live or history only."
       },
       "PressureContext": {
         "properties": {
@@ -21125,6 +23246,13 @@
             "title": "Max Json Body Bytes",
             "default": 2097152
           },
+          "map_trail_points": {
+            "type": "integer",
+            "maximum": 500.0,
+            "minimum": 0.0,
+            "title": "Map Trail Points",
+            "default": 60
+          },
           "integrity_mode": {
             "type": "string",
             "enum": [
@@ -21648,6 +23776,12 @@
             "minimum": 0.0,
             "title": "Gis Opacity",
             "default": 0.7
+          },
+          "basemap_style_url": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Basemap Style Url",
+            "default": ""
           }
         },
         "additionalProperties": false,
@@ -25194,6 +27328,30 @@
           "last_date"
         ],
         "title": "TourScheduleInput"
+      },
+      "TrackBatch": {
+        "properties": {
+          "tracks": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/TrackPoint"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Tracks"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tracks",
+          "truncated"
+        ],
+        "title": "TrackBatch"
       },
       "TrackPoint": {
         "properties": {

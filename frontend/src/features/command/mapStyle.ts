@@ -216,3 +216,15 @@ export const mapStyle: StyleSpecification = {
     },
   ],
 };
+// Production never touches public tile services: without an approved internal style the map is
+// schematic (operational layers on a plain background) and makes no basemap request at all.
+const publicSources = new Set(["openmaptiles", "osm-street"]);
+export const schematicStyle: StyleSpecification = {
+  version: 8,
+  sources: Object.fromEntries(
+    Object.entries(mapStyle.sources).filter(([id]) => !publicSources.has(id)),
+  ),
+  layers: mapStyle.layers.filter(
+    (layer) => layer.id === "background" || (!baseLayerIds.includes(layer.id) && layer.id !== "osm-street"),
+  ),
+};
