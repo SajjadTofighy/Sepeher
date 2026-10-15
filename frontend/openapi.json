@@ -1032,6 +1032,70 @@
         }
       }
     },
+    "/api/v1/incidents/{id}/routes": {
+      "get": {
+        "tags": [
+          "incidents"
+        ],
+        "summary": "Incident Routes",
+        "description": "Route choices for one patrol; the operator picks one (route_id) when assigning.",
+        "operationId": "incident_routes_api_v1_incidents__id__routes_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "asset_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "alternatives",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 3,
+              "minimum": 1,
+              "default": 3,
+              "title": "Alternatives"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutePlan"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/incidents/{id}/report": {
       "get": {
         "tags": [
@@ -2931,6 +2995,48 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RoadRoute"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/routing/routes": {
+      "post": {
+        "tags": [
+          "routing"
+        ],
+        "summary": "Routes",
+        "description": "Fastest route and up to two distinct alternatives that never cross the given closed areas.",
+        "operationId": "routes_api_v1_routing_routes_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RouteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutePlan"
                 }
               }
             }
@@ -19350,6 +19456,23 @@
             },
             "type": "array",
             "title": "Backup Patrols"
+          },
+          "route": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoadRoute"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "route_alternatives": {
+            "items": {
+              "$ref": "#/components/schemas/RoadRoute"
+            },
+            "type": "array",
+            "title": "Route Alternatives"
           }
         },
         "type": "object",
@@ -23627,6 +23750,16 @@
           "source": {
             "type": "string",
             "title": "Source"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "default": "R1"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "default": "سریع‌ترین"
           }
         },
         "type": "object",
@@ -23714,6 +23847,91 @@
         ],
         "title": "RouteCoverageInput",
         "description": "Herasat's decision for one walking route: visit all stations or an optimized subset."
+      },
+      "RoutePlan": {
+        "properties": {
+          "routes": {
+            "items": {
+              "$ref": "#/components/schemas/RoadRoute"
+            },
+            "type": "array",
+            "title": "Routes"
+          },
+          "avoided_areas": {
+            "type": "integer",
+            "title": "Avoided Areas"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "routes",
+          "avoided_areas",
+          "source"
+        ],
+        "title": "RoutePlan",
+        "description": "Fastest route and distinct alternatives; closed hazard areas of other open incidents are avoided."
+      },
+      "RouteRequest": {
+        "properties": {
+          "origin": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Origin"
+          },
+          "destination": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Destination"
+          },
+          "alternatives": {
+            "type": "integer",
+            "maximum": 3.0,
+            "minimum": 1.0,
+            "title": "Alternatives",
+            "default": 3
+          },
+          "avoid_areas": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/HazardCircle"
+                },
+                {
+                  "$ref": "#/components/schemas/HazardPolygon"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "type",
+                "mapping": {
+                  "circle": "#/components/schemas/HazardCircle",
+                  "polygon": "#/components/schemas/HazardPolygon"
+                }
+              }
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Avoid Areas"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "origin",
+          "destination"
+        ],
+        "title": "RouteRequest"
       },
       "RuntimeSettings": {
         "properties": {
@@ -27890,6 +28108,18 @@
               }
             ],
             "title": "Asset Id"
+          },
+          "route_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^R[1-3]$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route Id"
           },
           "note": {
             "type": "string",

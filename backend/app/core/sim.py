@@ -3,7 +3,7 @@
 Every asset follows a deterministic, piecewise motion plan so the same instant always
 yields the same coordinates (polling, replay and tests stay consistent):
 
-  patrol loop around a base point  ->  optional straight-line dispatch  ->  parked at target
+  patrol loop around a base point  ->  optional dispatch along the road route  ->  parked at target
 """
 
 import math
@@ -40,10 +40,23 @@ def new_plan(asset, base, now=None):
     return plan
 
 
+def _along(path, share):
+    """Point at `share` of a polyline's length, so motion follows the road geometry."""
+    legs = [distance_km(a, b) for a, b in zip(path, path[1:])]
+    remaining = share * sum(legs)
+    for (a, b), leg in zip(zip(path, path[1:]), legs):
+        if remaining <= leg and leg > 0:
+            return [a[i] + (b[i] - a[i]) * remaining / leg for i in (0, 1)]
+        remaining -= leg
+    return list(path[-1])
+
+
 def position(plan, t):
     route = next((r for r in reversed(plan["routes"]) if t >= r["start"]), None)
     if route:
         p = min(1.0, (t - route["start"]) / route["duration"])
+        if route.get("path"):
+            return _along([route["from"], *route["path"], route["to"]], p)
         return [route["from"][i] + (route["to"][i] - route["from"][i]) * p for i in (0, 1)]
     theta = plan["direction"] * 2 * math.pi * (t - plan["t0"]) / plan["period"]
     dx, dy = _loop_offset(theta, plan["radius"], plan["aspect"], plan["phase"], plan["center"][1])
@@ -76,19 +89,28 @@ def apply(asset, plan, now=None):
         asset["speed"] = round(distance_km(before, [lon, lat]) * 720)
     start = max(plan["t0"], now - TRAIL_SECONDS)
     steps = int((now - start) // TRAIL_STEP)
-    asset["track"] = [
-        dict(lon=p[0], lat=p[1], time=iso(t))
-        for t in [start + k * TRAIL_STEP for k in range(steps)] + [now]
-        for p in [position(plan, t)]
-    ]
+    times = [start + k * TRAIL_STEP for k in range(steps)] + [now]
+    # A dispatch drive is shorter than the trail step; add the instants it passes each road vertex.
+    times = sorted({*times, *(t for r in plan["routes"] for t in _vertex_times(r) if start <= t <= now)})
+    asset["track"] = [dict(lon=p[0], lat=p[1], time=iso(t)) for t in times for p in [position(plan, t)]]
 
 
-def dispatch(plan, target, seconds, now=None, display_kmh=45):
-    """Freeze the loop and drive straight to target; the patrol parks on arrival."""
+def _vertex_times(route):
+    path = [route["from"], *route.get("path", ()), route["to"]]
+    legs = [distance_km(a, b) for a, b in zip(path, path[1:])]
+    total, done = sum(legs) or 1, 0
+    for leg in legs[:-1]:
+        done += leg
+        yield route["start"] + route["duration"] * done / total
+
+
+def dispatch(plan, target, seconds, now=None, display_kmh=45, path=None):
+    """Freeze the loop and drive to target, along `path` (road route) when given; the patrol parks on arrival."""
     now = time.time() if now is None else now
     route = {
         "from": position(plan, now),
         "to": list(target),
+        "path": [list(p) for p in path or ()],
         "start": now,
         "duration": max(1.0, seconds),
         "display_kmh": display_kmh,

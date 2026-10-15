@@ -421,6 +421,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/incidents/{id}/routes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Incident Routes
+         * @description Route choices for one patrol; the operator picks one (route_id) when assigning.
+         */
+        get: operations["incident_routes_api_v1_incidents__id__routes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/incidents/{id}/report": {
         parameters: {
             query?: never;
@@ -1134,6 +1154,26 @@ export interface paths {
         get: operations["route_api_v1_routing_route_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/routing/routes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Routes
+         * @description Fastest route and up to two distinct alternatives that never cross the given closed areas.
+         */
+        post: operations["routes_api_v1_routing_routes_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4779,6 +4819,9 @@ export interface components {
             emergency_contacts?: components["schemas"]["EmergencyContact"][];
             /** Backup Patrols */
             backup_patrols?: components["schemas"]["NearbyPatrol"][];
+            route?: components["schemas"]["RoadRoute"] | null;
+            /** Route Alternatives */
+            route_alternatives?: components["schemas"]["RoadRoute"][];
         };
         /** IncidentCreation */
         IncidentCreation: {
@@ -6331,6 +6374,16 @@ export interface components {
             path: number[][];
             /** Source */
             source: string;
+            /**
+             * Id
+             * @default R1
+             */
+            id: string;
+            /**
+             * Label
+             * @default سریع‌ترین
+             */
+            label: string;
         };
         /** RoleChangeEvent */
         RoleChangeEvent: {
@@ -6361,6 +6414,32 @@ export interface components {
              * @enum {string}
              */
             subset_mode: "shadow" | "active";
+        };
+        /**
+         * RoutePlan
+         * @description Fastest route and distinct alternatives; closed hazard areas of other open incidents are avoided.
+         */
+        RoutePlan: {
+            /** Routes */
+            routes: components["schemas"]["RoadRoute"][];
+            /** Avoided Areas */
+            avoided_areas: number;
+            /** Source */
+            source: string;
+        };
+        /** RouteRequest */
+        RouteRequest: {
+            /** Origin */
+            origin: number[];
+            /** Destination */
+            destination: number[];
+            /**
+             * Alternatives
+             * @default 3
+             */
+            alternatives: number;
+            /** Avoid Areas */
+            avoid_areas?: (components["schemas"]["HazardCircle"] | components["schemas"]["HazardPolygon"])[];
         };
         /** RuntimeSettings */
         RuntimeSettings: {
@@ -7978,6 +8057,8 @@ export interface components {
             status: "confirmed" | "assigned" | "en_route" | "on_scene" | "closed";
             /** Asset Id */
             asset_id?: string | null;
+            /** Route Id */
+            route_id?: string | null;
             /**
              * Note
              * @default
@@ -8720,6 +8801,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DispatchOptions"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    incident_routes_api_v1_incidents__id__routes_get: {
+        parameters: {
+            query: {
+                asset_id: string;
+                alternatives?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutePlan"];
                 };
             };
             /** @description Validation Error */
@@ -10074,6 +10189,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RoadRoute"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    routes_api_v1_routing_routes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RouteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutePlan"];
                 };
             };
             /** @description Validation Error */

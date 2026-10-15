@@ -1,6 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
-from ..core.models import DispatchOptions, HazardArea, Incident, IncidentCreation, IncidentReport, NearbyPatrol, Transition
+from ..core.models import DispatchOptions, HazardArea, Incident, IncidentCreation, IncidentReport, NearbyPatrol, RoutePlan, Transition
 from ..core import roads, sim, store
 from ..security import authz
 from ..field import safety as field_safety
@@ -19,10 +19,20 @@ def eta_minutes(km):
     return round(km * ROAD_FACTOR / PATROL_KMH * 60, 1)
 
 
-def travel(origins, destination):
+def avoid_areas(item):
+    """Hazard areas of other open incidents are closed to traffic; the incident's own area is the destination."""
+    return [i["hazard_area"] for i in state["incidents"]
+            if i["id"] != item["id"] and i["status"] != "closed" and i.get("hazard_area")]
+
+
+def route_options(a, item, alternatives=3):
+    return roads.network().routes([a["lon"], a["lat"]], [item["lon"], item["lat"]], alternatives, avoid_areas(item))
+
+
+def travel(origins, destination, avoid=()):
     """Fastest drive per origin over the offline road graph; straight-line estimate where no road route exists."""
     rows = []
-    for origin, route in zip(origins, roads.network().to_destination(origins, destination)):
+    for origin, route in zip(origins, roads.network().to_destination(origins, destination, avoid)):
         if route:
             rows.append(dict(distance_km=route["distance_km"], eta_minutes=route["eta_minutes"], distance_type="road"))
         else:
@@ -129,11 +139,17 @@ def transition(id: str, p: Transition):
         if not dispatchable(a, item):
             raise HTTPException(409, "گشت انتخابی آماده اعزام نیست")
         item["assigned_to"] = p.asset_id
-        item["eta_minutes"] = travel([[a["lon"], a["lat"]]], [item["lon"], item["lat"]])[0]["eta_minutes"]
+        routes = route_options(a, item)
+        chosen = next((r for r in routes if r["id"] == (p.route_id or "R1")), None)
+        if p.route_id and not chosen:
+            raise HTTPException(409, "مسیر انتخابی دیگر معتبر نیست؛ مسیرها را دوباره دریافت کنید")
+        item["route"], item["route_alternatives"] = chosen, [r for r in routes if r is not chosen]
+        item["eta_minutes"] = chosen["eta_minutes"] if chosen else travel([[a["lon"], a["lat"]]], [item["lon"], item["lat"]])[0]["eta_minutes"]
         sim.dispatch(
             plan_for(a),
             [item["lon"], item["lat"]],
             max(12, min(45, item["eta_minutes"] * 60 / DEMO_TIME_COMPRESSION)),
+            path=chosen["path"][1:-1] if chosen else None,
         )
     if p.status == "closed" and not p.note.strip():
         raise HTTPException(422, "گزارش خاتمه لازم است")
@@ -166,7 +182,7 @@ def nearby(id: str):
 def nearby_patrols(item):
     """Shared backup suggestions; eligibility and ETA stay identical to the API."""
     patrols = [a for a in state["assets"] if dispatchable(a, item)]
-    trips = travel([[a["lon"], a["lat"]] for a in patrols], [item["lon"], item["lat"]])
+    trips = travel([[a["lon"], a["lat"]] for a in patrols], [item["lon"], item["lat"]], avoid_areas(item))
     rows = [
         dict(
             asset_id=a["id"],
@@ -216,6 +232,14 @@ def dispatch_options(id: str):
                 needs_confirmation=[r for r in rows if r["needs_confirmation"]], excluded=excluded,
                 eta_basis=eta_basis(rows),
                 computed_at=now())
+
+
+@router.get("/api/v1/incidents/{id}/routes", response_model=RoutePlan)
+def incident_routes(id: str, asset_id: str, alternatives: int = Query(3, ge=1, le=3)):
+    """Route choices for one patrol; the operator picks one (route_id) when assigning."""
+    item, a = lookup("incidents", id), lookup("assets", asset_id)
+    store.refresh_tracks()
+    return dict(routes=route_options(a, item, alternatives), avoided_areas=len(avoid_areas(item)), source=roads.network().source)
 
 
 @router.get("/api/v1/incidents/{id}/report", response_model=IncidentReport)

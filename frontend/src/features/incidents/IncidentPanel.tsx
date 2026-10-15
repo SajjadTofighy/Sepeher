@@ -8,12 +8,13 @@ MapPin,
 Printer,
 ShieldAlert,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect,useState } from "react";
 import { api,fa,labels,timeFa } from "../../api";
 import type { Act } from "../../shared/lib/actions";
 import { download } from "../../shared/lib/download";
 import { Badge,Modal } from "../../shared/ui/primitives";
-import type { Data,Incident,NearbyPatrol, DispatchOptions } from "../../types";
+import type { Data,Incident,NearbyPatrol, DispatchOptions, RoadRoute, RoutePlan } from "../../types";
 import { printIncidentReport } from "./printReport";
 import HazardDetails from "./HazardDetails";
 const flow = [
@@ -44,7 +45,8 @@ export default function IncidentPanel({
   const [nearby, setNearby] = useState<NearbyPatrol[]>([]),
     [options, setOptions] = useState<DispatchOptions | null>(null),
     [chosen, setChosen] = useState(""),
-    [note, setNote] = useState("");
+    [note, setNote] = useState(""),
+    [routeId, setRouteId] = useState("R1");
   useEffect(() => {
     api<DispatchOptions>(`/incidents/${i.id}/dispatch-options`)
       .then((r) => {
@@ -57,6 +59,12 @@ export default function IncidentPanel({
     setNote("");
   }, [i.id]);
   const next = flow[flow.indexOf(i.status) + 1];
+  const routes = useQuery({
+    queryKey: ["incident-routes", i.id, chosen],
+    queryFn: () => api<RoutePlan>(`/incidents/${i.id}/routes?asset_id=${encodeURIComponent(chosen)}`),
+    enabled: next === "assigned" && !!chosen,
+  });
+  useEffect(() => setRouteId("R1"), [chosen]);
   const policy = data.policies.find((p) => p.id === i.policy_id);
   return (
     <Modal title="فرماندهی حادثه" onClose={close} wide>
@@ -104,10 +112,7 @@ export default function IncidentPanel({
           </div>
           <div className="detail-section">
             <h3>پیشنهاد گشت نزدیک</h3>
-            <p>
-              زمان رسیدن تخمینی است: فاصله مستقیم × ضریب ۱٫۳ با سرعت ۴۵ کیلومتر
-              بر ساعت؛ شبکه راه قابل مسیریابی هنوز در دسترس نیست.
-            </p>
+            <p>{options?.eta_basis}</p>
             <div className="nearby-list">
               {nearby.map((a) => (
                 <label
@@ -138,6 +143,35 @@ export default function IncidentPanel({
               </details>
             )}
           </div>
+          {next === "assigned" && !!chosen && (
+            <div className="detail-section">
+              <h3>انتخاب مسیر اعزام</h3>
+              {routes.isLoading && <p className="muted">در حال محاسبه مسیرها…</p>}
+              {routes.data && !routes.data.routes.length && (
+                <p className="muted">مسیر روی شبکه راه یافت نشد؛ زمان رسیدن با فاصله مستقیم تخمین زده می‌شود.</p>
+              )}
+              {!!routes.data?.routes.length && (
+                <>
+                  <RoutePreview routes={routes.data.routes} active={routeId} />
+                  {!!routes.data.avoided_areas && (
+                    <p className="muted">{fa(routes.data.avoided_areas)} محدوده خطر باز از مسیرها کنار گذاشته شد.</p>
+                  )}
+                  <div className="nearby-list">
+                    {routes.data.routes.map((r) => (
+                      <label key={r.id} className={routeId === r.id ? "chosen" : ""}>
+                        <input type="radio" name="route" checked={routeId === r.id} onChange={() => setRouteId(r.id)} />
+                        <strong>{r.label}</strong>
+                        <span>
+                          ~{fa(Math.round(r.eta_minutes))} دقیقه · {fa(r.distance_km)} کیلومتر
+                          {r.access_km > 0.05 && ` · ${fa(r.access_km)} کیلومتر بیرون از راه`}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
           {i.assigned_to && (
             <p className="assigned-banner">
               <CheckCircle2 size={18} />
@@ -147,6 +181,7 @@ export default function IncidentPanel({
                 : i.eta_minutes
                   ? ` · رسیدن حدود ${fa(Math.round(i.eta_minutes))} دقیقه`
                   : ""}
+              {i.route && ` · ${i.route.label}، ${fa(i.route.distance_km)} کیلومتر روی شبکه راه (روی نقشه)`}
             </p>
           )}
           {next && (
@@ -172,6 +207,7 @@ export default function IncidentPanel({
                       api(`/incidents/${i.id}/transition`, "POST", {
                         status: next,
                         asset_id: chosen,
+                        route_id: next === "assigned" && routes.data?.routes.length ? routeId : undefined,
                         note,
                       }),
                     `وضعیت پرونده: ${labels[next]}`,
@@ -240,5 +276,27 @@ export default function IncidentPanel({
         </aside>
       </div>
     </Modal>
+  );
+}
+
+/** Schematic preview of route choices before dispatch; the map shows the dispatched route. */
+function RoutePreview({ routes, active }: { routes: RoadRoute[]; active: string }) {
+  const points = routes.flatMap((r) => r.path);
+  const [x0, x1] = [Math.min(...points.map((p) => p[0])), Math.max(...points.map((p) => p[0]))];
+  const [y0, y1] = [Math.min(...points.map((p) => p[1])), Math.max(...points.map((p) => p[1]))];
+  const scale = 280 / Math.max(x1 - x0, y1 - y0, 1e-6);
+  const xy = (p: number[]) => `${8 + (p[0] - x0) * scale},${8 + (y1 - p[1]) * scale}`;
+  const ordered = [...routes.filter((r) => r.id !== active), ...routes.filter((r) => r.id === active)];
+  return (
+    <svg className="route-preview" viewBox={`0 0 ${16 + (x1 - x0) * scale} ${16 + (y1 - y0) * scale}`}
+      role="img" aria-label="پیش‌نمایش مسیرهای پیشنهادی" style={{ width: "100%", maxHeight: 180 }}>
+      {ordered.map((r) => (
+        <polyline key={r.id} points={r.path.map(xy).join(" ")} fill="none" strokeLinecap="round" strokeLinejoin="round"
+          stroke={r.id === active ? "#4fb3ff" : "#9aa7b3"} strokeWidth={r.id === active ? 4 : 2}
+          strokeDasharray={r.id === active ? undefined : "4 4"} />
+      ))}
+      <circle cx={xy(routes[0].path[0]).split(",")[0]} cy={xy(routes[0].path[0]).split(",")[1]} r={5} fill="#7bd88f" />
+      <circle cx={xy(routes[0].path.at(-1)!).split(",")[0]} cy={xy(routes[0].path.at(-1)!).split(",")[1]} r={5} fill="#ef737e" />
+    </svg>
   );
 }

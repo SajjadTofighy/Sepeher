@@ -20,6 +20,10 @@ SPEEDS = dict(motorway=90, motorway_link=60, trunk=80, trunk_link=50, primary=70
 ACCESS_KMH = 15  # leg between the true position and the nearest road node
 MAX_SNAP_KM = 2.0  # farther than this from any road node: no road route, caller falls back
 CELL_DEG = 0.01
+FA_DIGITS = str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹")
+PENALTY = 1.6  # cost factor on edges of found routes when searching for alternatives
+MAX_OVERLAP = 0.7  # an alternative may share at most this share of its length with a kept route
+MAX_DETOUR = 1.6  # and be at most this factor slower than the fastest
 
 
 def _speed(highway, maxspeed):
@@ -87,7 +91,8 @@ class RoadGraph:
             ring += 1
         return best
 
-    def _search(self, start, edges, goal=None):
+    def _search(self, start, edges, goal=None, blocked=(), penalty=None):
+        """Dijkstra on travel time; blocked nodes are never entered, penalty scales chosen edges' cost."""
         minutes, km, prev, heap = {start: 0.0}, {start: 0.0}, {}, [(0.0, start)]
         while heap:
             t, n = heapq.heappop(heap)
@@ -96,32 +101,81 @@ class RoadGraph:
             if n == goal:
                 break
             for m, d, e in edges[n]:
-                if t + e < minutes.get(m, math.inf):
-                    minutes[m], km[m], prev[m] = t + e, km[n] + d, n
-                    heapq.heappush(heap, (t + e, m))
+                if m in blocked:
+                    continue
+                cost = e * penalty.get((n, m), 1) if penalty else e
+                if t + cost < minutes.get(m, math.inf):
+                    minutes[m], km[m], prev[m] = t + cost, km[n] + d, n
+                    heapq.heappush(heap, (t + cost, m))
         return minutes, km, prev
 
-    def route(self, origin, destination):
-        """Fastest path origin → destination, or None when either end is off the network or unreachable."""
+    def blocked_nodes(self, areas):
+        """Road nodes inside closed areas (hazard circles/polygons) the route must not cross."""
+        from .engine import point_in_polygon
+        blocked = set()
+        for area in areas or ():
+            if area.get("type") == "circle":
+                hit = lambda p: distance_km(p, area["center"]) * 1000 <= area["radius_m"]
+            else:
+                hit = lambda p: point_in_polygon(p[0], p[1], area["points"])
+            blocked.update(n for n, p in enumerate(self.coords) if hit(p))
+        return blocked
+
+    def _edge(self, a, b):
+        return min((x for x in self.out[a] if x[0] == b), key=lambda x: x[2])
+
+    def routes(self, origin, destination, alternatives=1, avoid=()):
+        """Fastest route plus up to `alternatives - 1` distinct alternatives (penalty method).
+
+        An alternative is kept only if it shares at most MAX_OVERLAP of its length with every
+        kept route and is at most MAX_DETOUR times slower than the fastest. Areas in `avoid` are
+        never crossed, except the snapped end points themselves."""
         a, b = self.nearest(origin), self.nearest(destination)
         if not a or not b:
-            return None
-        minutes, km, prev = self._search(a[0], self.out, b[0])
-        if b[0] not in minutes:
-            return None
-        path, n = [self.coords[b[0]]], b[0]
-        while n != a[0]:
-            n = prev[n]
-            path.append(self.coords[n])
-        path.reverse()
-        return self._result(a[1] + b[1], km[b[0]], minutes[b[0]], [list(origin), *path, list(destination)])
+            return []
+        blocked = self.blocked_nodes(avoid) - {a[0], b[0]}
+        penalty, kept, attempts = {}, [], 0
+        while len(kept) < alternatives and attempts < alternatives * 4:
+            attempts += 1
+            minutes, _, prev = self._search(a[0], self.out, b[0], blocked, penalty)
+            if b[0] not in minutes:
+                break
+            nodes, n = [b[0]], b[0]
+            while n != a[0]:
+                n = prev[n]
+                nodes.append(n)
+            nodes.reverse()
+            edges = [self._edge(x, y) for x, y in zip(nodes, nodes[1:])]
+            pairs = list(zip(nodes, nodes[1:]))
+            for pair in pairs:
+                penalty[pair] = penalty.get(pair, 1) * PENALTY
+                penalty[pair[::-1]] = penalty.get(pair[::-1], 1) * PENALTY
+            road_km, road_min = sum(e[1] for e in edges), sum(e[2] for e in edges)
+            lengths = {frozenset(pair): e[1] for pair, e in zip(pairs, edges)}
+            if kept and road_min + a[1] / ACCESS_KMH * 60 > kept[0]["eta_minutes"] * MAX_DETOUR:
+                continue
+            if any(sum(v for k, v in lengths.items() if k in r["_edges"]) > MAX_OVERLAP * max(road_km, 1e-9) for r in kept):
+                continue
+            route = self._result(a[1] + b[1], road_km, road_min, [list(origin), *(self.coords[n] for n in nodes), list(destination)])
+            route["_edges"] = lengths
+            kept.append(route)
+        for i, r in enumerate(kept):
+            del r["_edges"]
+            r.update(id=f"R{i + 1}", label="سریع‌ترین" if i == 0 else f"جایگزین {str(i).translate(FA_DIGITS)}")
+        return kept
 
-    def to_destination(self, origins, destination):
+    def route(self, origin, destination, avoid=()):
+        """Fastest path origin → destination, or None when either end is off the network or unreachable."""
+        found = self.routes(origin, destination, 1, avoid)
+        return found[0] if found else None
+
+    def to_destination(self, origins, destination, avoid=()):
         """One reverse search from the destination gives every origin's fastest drive to it."""
         b = self.nearest(destination)
         if not b:
             return [None] * len(origins)
-        minutes, km, _ = self._search(b[0], self.inc)
+        blocked = self.blocked_nodes(avoid) - {b[0]}
+        minutes, km, _ = self._search(b[0], self.inc, blocked=blocked)
         results = []
         for origin in origins:
             a = self.nearest(origin)

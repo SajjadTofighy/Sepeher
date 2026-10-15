@@ -112,4 +112,6 @@ export type CommandCandidate = Schemas["CommandCandidate"];
 export type ChangeSet = Schemas["ChangeSet"];
 export type TrackBatch = Schemas["TrackBatch"];
 export type DispatchOptions = Schemas["DispatchOptions"];
+export type RoadRoute = Schemas["RoadRoute"];
+export type RoutePlan = Schemas["RoutePlan"];
 export type CommGapLayer = Schemas["CommGapLayer"];

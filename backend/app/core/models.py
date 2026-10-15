@@ -680,6 +680,8 @@ class Incident(BaseModel):
     hazard_area: HazardArea | None = None
     emergency_contacts: list[EmergencyContact] = Field(default_factory=list)
     backup_patrols: list["NearbyPatrol"] = Field(default_factory=list)
+    route: "RoadRoute | None" = None
+    route_alternatives: list["RoadRoute"] = Field(default_factory=list)
 
 
 class NearbyPatrol(BaseModel):
@@ -1257,6 +1259,7 @@ class Transition(BaseModel):
     model_config = ConfigDict(extra='forbid')
     status: Literal["confirmed", "assigned", "en_route", "on_scene", "closed"]
     asset_id: str | None = None
+    route_id: str | None = Field(default=None, pattern=r"^R[1-3]$")
     note: str = Field(default="", max_length=1000)
 
 
@@ -2772,6 +2775,29 @@ class RoadRoute(BaseModel):
     access_km: float
     path: list[list[float]]
     source: str
+    id: str = "R1"
+    label: str = "سریع‌ترین"
+
+
+class RoutePlan(BaseModel):
+    """Fastest route and distinct alternatives; closed hazard areas of other open incidents are avoided."""
+    routes: list[RoadRoute]
+    avoided_areas: int
+    source: str
+
+
+class RouteRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    origin: list[float] = Field(min_length=2, max_length=2)
+    destination: list[float] = Field(min_length=2, max_length=2)
+    alternatives: int = Field(default=3, ge=1, le=3)
+    avoid_areas: list[HazardArea] = Field(default_factory=list, max_length=20)
+
+    @field_validator("origin", "destination")
+    @classmethod
+    def valid_point(cls, point):
+        validate_coordinates([point])
+        return point
 
 
 class RoadNetworkStatus(BaseModel):

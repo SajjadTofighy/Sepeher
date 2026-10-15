@@ -71,6 +71,7 @@ const layerNames = {
   coverage: "محدوده‌های پوشش ضعیف",
   patrolCoverage: "پوشش گشت خطوط",
   hazard: "محدوده خطر حوادث",
+  routes: "مسیر اعزام گشت‌ها",
   commGaps: "شکاف ارتباطی",
   risk: "ریسک",
   heat: "نقشه حرارتی",
@@ -107,6 +108,7 @@ function MapContent(props: Props) {
       coverage: false,
       patrolCoverage: false,
       hazard: true,
+      routes: true,
       commGaps: false,
       risk: false,
       heat: false,
@@ -156,6 +158,33 @@ function MapContent(props: Props) {
     } else (m.getSource("comm-gaps") as GeoJSONSource).setData(shapes);
     m.setLayoutProperty("comm-gaps", "visibility", layers.commGaps ? "visible" : "none");
   }, [ready, commGaps.data, layers.commGaps]);
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !ready) return;
+    // Dispatch routes on the road network: chosen route solid, rejected alternatives dashed.
+    const shapes = collection(
+      data.incidents
+        .filter((i) => (i.status === "assigned" || i.status === "en_route") && i.route)
+        .flatMap((i) => [i.route!, ...(i.route_alternatives || [])].map((r, k) =>
+          feature({ type: "LineString", coordinates: r.path },
+            { id: `${i.id}-${r.id}`, chosen: k === 0, label: `${r.label} · ${fa(Math.round(r.eta_minutes))} دقیقه` }))),
+    );
+    if (!m.getSource("dispatch-routes")) {
+      m.addSource("dispatch-routes", { type: "geojson", data: shapes });
+      m.addLayer({ id: "dispatch-routes-alt", type: "line", source: "dispatch-routes", filter: ["!", ["get", "chosen"]],
+        layout: { "line-cap": "round" },
+        paint: { "line-color": "#9aa7b3", "line-width": 3, "line-opacity": 0.7, "line-dasharray": [2, 2] } });
+      m.addLayer({ id: "dispatch-routes", type: "line", source: "dispatch-routes", filter: ["get", "chosen"],
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: { "line-color": "#4fb3ff", "line-width": 5, "line-opacity": 0.9 } });
+      if (m.getStyle().glyphs) m.addLayer({ id: "dispatch-routes-label", type: "symbol", source: "dispatch-routes",
+        layout: { "symbol-placement": "line", "text-field": ["get", "label"], "text-size": 12 },
+        paint: { "text-color": "#e8f1f8", "text-halo-color": "#09131c", "text-halo-width": 1.5 } });
+    } else (m.getSource("dispatch-routes") as GeoJSONSource).setData(shapes);
+    ["dispatch-routes-alt", "dispatch-routes", "dispatch-routes-label"].forEach((id) => {
+      if (m.getLayer(id)) m.setLayoutProperty(id, "visibility", layers.routes ? "visible" : "none");
+    });
+  }, [ready, data.incidents, layers.routes]);
   const coverage = useQuery({
     queryKey: ["intel", "coverage"],
     queryFn: ({ signal }) =>

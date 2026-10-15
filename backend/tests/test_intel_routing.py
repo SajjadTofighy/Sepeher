@@ -80,3 +80,71 @@ def test_routing_api_and_dispatch_use_road_eta(client):
     assert rows and all(row["distance_type"] == "road" for row in rows if roads.network().nearest([row["lon"], row["lat"]]))
     assert "شبکه راه شماتیک" in options["eta_basis"]
     assert [x["eta_minutes"] for x in options["needs_confirmation"]] == sorted(x["eta_minutes"] for x in options["needs_confirmation"])
+
+
+def test_alternatives_are_distinct_bounded_and_avoid_closed_areas():
+    g = roads.network()
+    origin, target = [49.70, 30.70], [49.95, 30.85]
+    found = g.routes(origin, target, 3)
+    assert [r["id"] for r in found] == ["R1", "R2", "R3"][:len(found)] and len(found) >= 2
+    assert found[0]["label"] == "سریع‌ترین" and found[1]["label"] == "جایگزین ۱"
+    assert all(r["eta_minutes"] >= found[0]["eta_minutes"] for r in found)
+    assert all(r["eta_minutes"] <= found[0]["eta_minutes"] * roads.MAX_DETOUR for r in found)
+    assert len({tuple(map(tuple, r["path"])) for r in found}) == len(found)
+    closed = dict(type="circle", center=[49.82, 30.78], radius_m=3000)
+    from app.core.sim import distance_km
+    for r in g.routes(origin, target, 3, [closed]):
+        assert all(distance_km(p, closed["center"]) * 1000 > closed["radius_m"] for p in r["path"])
+    walled = dict(type="polygon", points=[[49.60, 30.60], [50.30, 30.60], [50.30, 30.95], [49.60, 30.95]])
+    assert g.routes(origin, target, 3, [walled]) == []  # whole network closed: no road route, caller falls back
+    assert g.routes(origin, [49.88, 30.79], 3)  # ...a one-way spur reached the legal way
+
+
+def test_simulated_patrol_follows_the_road_path():
+    from app.core import sim
+    plan = dict(routes=[], radius=0.01, period=900, aspect=1, phase=0, direction=1, t0=0, center=[49.62, 30.78])
+    path = [[49.70, 30.78], [49.70, 30.86]]
+    sim.dispatch(plan, [49.78, 30.86], 100, now=1000, path=path)
+    start = sim.position(plan, 1000)
+    middle = sim.position(plan, 1050)
+    corner_share = (sim.distance_km(start, path[0]) + sim.distance_km(*path)) / (
+        sim.distance_km(start, path[0]) + sim.distance_km(*path) + sim.distance_km(path[1], [49.78, 30.86]))
+    corner = sim.position(plan, 1000 + 100 * corner_share)
+    assert abs(corner[0] - 49.70) < 1e-6 and abs(corner[1] - 30.86) < 1e-6
+    assert sim.position(plan, 2000) == [49.78, 30.86]
+    assert middle != [start[0] + (49.78 - start[0]) / 2, start[1] + (30.86 - start[1]) / 2]
+
+
+def test_assignment_stores_chosen_route_and_routes_api(client):
+    from app.core import store
+    incident = store.create_incident("آزمون مسیر انتخابی", "high", "آزمایش", store.lookup("assets", "AST-012"), "نمونه", "ثبت")
+    incident.update(lon=49.95, lat=30.85)
+    assert client.post(f"/api/v1/incidents/{incident['id']}/transition", json=dict(status="confirmed")).status_code == 200
+    patrol = client.get(f"/api/v1/incidents/{incident['id']}/dispatch-options").json()["suggestions"] or \
+        client.get(f"/api/v1/incidents/{incident['id']}/dispatch-options").json()["needs_confirmation"]
+    asset = patrol[0]["asset_id"]
+    plan = client.get(f"/api/v1/incidents/{incident['id']}/routes", params=dict(asset_id=asset)).json()
+    assert plan["source"] == "schematic" and plan["routes"]
+    pick = plan["routes"][-1]
+    body = dict(status="assigned", asset_id=asset, route_id="R9")
+    assert client.post(f"/api/v1/incidents/{incident['id']}/transition", json=body).status_code == 422
+    body["route_id"] = pick["id"]
+    item = client.post(f"/api/v1/incidents/{incident['id']}/transition", json=body).json()
+    assert item["route"]["id"] == pick["id"] and item["eta_minutes"] == item["route"]["eta_minutes"]
+    assert {r["id"] for r in item["route_alternatives"]} == {r["id"] for r in plan["routes"]} - {pick["id"]}
+    assert store.plan_for(store.lookup("assets", asset))["routes"][-1]["path"] == item["route"]["path"][1:-1]
+    free = client.post("/api/v1/routing/routes", json=dict(origin=[49.70, 30.70], destination=[49.95, 30.85])).json()
+    blocked = client.post("/api/v1/routing/routes", json=dict(origin=[49.70, 30.70], destination=[49.95, 30.85],
+        avoid_areas=[dict(type="circle", center=[49.82, 30.78], radius_m=3000)])).json()
+    assert blocked["avoided_areas"] == 1 and blocked["routes"][0]["eta_minutes"] > free["routes"][0]["eta_minutes"]
+    assert client.post("/api/v1/routing/routes", json=dict(origin=[200, 30], destination=[49.9, 30.8])).status_code == 422
+
+
+def test_trail_keeps_road_bends_of_a_short_dispatch():
+    from app.core import sim
+    plan = dict(routes=[], radius=0.01, period=900, aspect=1, phase=0, direction=1, t0=0, center=[49.62, 30.78])
+    sim.dispatch(plan, [49.78, 30.86], 12, now=1000, path=[[49.70, 30.78], [49.70, 30.86]])
+    asset = dict(id="X")
+    sim.apply(asset, plan, now=1100)
+    points = [[round(p["lon"], 6), round(p["lat"], 6)] for p in asset["track"]]
+    assert [49.70, 30.78] in points and [49.70, 30.86] in points
