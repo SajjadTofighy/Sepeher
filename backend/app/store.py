@@ -179,6 +179,8 @@ def create_incident(title, severity, zone, asset, description, first_action, zon
         timeline=[dict(time=now(), action=first_action, actor=actor)],
     )
     state["incidents"].insert(0, item)
+    from .intel.bayes import persist_incident
+    persist_incident(item)
     policy = next((p for p in state["policies"] if p["id"] == policy_id), None)
     if policy and policy["condition"] == "sos":
         attach_emergency_context(item, "sos")

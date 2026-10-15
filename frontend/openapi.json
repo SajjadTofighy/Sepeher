@@ -2015,6 +2015,169 @@
         }
       }
     },
+    "/api/v1/intel/risk/events": {
+      "get": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Risk Events",
+        "operationId": "risk_events_api_v1_intel_risk_events_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RiskEvent"
+                  },
+                  "type": "array",
+                  "title": "Response Risk Events Api V1 Intel Risk Events Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Import Risk Events",
+        "operationId": "import_risk_events_api_v1_intel_risk_events_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RiskEventImport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskEventImportResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/intel/patrol-strategy": {
+      "get": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Patrol Strategy",
+        "operationId": "patrol_strategy_api_v1_intel_patrol_strategy_get",
+        "parameters": [
+          {
+            "name": "stops",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 4,
+              "title": "Stops"
+            }
+          },
+          {
+            "name": "horizon_hours",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 72,
+              "exclusiveMinimum": 0,
+              "default": 8.0,
+              "title": "Horizon Hours"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatrolStrategy"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/intel/patrol-game/approval": {
+      "get": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Patrol Game Approval",
+        "operationId": "patrol_game_approval_api_v1_intel_patrol_game_approval_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatrolGameApproval"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/intel/patrol-game/approve": {
+      "post": {
+        "tags": [
+          "intel"
+        ],
+        "summary": "Approve Patrol Game",
+        "operationId": "approve_patrol_game_api_v1_intel_patrol_game_approve_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatrolGameApproval"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/intel/patrol-plans": {
       "get": {
         "tags": [
@@ -10440,6 +10603,241 @@
         ]
       }
     },
+    "/api/v1/tour/routes/{id}/coverage": {
+      "put": {
+        "tags": [
+          "field"
+        ],
+        "summary": "Route Coverage",
+        "operationId": "route_coverage_api_v1_tour_routes__id__coverage_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RouteCoverageInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TourRoute"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tour/routes/{id}/strategy": {
+      "get": {
+        "tags": [
+          "field"
+        ],
+        "summary": "Route Strategy",
+        "description": "Preview of per-station visit probabilities for a walking route; nothing is stored.",
+        "operationId": "route_strategy_api_v1_tour_routes__id__strategy_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "horizon_hours",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 24,
+              "exclusiveMinimum": 0,
+              "default": 2.0,
+              "title": "Horizon Hours"
+            }
+          },
+          {
+            "name": "stations_per_tour",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 500,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Stations Per Tour"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatrolStrategy"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tour": {
       "get": {
         "tags": [
@@ -12990,6 +13388,81 @@
         ],
         "title": "AuthConfiguration"
       },
+      "BayesEstimate": {
+        "properties": {
+          "prior_rate": {
+            "type": "number",
+            "title": "Prior Rate"
+          },
+          "prior_years": {
+            "type": "number",
+            "title": "Prior Years"
+          },
+          "weighted_events": {
+            "type": "number",
+            "title": "Weighted Events"
+          },
+          "exposure_years": {
+            "type": "number",
+            "title": "Exposure Years"
+          },
+          "shape": {
+            "type": "number",
+            "title": "Shape"
+          },
+          "rate": {
+            "type": "number",
+            "title": "Rate"
+          },
+          "mean": {
+            "type": "number",
+            "title": "Mean"
+          },
+          "lower": {
+            "type": "number",
+            "title": "Lower"
+          },
+          "upper": {
+            "type": "number",
+            "title": "Upper"
+          },
+          "planning_rate": {
+            "type": "number",
+            "title": "Planning Rate"
+          },
+          "credible": {
+            "type": "number",
+            "title": "Credible"
+          },
+          "quantile": {
+            "type": "number",
+            "title": "Quantile"
+          },
+          "event_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Event Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "prior_rate",
+          "prior_years",
+          "weighted_events",
+          "exposure_years",
+          "shape",
+          "rate",
+          "mean",
+          "lower",
+          "upper",
+          "planning_rate",
+          "credible",
+          "quantile"
+        ],
+        "title": "BayesEstimate"
+      },
       "Bootstrap": {
         "properties": {
           "assets": {
@@ -14715,6 +15188,126 @@
           "message"
         ],
         "title": "ErrorDetail"
+      },
+      "EventWeights": {
+        "properties": {
+          "incident": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Incident",
+            "default": 1.0
+          },
+          "import_theft": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Import Theft",
+            "default": 1.0
+          },
+          "import_sabotage": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Import Sabotage",
+            "default": 1.0
+          },
+          "import_intrusion": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Import Intrusion",
+            "default": 0.8
+          },
+          "import_tampering": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Import Tampering",
+            "default": 0.8
+          },
+          "import_vandalism": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Import Vandalism",
+            "default": 0.6
+          },
+          "import_other": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Import Other",
+            "default": 0.4
+          },
+          "report_security": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Report Security",
+            "default": 1.0
+          },
+          "report_damage": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Report Damage",
+            "default": 1.0
+          },
+          "report_uxo": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Report Uxo",
+            "default": 0.5
+          },
+          "report_drone_sighting": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Report Drone Sighting",
+            "default": 0.5
+          },
+          "report_operations": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Report Operations",
+            "default": 0.2
+          },
+          "report_safety_hse": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Report Safety Hse",
+            "default": 0.1
+          },
+          "report_other": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Report Other",
+            "default": 0.3
+          },
+          "seal_anomaly": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Seal Anomaly",
+            "default": 0.8
+          },
+          "tag_replay": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Tag Replay",
+            "default": 0.6
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "EventWeights",
+        "description": "Evidence weight of each recorded event category in the Bayesian update."
       },
       "ExceptionBoard": {
         "properties": {
@@ -18137,6 +18730,173 @@
         "title": "PaperScanInput",
         "description": "A later entry of the printed backup patrol form; always method=paper and trust=low."
       },
+      "PatrolGameApproval": {
+        "properties": {
+          "fingerprint": {
+            "type": "string",
+            "title": "Fingerprint"
+          },
+          "approved": {
+            "type": "boolean",
+            "title": "Approved"
+          },
+          "approved_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved By"
+          },
+          "approved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fingerprint",
+          "approved",
+          "approved_by",
+          "approved_at"
+        ],
+        "title": "PatrolGameApproval"
+      },
+      "PatrolGameSettings": {
+        "properties": {
+          "model": {
+            "type": "string",
+            "enum": [
+              "stackelberg",
+              "quantal",
+              "weighted"
+            ],
+            "title": "Model",
+            "default": "stackelberg"
+          },
+          "threat_profile": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Threat Profile",
+            "default": 0.5
+          },
+          "quantal_rationality": {
+            "type": "number",
+            "maximum": 50.0,
+            "minimum": 0.0,
+            "title": "Quantal Rationality",
+            "default": 4.0
+          },
+          "attack_minutes": {
+            "type": "number",
+            "maximum": 1440.0,
+            "minimum": 1.0,
+            "title": "Attack Minutes",
+            "default": 90
+          },
+          "max_detection": {
+            "type": "number",
+            "maximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Max Detection",
+            "default": 0.9
+          },
+          "capture_penalty": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Capture Penalty",
+            "default": 0.5
+          },
+          "risk_quantile": {
+            "type": "number",
+            "maximum": 0.99,
+            "minimum": 0.5,
+            "title": "Risk Quantile",
+            "default": 0.5
+          },
+          "credible_level": {
+            "type": "number",
+            "maximum": 0.99,
+            "minimum": 0.5,
+            "title": "Credible Level",
+            "default": 0.9
+          },
+          "prior_strength_years": {
+            "type": "number",
+            "maximum": 20.0,
+            "minimum": 0.1,
+            "title": "Prior Strength Years",
+            "default": 1.0
+          },
+          "half_life_days": {
+            "type": "number",
+            "maximum": 3650.0,
+            "minimum": 7.0,
+            "title": "Half Life Days",
+            "default": 365
+          },
+          "spatial_bandwidth_m": {
+            "type": "number",
+            "maximum": 10000.0,
+            "minimum": 10.0,
+            "title": "Spatial Bandwidth M",
+            "default": 300
+          },
+          "history_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "History Start"
+          },
+          "allow_subset_tours": {
+            "type": "boolean",
+            "title": "Allow Subset Tours",
+            "default": false
+          },
+          "classes": {
+            "items": {
+              "$ref": "#/components/schemas/TargetClassParameters"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "minItems": 4,
+            "title": "Classes"
+          },
+          "overrides": {
+            "items": {
+              "$ref": "#/components/schemas/TargetOverride"
+            },
+            "type": "array",
+            "maxItems": 2000,
+            "title": "Overrides"
+          },
+          "event_weights": {
+            "$ref": "#/components/schemas/EventWeights"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PatrolGameSettings",
+        "description": "Every organisation-specific input of the patrol security game; edited in the UI, approved by Herasat."
+      },
       "PatrolPlan": {
         "properties": {
           "id": {
@@ -18215,6 +18975,16 @@
           "finding_id": {
             "type": "string",
             "title": "Finding Id"
+          },
+          "strategy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PatrolStrategy"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "can_execute": {
             "type": "boolean",
@@ -18426,6 +19196,157 @@
           "audit_id"
         ],
         "title": "PatrolReport"
+      },
+      "PatrolStrategy": {
+        "properties": {
+          "model": {
+            "type": "string",
+            "enum": [
+              "stackelberg",
+              "quantal",
+              "weighted"
+            ],
+            "title": "Model"
+          },
+          "resources": {
+            "type": "number",
+            "title": "Resources"
+          },
+          "horizon_hours": {
+            "type": "number",
+            "title": "Horizon Hours"
+          },
+          "threat_profile": {
+            "type": "number",
+            "title": "Threat Profile"
+          },
+          "targets": {
+            "items": {
+              "$ref": "#/components/schemas/StrategyTarget"
+            },
+            "type": "array",
+            "title": "Targets"
+          },
+          "attacked_target_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attacked Target Id"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/StrategyOutcome"
+          },
+          "baselines": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/StrategyOutcome"
+            },
+            "type": "object",
+            "title": "Baselines"
+          },
+          "improvement_vs_uniform": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Improvement Vs Uniform"
+          },
+          "improvement_vs_proportional": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Improvement Vs Proportional"
+          },
+          "entropy": {
+            "type": "number",
+            "title": "Entropy"
+          },
+          "parameters_fingerprint": {
+            "type": "string",
+            "title": "Parameters Fingerprint"
+          },
+          "parameters_approved": {
+            "type": "boolean",
+            "title": "Parameters Approved"
+          },
+          "approved_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved By"
+          },
+          "approved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved At"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "conformity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StrategyConformity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "can_execute": {
+            "type": "boolean",
+            "const": false,
+            "title": "Can Execute",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "model",
+          "resources",
+          "horizon_hours",
+          "threat_profile",
+          "targets",
+          "attacked_target_id",
+          "outcome",
+          "baselines",
+          "improvement_vs_uniform",
+          "improvement_vs_proportional",
+          "entropy",
+          "parameters_fingerprint",
+          "parameters_approved",
+          "warnings"
+        ],
+        "title": "PatrolStrategy",
+        "description": "Optimal randomized coverage with its full arithmetic; advisory only."
       },
       "PermissionMatrix": {
         "properties": {
@@ -19722,6 +20643,219 @@
         "type": "object",
         "title": "ReportRouting"
       },
+      "RiskEvent": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "time": {
+            "type": "string",
+            "title": "Time"
+          },
+          "lon": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lon"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "target_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Id"
+          },
+          "weight": {
+            "type": "number",
+            "title": "Weight"
+          },
+          "source_ref": {
+            "type": "string",
+            "title": "Source Ref"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "source",
+          "category",
+          "time",
+          "lon",
+          "lat",
+          "target_id",
+          "weight",
+          "source_ref"
+        ],
+        "title": "RiskEvent"
+      },
+      "RiskEventImport": {
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/RiskEventInput"
+            },
+            "type": "array",
+            "maxItems": 2000,
+            "minItems": 1,
+            "title": "Events"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "events"
+        ],
+        "title": "RiskEventImport"
+      },
+      "RiskEventImportResult": {
+        "properties": {
+          "created": {
+            "type": "integer",
+            "title": "Created"
+          },
+          "unchanged": {
+            "type": "integer",
+            "title": "Unchanged"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/RiskEvent"
+            },
+            "type": "array",
+            "title": "Events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "created",
+          "unchanged",
+          "events"
+        ],
+        "title": "RiskEventImportResult"
+      },
+      "RiskEventInput": {
+        "properties": {
+          "time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Time"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "theft",
+              "sabotage",
+              "intrusion",
+              "tampering",
+              "vandalism",
+              "other"
+            ],
+            "title": "Category"
+          },
+          "lon": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 180.0,
+                "minimum": -180.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lon"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 85.0,
+                "minimum": -85.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "target_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Id"
+          },
+          "weight": {
+            "type": "number",
+            "maximum": 10.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Weight",
+            "default": 1.0
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 3,
+            "title": "Description"
+          },
+          "source_ref": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Source Ref"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "time",
+          "category",
+          "description",
+          "source_ref"
+        ],
+        "title": "RiskEventInput",
+        "description": "Historical or manual event for the Bayesian ledger; append-only and audited."
+      },
       "RiskFactor": {
         "properties": {
           "factor": {
@@ -19804,6 +20938,26 @@
           "finding_id": {
             "type": "string",
             "title": "Finding Id"
+          },
+          "target_class": {
+            "type": "string",
+            "title": "Target Class",
+            "default": ""
+          },
+          "value": {
+            "type": "number",
+            "title": "Value",
+            "default": 0
+          },
+          "bayes": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BayesEstimate"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -19915,8 +21069,52 @@
         ],
         "title": "RoleChangeEvent"
       },
+      "RouteCoverageInput": {
+        "properties": {
+          "coverage_mode": {
+            "type": "string",
+            "enum": [
+              "all",
+              "optimized"
+            ],
+            "title": "Coverage Mode"
+          },
+          "stations_per_tour": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 500.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stations Per Tour"
+          },
+          "subset_mode": {
+            "type": "string",
+            "enum": [
+              "shadow",
+              "active"
+            ],
+            "title": "Subset Mode",
+            "default": "shadow"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "coverage_mode"
+        ],
+        "title": "RouteCoverageInput",
+        "description": "Herasat's decision for one walking route: visit all stations or an optimized subset."
+      },
       "RuntimeSettings": {
         "properties": {
+          "patrol_game": {
+            "$ref": "#/components/schemas/PatrolGameSettings"
+          },
           "rate_limit_per_minute": {
             "$ref": "#/components/schemas/RateLimits"
           },
@@ -20909,6 +22107,33 @@
               }
             ],
             "title": "Tour Id"
+          },
+          "selection_mode": {
+            "type": "string",
+            "enum": [
+              "all",
+              "optimized"
+            ],
+            "title": "Selection Mode",
+            "default": "all"
+          },
+          "proposed_station_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Proposed Station Ids"
+          },
+          "selection_finding_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selection Finding Id"
           }
         },
         "type": "object",
@@ -22863,6 +24088,139 @@
         ],
         "title": "StationVisitInput"
       },
+      "StrategyConformity": {
+        "properties": {
+          "plans": {
+            "type": "integer",
+            "title": "Plans"
+          },
+          "chi_square": {
+            "type": "number",
+            "title": "Chi Square"
+          },
+          "degrees_of_freedom": {
+            "type": "integer",
+            "title": "Degrees Of Freedom"
+          },
+          "max_standardized_deviation": {
+            "type": "number",
+            "title": "Max Standardized Deviation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "plans",
+          "chi_square",
+          "degrees_of_freedom",
+          "max_standardized_deviation"
+        ],
+        "title": "StrategyConformity"
+      },
+      "StrategyOutcome": {
+        "properties": {
+          "defender_expected": {
+            "type": "number",
+            "title": "Defender Expected"
+          },
+          "attacker_expected": {
+            "type": "number",
+            "title": "Attacker Expected"
+          },
+          "attacker_max": {
+            "type": "number",
+            "title": "Attacker Max"
+          },
+          "expected_loss": {
+            "type": "number",
+            "title": "Expected Loss"
+          }
+        },
+        "type": "object",
+        "required": [
+          "defender_expected",
+          "attacker_expected",
+          "attacker_max",
+          "expected_loss"
+        ],
+        "title": "StrategyOutcome"
+      },
+      "StrategyTarget": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "target_class": {
+            "type": "string",
+            "title": "Target Class"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          },
+          "bayes": {
+            "$ref": "#/components/schemas/BayesEstimate"
+          },
+          "attempt_probability": {
+            "type": "number",
+            "title": "Attempt Probability"
+          },
+          "attacker_uncovered": {
+            "type": "number",
+            "title": "Attacker Uncovered"
+          },
+          "detection": {
+            "type": "number",
+            "title": "Detection"
+          },
+          "coverage": {
+            "type": "number",
+            "title": "Coverage"
+          },
+          "attacker_utility": {
+            "type": "number",
+            "title": "Attacker Utility"
+          },
+          "attack_probability": {
+            "type": "number",
+            "title": "Attack Probability"
+          },
+          "mandatory": {
+            "type": "boolean",
+            "title": "Mandatory",
+            "default": false
+          },
+          "selected": {
+            "type": "boolean",
+            "title": "Selected",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "target_class",
+          "value",
+          "bayes",
+          "attempt_probability",
+          "attacker_uncovered",
+          "detection",
+          "coverage",
+          "attacker_utility",
+          "attack_probability"
+        ],
+        "title": "StrategyTarget"
+      },
       "Summary": {
         "properties": {
           "online": {
@@ -23223,6 +24581,97 @@
         ],
         "title": "TagVerification"
       },
+      "TargetClassParameters": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^(facility_unmanned|facility_manned|pipeline_segment|station_default|station:.{1,80})$",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Label"
+          },
+          "value": {
+            "type": "number",
+            "maximum": 100.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Value"
+          },
+          "prior_rate_per_year": {
+            "type": "number",
+            "maximum": 1000.0,
+            "minimum": 0.001,
+            "title": "Prior Rate Per Year"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "value",
+          "prior_rate_per_year"
+        ],
+        "title": "TargetClassParameters",
+        "description": "Organisation-defined consequence value and expert baseline rate for one class of target."
+      },
+      "TargetOverride": {
+        "properties": {
+          "target_id": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Target Id"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "prior_rate_per_year": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1000.0,
+                "minimum": 0.001
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prior Rate Per Year"
+          },
+          "always_visit": {
+            "type": "boolean",
+            "title": "Always Visit",
+            "default": false
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 3,
+            "title": "Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "target_id",
+          "note"
+        ],
+        "title": "TargetOverride"
+      },
       "TimelineEntry": {
         "properties": {
           "time": {
@@ -23491,6 +24940,35 @@
           "created_at": {
             "type": "string",
             "title": "Created At"
+          },
+          "coverage_mode": {
+            "type": "string",
+            "enum": [
+              "all",
+              "optimized"
+            ],
+            "title": "Coverage Mode",
+            "default": "all"
+          },
+          "stations_per_tour": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stations Per Tour"
+          },
+          "subset_mode": {
+            "type": "string",
+            "enum": [
+              "shadow",
+              "active"
+            ],
+            "title": "Subset Mode",
+            "default": "shadow"
           }
         },
         "type": "object",

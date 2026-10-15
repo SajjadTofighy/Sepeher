@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ClipboardList,
+  Crosshair,
   History,
   Layers,
   LayoutDashboard,
@@ -54,6 +55,7 @@ import ConfigurationForm from "./features/settings/ConfigurationForm";
 import FieldApp from "./features/field-comms/FieldApp";
 import FieldCommsPage from "./features/field-comms/FieldCommsPage";
 import SupervisionPage from "./features/supervision/SupervisionPage";
+import PatrolGamePage from "./features/patrol-game/PatrolGamePage";
 import GuidesPage from "./features/guides/GuidesPage";
 import SettingsPage from "./features/settings/SettingsPage";
 import { useOperations } from "./shared/api/useOperations";
@@ -74,6 +76,7 @@ const nav = [
   { id: "replay", name: "تاریخچه و بازپخش", icon: History },
   { id: "analytics", name: "داشبورد مدیریتی", icon: LayoutDashboard },
   { id: "supervision", name: "نظارت استثنامحور گشت", icon: ListChecks },
+  { id: "patrol-game", name: "راهبرد گشت بهینه", icon: Crosshair },
   { id: "field-comms", name: "پیام، رسانه و گزارش میدانی", icon: MessagesSquare },
   { id: "field", name: "اپ میدانی نگهبان", icon: Smartphone },
   { id: "guides", name: "راهنما و فرم پشتیبان", icon: BookOpen },
@@ -84,6 +87,7 @@ const nav = [
 // Navigation convenience only: the server decides every permission.
 const NAV_ROLES: Record<string, string[]> = {
   supervision: ["shift_supervisor", "security_officer", "security_manager", "admin"],
+  "patrol-game": ["shift_supervisor", "security_officer", "security_manager", "admin"],
   "field-comms": ["shift_supervisor", "security_officer", "security_manager", "admin"],
   assessment: ["auditor"],
   settings: ["admin", "security_manager", "security_officer", "shift_supervisor"],
@@ -618,6 +622,7 @@ export default function App() {
             </Suspense>
           )}
           {page === "supervision" && <SupervisionPage />}
+          {page === "patrol-game" && <PatrolGamePage act={act} busy={busy} />}
           {page === "field-comms" && <FieldCommsPage data={data} act={act} busy={busy} />}
           {page === "field" && <FieldApp />}
           {page === "guides" && <GuidesPage />}

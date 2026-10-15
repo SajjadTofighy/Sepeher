@@ -123,6 +123,12 @@ class FieldStore:
         with self.connection() as db:
             return [json.loads(row[0]) for row in db.execute('SELECT payload FROM scans ORDER BY rowid')]
 
+    def rejected_scans(self, reason):
+        with self.connection() as db:
+            return [json.loads(row[0]) for row in db.execute(
+                "SELECT payload FROM scans WHERE json_extract(payload,'$.status')='rejected' "
+                "AND json_extract(payload,'$.reason')=? ORDER BY rowid", (reason,))]
+
     def scan_by_client(self, owner_sub, client_id):
         if client_id is None:
             return None

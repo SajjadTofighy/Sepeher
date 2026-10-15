@@ -1,4 +1,4 @@
-"""Secure randomized drafts and coverage-driven compliance, without dispatch."""
+"""Game-theoretic randomized drafts and coverage-driven compliance, without dispatch."""
 
 import secrets
 from copy import deepcopy
@@ -10,7 +10,7 @@ from ..tracks import parse_timestamp
 from .. import engine, store
 from ..routers.incidents import eta_minutes, patrol_vehicle
 from ..sim import distance_km
-from . import coverage, findings, risk
+from . import coverage, findings, patrol_game, risk
 
 MAX_TIME_RETRIES = 64
 MAX_SCHEDULE_ATTEMPTS = 32
@@ -95,6 +95,31 @@ def _mandatory(rows, stamp):
     return max(never, key=lambda r: r["score"]) if never else None
 
 
+def _targets(rows, stamp, capacity):
+    """Game targets, Bayesian estimates and mandatory ids (most overdue plus always-visit overrides)."""
+    targets = patrol_game.vehicle_targets(rows)
+    overdue = _mandatory(rows, stamp)
+    mandatory = ([overdue["id"]] if overdue else []) + [t["id"] for t in targets if t["always_visit"]
+                                                        and (overdue is None or t["id"] != overdue["id"])]
+    if len(mandatory) > capacity:
+        raise HTTPException(422, "اهداف الزامی بیشتر از ظرفیت توقف خودروهای انتخاب‌شده است")
+    return targets, {r["id"]: r["bayes"] for r in rows}, mandatory
+
+
+@store.state_locked
+def preview(resources, horizon_hours):
+    """Current optimal coverage for the given vehicle stops and horizon; nothing is stored."""
+    stamp = store.now()
+    rows = risk.snapshot(stamp)["items"]
+    capacity = min(len(rows), resources)
+    targets, estimates, mandatory = _targets(rows, stamp, capacity)
+    alpha = store.state["settings"]["intel_risk_alpha"]
+    record, _ = patrol_game.strategy(targets, capacity - len(mandatory), horizon_hours, stamp, mandatory,
+                                     {r["id"]: r["score"] ** alpha for r in rows}, estimates)
+    record["conformity"] = patrol_game.conformity(store.state["patrol_plans"])
+    return record
+
+
 @store.state_locked
 def create(payload, rng=None):
     rng = rng if rng is not None else secrets.SystemRandom()
@@ -114,9 +139,22 @@ def create(payload, rng=None):
     count = min(len(rows), payload.stops_per_patrol * len(assets))
     if count < payload.stops_per_patrol * len(assets):
         warnings.append("تعداد اهداف موجود کمتر از ظرفیت درخواست‌شده است")
-    mandatory = _mandatory(rows, stamp)
-    selected = ([mandatory] if mandatory else []) + weighted_sample(
-        [r for r in rows if mandatory is None or r["id"] != mandatory["id"]], count - bool(mandatory), settings["intel_risk_alpha"], rng)
+    targets, estimates, mandatory_ids = _targets(rows, stamp, count)
+    by_id = {r["id"]: r for r in rows}
+    free_count = count - len(mandatory_ids)
+    weights = {r["id"]: r["score"] ** settings["intel_risk_alpha"] for r in rows}
+    horizon = (end - start).total_seconds() / 3600
+    strategy, marginals = patrol_game.strategy(targets, free_count, horizon, stamp, mandatory_ids, weights, estimates)
+    if strategy["model"] == "weighted":
+        sampled = weighted_sample([r for r in rows if r["id"] not in mandatory_ids], free_count, settings["intel_risk_alpha"], rng)
+        chosen = {r["id"] for r in sampled}
+        for row in strategy["targets"]:
+            row["selected"] = row["mandatory"] or row["id"] in chosen
+    else:
+        sampled = [by_id[id] for id in patrol_game.sample(strategy, marginals, free_count, rng)]
+    strategy["conformity"] = patrol_game.conformity(store.state["patrol_plans"])
+    warnings.extend(strategy["warnings"])
+    selected = [by_id[id] for id in mandatory_ids] + sampled
     patrols = []
     for asset in assets:
         base = asset.get("patrol_base")
@@ -138,18 +176,24 @@ def create(payload, rng=None):
             point = [target["lon"], target["lat"]]
         times = _schedule(ordered, patrol["base"], start, end, settings, history, rng)
         patrol["stops"] = [dict(target_id=r["id"], **{k: deepcopy(r[k]) for k in ("kind", "name", "field", "lon", "lat", "score", "breakdown", "finding_id")},
-                               due_at=due, mandatory=mandatory is not None and r["id"] == mandatory["id"]) for r, due in zip(ordered, times)]
+                               due_at=due, mandatory=r["id"] in mandatory_ids) for r, due in zip(ordered, times)]
     id = f"PPL-{len(store.state['patrol_plans']) + 1:04}"
     source_ids = [r["finding_id"] for r in selected]
     finding = findings.raise_finding(rule_id=f"intel.patrol_plan.{id}", kind="patrol_plan", severity="info",
         subject_ids=payload.asset_ids, summary=f"پیشنهاد برنامه گشت {id}؛ نیازمند تأیید اپراتور",
-        sources=source_ids, now_iso=stamp, evidence=dict(rule="نمونه‌گیری وزن‌دار و زمان‌بندی تصادفی محدود",
-        thresholds=settings, window_from=start.isoformat(), window_to=end.isoformat(),
+        sources=source_ids, now_iso=stamp, evidence=dict(
+        rule="نمونه‌گیری وزن‌دار و زمان‌بندی تصادفی محدود" if strategy["model"] == "weighted"
+        else "راهبرد بازی امنیتی استکلبرگ، نمونه‌گیری شانه‌ای با احتمال‌های دقیق و زمان‌بندی تصادفی محدود",
+        thresholds={**settings, "patrol_game": deepcopy(patrol_game.parameters())},
+        window_from=start.isoformat(), window_to=end.isoformat(),
         points=[[s["lon"], s["lat"], s["due_at"]] for p in patrols for s in p["stops"]],
-        values=dict(plan_id=id, patrols=patrols, mandatory_target_id=mandatory["id"] if mandatory else None)))
+        values=dict(plan_id=id, patrols=patrols, mandatory_target_ids=mandatory_ids,
+                    mandatory_target_id=mandatory_ids[0] if mandatory_ids else None,
+                    parameters_fingerprint=strategy["parameters_fingerprint"], outcome=strategy["outcome"],
+                    baselines=strategy["baselines"], entropy=strategy["entropy"])))
     plan = dict(id=id, status="draft", shift_start=start.isoformat(), shift_end=end.isoformat(), created_at=stamp,
                 approved_at=None, discarded_at=None, patrols=patrols, settings_snapshot=settings, mission_ids=[],
-                warnings=warnings, finding_id=finding["id"], can_execute=False)
+                warnings=warnings, finding_id=finding["id"], strategy=strategy, can_execute=False)
     store.state["patrol_plans"].append(plan)
     store.audit("ساخت پیش‌نویس برنامه گشت", id, actor="اپراتور")
     return plan

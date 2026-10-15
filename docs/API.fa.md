@@ -87,7 +87,7 @@ OpenAPI کامل در `openapi.json` و Swagger در `/docs` موجود است. 
 | GET/POST | `/zones` | فهرست / ایجاد چندضلعی نمونه |
 | PUT | `/zones/{id}` | ویرایش مشخصات و هندسه محدوده |
 | PATCH | `/assets/{id}/settings` | مشخصات سیم‌کارت، بسته و فاصله گزارش |
-| GET/PUT | `/settings` | تنظیمات پوشش ارتباط، پوشش گشت، ریسک و برنامه، فاصله worker، retention، سکوت، dedupe و GIS |
+| GET/PUT | `/settings` | تنظیمات پوشش ارتباط، پوشش گشت، ریسک و برنامه، فاصله worker، retention، سکوت، dedupe و GIS؛ تغییر `patrol_game` فقط با نقش security_manager یا admin، پایدار در fieldstore و باطل‌کننده تأیید پارامترها |
 | GET | `/cameras` | دوربین‌های نمونه |
 | POST | `/cameras/{id}/event` | adapter همان plate-read؛ فقط event=plate با plate/time/vehicle_class واقعی؛ رخداد نمونه، intrusion و fire با 409 رد می‌شوند |
 
@@ -147,13 +147,18 @@ SOS فقط برای دستگاه دارای قابلیت sos پذیرفته می
 
 پیشنهادها سه گشت dispatchable نزدیک مرز هستند؛ با access_points نزدیک‌ترین گشت آزاد برای هر نقطه محاسبه می‌شود (یک گشت ممکن است برای چند نقطه پیشنهاد شود). هر پیشنهاد شامل target، access_point_index اختیاری، distance_km مستقیم، eta_minutes و eta_label=تخمینی است. ارجاع از همان transition وضعیت assigned استفاده می‌کند و پس از تأیید حادثه، یک گشت پرونده را به محل حادثه اعزام می‌کند؛ کنترل چند گشت یا مسیریابی جاده‌ای وجود ندارد. گزارش JSON و چاپ وضعیت جاری محدوده و فهرست‌های داخل/نزدیک‌شونده را دارند؛ در پرونده بسته این فهرست‌های زنده خالی‌اند.
 
-## ریسک ثابت و برنامه پیشنهادی گشت (فاز ۲B پایه)
+## ریسک، برآورد بیزی و راهبرد بهینه گشت
 
 | Method | Path | رفتار |
 |---|---|---|
-| GET | `/intel/risk` | items با id، kind، name، field، lon/lat هدف، score، breakdown و finding_id؛ max_score و computed_at |
+| GET | `/intel/risk` | items با id، kind، name، field، lon/lat هدف، score، breakdown، finding_id، target_class، value و bayes؛ max_score و computed_at |
+| GET | `/intel/risk/events` | دفتر شواهد مورد استفاده: سوابق واردشده، حادثه‌ها، گزارش‌های میدانی دارای مختصات، ناهنجاری پلمب و اسکن تکراری رد‌شده |
+| POST | `/intel/risk/events` | نقش approval؛ `{events:[{time, category, lon/lat یا target_id, weight, description, source_ref}]}` تا ۲۰۰۰ مورد؛ source_ref کلید یکتا: تکرار همان محتوا unchanged، محتوای متفاوت 409، زمان آینده یا هدف ناشناخته 422؛ audit |
+| GET | `/intel/patrol-strategy?stops=&horizon_hours=` | `PatrolStrategy` فعلی برای مجموع توقف خودروها؛ چیزی ذخیره نمی‌شود |
+| GET | `/intel/patrol-game/approval` | اثر انگشت SHA-256 پارامترها و وضعیت تأیید |
+| POST | `/intel/patrol-game/approve` | فقط security_manager یا admin؛ تأیید اثر انگشت فعلی با audit |
 | GET | `/intel/patrol-plans` | برنامه‌های نگهداری‌شده؛ مسیر تفصیلی `/{id}` نیز موجود است |
-| POST | `/intel/patrol-plans` | ساخت پیش‌نویس با shift_start، shift_end، asset_ids و stops_per_patrol؛ پاسخ 201 |
+| POST | `/intel/patrol-plans` | ساخت پیش‌نویس با shift_start، shift_end، asset_ids و stops_per_patrol؛ پاسخ 201 با `strategy` |
 | POST | `/intel/patrol-plans/{id}/approve` | تأیید انسانی audited و ایجاد Missions؛ بدون اعزام یا فرمان |
 | POST | `/intel/patrol-plans/{id}/discard` | کنارگذاشتن پیش‌نویس، رفع یافته پیشنهاد و audit |
 
@@ -167,11 +172,15 @@ SOS فقط برای دستگاه دارای قابلیت sos پذیرفته می
 {"shift_start":"2026-10-09T06:00:00+03:30","shift_end":"2026-10-09T14:00:00+03:30","asset_ids":["AST-001","AST-002"],"stops_per_patrol":3}
 ```
 
-آغاز شیفت باید در آینده، پایان پس از آغاز و طول حداکثر هفت روز باشد؛ زمان بدون منطقه زمانی، شناسه تکراری، عضو غیرگشت یا پارامتر RNG/seed رد می‌شود. bases از Asset.patrol_base ثابت است؛ در نبود آن موقعیت فعلی با هشدار صریح استفاده می‌شود. بیشترین دیرکرد واقعی نسبت به مهلت خودِ هدف الزامی است؛ در نبود stale یک never با ریسک بیشتر جایگزین می‌شود، و اگر همه ok باشند همه اهداف نمونه‌گیری می‌شوند. بقیه با احتمال متناسب score^intel_risk_alpha=2، بدون تکرار و با secrets.SystemRandom انتخاب می‌شوند؛ در امتیازهای همگی صفر انتخاب یکنواخت است. RNG فقط پارامتر داخلی آزمون و بدون حالت ذخیره‌شده است.
+برآورد بیزی: نرخ هر هدف (اقدام در سال) پیشین Gamma(r0·s, s) دارد؛ r0 نرخ پایه دسته یا مقدار اختصاصی هدف (برای قطعه و تأسیسات ضرب در 0.5+دسترسی نرمال) و s برابر prior_strength_years است. هر شاهد با وزن دسته (event_weights)، وزن خودش، کرنل گاوسی spatial_bandwidth_m (تا سه برابر آن؛ شاهد دارای target_id فقط همان هدف) و `2^(-age/half_life_days)` جمع می‌شود و مواجهه، مدت مشاهده با همان کاهش است. آغاز مشاهده نخستین محاسبه پایدار یا history_start اعلامی سازمان (هرکدام زودتر) است؛ سابقه واردشده پیش از آن هشدار می‌دهد. نرخ برنامه‌ریزی چندک risk_quantile پسین و بازه باور credible_level است.
+
+بازی: ارزش V و احتمال اقدام ρ=1-exp(-نرخ×افق) نرمال می‌شوند؛ سود مهاجم بدون پوشش `(1-w)ρ̂ + wV̂` با w=threat_profile؛ احتمال کشف یک بازدید `min(max_detection, (attack_minutes+توقف)/افق)`؛ با پوشش `-d·capture_penalty + (1-d)·سود` و زیان مدافع `-(1-d)V̂` در برابر `-V̂`. model=stackelberg تعادل استکلبرگ قوی دقیق (ORIGAMI با حل دقیق منحنی منابع و شکست تساوی به سود مدافع)، quantal بهینه در برابر مهاجم با عقلانیت محدود quantal_rationality (گرادیان تصویرشده چندآغازی) و weighted روش قدیمی score^intel_risk_alpha است.
+
+آغاز شیفت باید در آینده، پایان پس از آغاز و طول حداکثر هفت روز باشد؛ زمان بدون منطقه زمانی، شناسه تکراری، عضو غیرگشت یا پارامتر RNG/seed رد می‌شود. bases از Asset.patrol_base ثابت است؛ در نبود آن موقعیت فعلی با هشدار صریح استفاده می‌شود. بیشترین دیرکرد واقعی نسبت به مهلت خودِ هدف و اهداف always_visit الزامی‌اند (بیش از ظرفیت 422)؛ در نبود stale یک never با ریسک بیشتر جایگزین می‌شود. بقیه با نمونه‌گیری شانه‌ای (ترتیب تصادفی و یک آفست) دقیقاً با احتمال حاشیه‌ای راهبرد و بدون تکرار انتخاب می‌شوند؛ در model=weighted نمونه‌گیری وزن‌دار قدیمی. RNG فقط secrets.SystemRandom و پارامتر داخلی آزمون و بدون حالت ذخیره‌شده است. راهبرد پیشنهادی است و can_execute=false دارد.
 
 ظرفیت هر گشت stops_per_patrol است؛ هر هدف به نزدیک‌ترین پایگاه دارای ظرفیت اختصاص و ایستگاه‌ها با نزدیک‌ترین همسایه مرتب می‌شوند. هدف قطعه نقطه میانی روی طول خط است. وقت‌ها در شیفت تصادفی‌اند، سفر اولیه از پایگاه و فاصله ایستگاه‌ها با eta_minutes تخمینی به‌علاوه intel_plan_dwell_minutes=10 رعایت می‌شود؛ توقف آخر نیز در شیفت جا می‌گیرد. ظرفیت بیشتر از تعداد اهداف هشدار می‌دهد و هدف تکرار نمی‌شود. زمان هدف در سه برنامه اخیراً تأییدشده نباید در حریم ±intel_plan_time_jitter_minutes=60 به وقت تهران تکرار شود؛ مقایسه ساعت از نیمه‌شب نیز عبور می‌کند. ۶۴ تلاش هر ایستگاه و ۳۲ تلاش ترتیب زمانی حد دارند؛ شیفت کوتاه یا نبود زمان سازگار 422 فارسی است و برنامه متعارض ذخیره نمی‌شود.
 
-برنامه status=draft/approved/discarded، patrols با base و stops (مختصات، due_at، ریسک و ریز عوامل snapshot)، settings_snapshot، finding_id، warnings و mission_ids دارد؛ can_execute=false است. تأیید تکراری مأموریت اضافی نمی‌سازد، کنارگذاشتن تکراری بی‌اثر، عبور از approved به discarded یا برعکس 409 و تأیید پس از پایان شیفت 409 است. تأیید مأموریت با plan_id، plan_window_minutes و Checkpointهای دارای target_id/lon/lat/due_at ایجاد می‌کند. تأیید برنامه اعزام نیست و آمادگی آینده تجهیز تضمین نمی‌شود؛ ETA و خطوط پیش‌نمایش شماتیک‌اند.
+برنامه status=draft/approved/discarded، patrols با base و stops (مختصات، due_at، ریسک و ریز عوامل snapshot)، settings_snapshot، finding_id، warnings، mission_ids و `strategy` دارد. `PatrolStrategy` برای هر هدف دسته، ارزش، برآورد بیزی، احتمال اقدام، کشف، پوشش، احتمال انتخاب مهاجم، mandatory و selected؛ نتیجه و مبناهای uniform/proportional (و stackelberg برای مدل‌های دیگر)، درصد بهبود، آنتروپی نرمال، اثر انگشت و تأیید پارامترها، هشدارها و در صورت وجود ۵ برنامه تأییدشده آماره انطباق (مجموع مربع انحراف استاندارد پواسون-دوجمله‌ای) را دارد؛ evidence یافته برنامه پارامترهای patrol_game را نیز نگه می‌دارد؛ can_execute=false است. تأیید تکراری مأموریت اضافی نمی‌سازد، کنارگذاشتن تکراری بی‌اثر، عبور از approved به discarded یا برعکس 409 و تأیید پس از پایان شیفت 409 است. تأیید مأموریت با plan_id، plan_window_minutes و Checkpointهای دارای target_id/lon/lat/due_at ایجاد می‌کند. تأیید برنامه اعزام نیست و آمادگی آینده تجهیز تضمین نمی‌شود؛ ETA و خطوط پیش‌نمایش شماتیک‌اند.
 
 coverage هر بازدید گشت مأموریت از target_id در due_at ± intel_plan_window_minutes=30 را ثبت می‌کند؛ مرز پنجره شامل است و بازدید در visited_at نگهداری می‌شود. پنجره در مأموریت snapshot است و تغییر تنظیمات روی مأموریت تأییدشده اثر ندارد. بازدید گشت دیگر یا خارج پنجره ایستگاه را کامل نمی‌کند. پیشرفت از همان نسبت تعداد ایستگاه‌های بازدیدشده محاسبه می‌شود. ایستگاه‌های قدیمی بدون مختصات/مهلت همچنان دستی کار می‌کنند.
 
@@ -256,6 +265,8 @@ camera_id باید در فهرست دوربین‌های ثبت‌شده باش�
 | GET | `/devices` | admin همه؛ دیگران فقط دستگاه خود؛ بدون secret |
 | POST / PUT | `/devices/{id}/revoke` و `/certification` | admin؛ ابطال یا ex_certified |
 | GET / POST | `/tour/routes` | خواندن در حوزه؛ ساخت برای کارکنان مجاز با guard_id |
+| PUT | `/tour/routes/{id}/coverage` | فقط security_manager یا admin؛ `{coverage_mode, stations_per_tour, subset_mode}` با all یا optimized و shadow یا active؛ تعداد هر دور کمتر از کل و نه کمتر از ایستگاه‌های الزامی (ابتدا/انتهای ثابت و always_visit) وگرنه 422؛ audit |
+| GET | `/tour/routes/{id}/strategy?horizon_hours=&stations_per_tour=` | پیش‌نمایش احتمال بازدید هر ایستگاه (`PatrolStrategy`)؛ چیزی ذخیره نمی‌شود |
 | GET / POST | `/tour` | خواندن در حوزه؛ آغاز فقط مالک نگهبان با route_id و دستگاه |
 | GET / POST | `/tour/{id}` و `/tour/{id}/complete` | خواندن در حوزه؛ پایان فقط مالک |
 | POST | `/tour/{id}/check-in` | مالک و دستگاه؛ tag_id و pin؛ PIN اضطرار پاسخ عادی یکسان دارد |
@@ -324,7 +335,7 @@ revision قدیمی `tag_revision_stale`، کلید غیرفعال `tag_key_inac
 | POST | `/tour/handovers/{id}/ack` | فقط نگهبان ورودی؛ زمان و sub تأیید ذخیره می‌شود |
 | GET / PUT | `/tour/emergency/{zone_id}` | مشاهده scoped؛ تغییر فقط security_officer، security_manager یا admin، با دلیل و audit |
 
-`TourRouteInput` اکنون station_ids، order_mode، fixed_first، fixed_last و must_precede دارد. ایستگاه‌ها باید در حوزه مسیر باشند و قیود چرخه‌دار رد می‌شوند. `TourInput.scheduled_tour_id` برای دور برنامه‌ریزی‌شده لازم است؛ هنگام وجود برنامه تأییدشده برای مسیر و تاریخ، شروع دستی همان مسیر 409 می‌دهد. در حالت `handover_required` شروع دور تا تحویل تأییدشده مجاز نیست. بازدید دور برنامه‌ریزی‌شده فقط برای ایستگاه بعدی پذیرفته می‌شود. مسیرها برای guard بدون station_ids برمی‌گردند تا ترتیب کامل آشکار نشود.
+`TourRouteInput` اکنون station_ids، order_mode، fixed_first، fixed_last و must_precede دارد. ایستگاه‌ها باید در حوزه مسیر باشند و قیود چرخه‌دار رد می‌شوند. `TourInput.scheduled_tour_id` برای دور برنامه‌ریزی‌شده لازم است؛ هنگام وجود برنامه تأییدشده برای مسیر و تاریخ، شروع دستی همان مسیر 409 می‌دهد. در حالت `handover_required` شروع دور تا تحویل تأییدشده مجاز نیست. بازدید دور برنامه‌ریزی‌شده فقط برای ایستگاه بعدی پذیرفته می‌شود. مسیرها برای guard بدون station_ids برمی‌گردند تا ترتیب کامل آشکار نشود. در مسیر optimized هر دور ساخته‌شده زیرمجموعه پیشنهادی را با نمونه‌گیری شانه‌ای از بذر همان دور در `proposed_station_ids` و یافته tour_subset (شناسه در `selection_finding_id`) ثبت می‌کند؛ فقط وقتی allow_subset_tours روشن، پارامترها تأییدشده و تصمیم routing (subset_mode و shadow_mode/maintenance_silence سراسری) مجاز باشد `station_ids` همان زیرمجموعه و `selection_mode=optimized` است، وگرنه همه ایستگاه‌ها با هشدار دلیل؛ قید تقدم فقط بین ایستگاه‌های انتخاب‌شده اعمال می‌شود و صف نگهبان پیشنهاد را نمی‌بیند.
 
 تنظیمات تازه: `tour_schedule_max_days=31`، `tour_time_jitter_percent=15`، `queue_reveal=next_n`، `queue_reveal_count=1`، `handover_required=false`، `two_person_window_minutes=15` و `heat_profile`. پروفایل گرما فقط هشدار می‌دهد؛ برنامه را رد نمی‌کند. تصادفی‌سازی از RNG تزریقی در آزمون و بذر امن ذخیره‌شده سمت سرور در اجرا استفاده می‌کند. فعال‌سازی اضطرار، دورهای queued محوطه را excused می‌کند و missed checkpointهای همان محوطه را در موتور مشترک از هشدار خارج می‌کند؛ خاموش‌کردن اضطرار دورهای excused را خودکار دوباره فعال نمی‌کند. API فاز دو UI جداگانه دارد.
 

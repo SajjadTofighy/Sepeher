@@ -121,7 +121,93 @@ class RateLimits(BaseModel):
     emergency: int = Field(default=10, ge=1, le=10000)
 
 
+class TargetClassParameters(BaseModel):
+    """Organisation-defined consequence value and expert baseline rate for one class of target."""
+    model_config = ConfigDict(extra='forbid')
+    key: str = Field(pattern=r'^(facility_unmanned|facility_manned|pipeline_segment|station_default|station:.{1,80})$')
+    label: str = Field(min_length=1, max_length=100)
+    value: float = Field(gt=0, le=100, allow_inf_nan=False)
+    prior_rate_per_year: float = Field(ge=0.001, le=1000, allow_inf_nan=False)
+
+
+class TargetOverride(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    target_id: str = Field(min_length=1, max_length=200)
+    value: float | None = Field(default=None, gt=0, le=100, allow_inf_nan=False)
+    prior_rate_per_year: float | None = Field(default=None, ge=0.001, le=1000, allow_inf_nan=False)
+    always_visit: bool = False
+    note: str = Field(min_length=3, max_length=300)
+
+
+class EventWeights(BaseModel):
+    """Evidence weight of each recorded event category in the Bayesian update."""
+    model_config = ConfigDict(extra='forbid')
+    incident: float = Field(default=1.0, ge=0, le=10)
+    import_theft: float = Field(default=1.0, ge=0, le=10)
+    import_sabotage: float = Field(default=1.0, ge=0, le=10)
+    import_intrusion: float = Field(default=0.8, ge=0, le=10)
+    import_tampering: float = Field(default=0.8, ge=0, le=10)
+    import_vandalism: float = Field(default=0.6, ge=0, le=10)
+    import_other: float = Field(default=0.4, ge=0, le=10)
+    report_security: float = Field(default=1.0, ge=0, le=10)
+    report_damage: float = Field(default=1.0, ge=0, le=10)
+    report_uxo: float = Field(default=0.5, ge=0, le=10)
+    report_drone_sighting: float = Field(default=0.5, ge=0, le=10)
+    report_operations: float = Field(default=0.2, ge=0, le=10)
+    report_safety_hse: float = Field(default=0.1, ge=0, le=10)
+    report_other: float = Field(default=0.3, ge=0, le=10)
+    seal_anomaly: float = Field(default=0.8, ge=0, le=10)
+    tag_replay: float = Field(default=0.6, ge=0, le=10)
+
+
+def _default_classes():
+    rows = [('facility_unmanned', 'تأسیسات بدون سرنشین', 8, 2.0), ('facility_manned', 'تأسیسات دارای سرنشین', 6, 0.5),
+            ('pipeline_segment', 'قطعه خط لوله', 5, 0.3), ('station_default', 'ایستگاه (پیش‌فرض)', 5, 0.5),
+            ('station:حیاتی', 'ایستگاه حیاتی', 10, 1.5), ('station:حساس', 'ایستگاه حساس', 7, 1.0),
+            ('station:مهم', 'ایستگاه مهم', 5, 0.5), ('station:قابل حفاظت', 'ایستگاه قابل حفاظت', 3, 0.25)]
+    return [TargetClassParameters(key=k, label=l, value=v, prior_rate_per_year=r) for k, l, v, r in rows]
+
+
+class PatrolGameSettings(BaseModel):
+    """Every organisation-specific input of the patrol security game; edited in the UI, approved by Herasat."""
+    model_config = ConfigDict(extra='forbid')
+    model: Literal['stackelberg', 'quantal', 'weighted'] = 'stackelberg'
+    threat_profile: float = Field(default=0.5, ge=0, le=1, allow_inf_nan=False)
+    quantal_rationality: float = Field(default=4.0, ge=0, le=50, allow_inf_nan=False)
+    attack_minutes: float = Field(default=90, ge=1, le=1440, allow_inf_nan=False)
+    max_detection: float = Field(default=0.9, gt=0, le=1, allow_inf_nan=False)
+    capture_penalty: float = Field(default=0.5, ge=0, le=10, allow_inf_nan=False)
+    risk_quantile: float = Field(default=0.5, ge=0.5, le=0.99, allow_inf_nan=False)
+    credible_level: float = Field(default=0.9, ge=0.5, le=0.99, allow_inf_nan=False)
+    prior_strength_years: float = Field(default=1.0, ge=0.1, le=20, allow_inf_nan=False)
+    half_life_days: float = Field(default=365, ge=7, le=3650, allow_inf_nan=False)
+    spatial_bandwidth_m: float = Field(default=300, ge=10, le=10000, allow_inf_nan=False)
+    history_start: str | None = Field(default=None, pattern=r'^\d{4}-\d{2}-\d{2}$')
+    allow_subset_tours: bool = False
+    classes: list[TargetClassParameters] = Field(default_factory=_default_classes, min_length=4, max_length=200)
+    overrides: list[TargetOverride] = Field(default_factory=list, max_length=2000)
+    event_weights: EventWeights = Field(default_factory=EventWeights)
+
+    @model_validator(mode='after')
+    def consistent(self):
+        keys = [c.key for c in self.classes]
+        if len(set(keys)) != len(keys):
+            raise ValueError('کلید هر دسته هدف باید یکتا باشد')
+        missing = {'facility_unmanned', 'facility_manned', 'pipeline_segment', 'station_default'} - set(keys)
+        if missing:
+            raise ValueError('دسته‌های پایه هدف الزامی‌اند: ' + '، '.join(sorted(missing)))
+        targets = [o.target_id for o in self.overrides]
+        if len(set(targets)) != len(targets):
+            raise ValueError('برای هر هدف فقط یک مقدار اختصاصی مجاز است')
+        if any(o.value is None and o.prior_rate_per_year is None and not o.always_visit for o in self.overrides):
+            raise ValueError('مقدار اختصاصی باید ارزش، نرخ پایه یا بازدید الزامی را تعیین کند')
+        if self.history_start:
+            datetime.fromisoformat(self.history_start)
+        return self
+
+
 class RuntimeSettings(BaseModel):
+    patrol_game: PatrolGameSettings = Field(default_factory=PatrolGameSettings)
     rate_limit_per_minute: RateLimits = Field(default_factory=RateLimits)
     max_json_body_bytes: int = Field(default=2097152, ge=65536, le=16777216)
     model_config = ConfigDict(extra='forbid')
@@ -804,6 +890,22 @@ class RiskFactor(BaseModel):
     contribution: float
 
 
+class BayesEstimate(BaseModel):
+    prior_rate: float
+    prior_years: float
+    weighted_events: float
+    exposure_years: float
+    shape: float
+    rate: float
+    mean: float
+    lower: float
+    upper: float
+    planning_rate: float
+    credible: float
+    quantile: float
+    event_ids: list[str] = Field(default_factory=list)
+
+
 class RiskItem(BaseModel):
     id: str
     kind: Literal["segment", "facility"]
@@ -814,6 +916,9 @@ class RiskItem(BaseModel):
     score: float
     breakdown: list[RiskFactor]
     finding_id: str
+    target_class: str = ''
+    value: float = 0
+    bayes: BayesEstimate | None = None
 
 
 class RiskStatus(BaseModel):
@@ -871,6 +976,7 @@ class PatrolPlan(BaseModel):
     mission_ids: list[str]
     warnings: list[str]
     finding_id: str
+    strategy: 'PatrolStrategy | None' = None
     can_execute: Literal[False] = False
 
 
@@ -1265,6 +1371,9 @@ class TourRoute(TourRouteInput):
     model_config = ConfigDict(extra='ignore')
     id: str
     created_at: str
+    coverage_mode: Literal['all', 'optimized'] = 'all'
+    stations_per_tour: int | None = None
+    subset_mode: Literal['shadow', 'active'] = 'shadow'
 
 
 class ShiftSegment(BaseModel):
@@ -1341,6 +1450,9 @@ class ScheduledTour(ScopedInput):
     warnings: list[str]
     handover_id: str | None = None
     tour_id: str | None = None
+    selection_mode: Literal['all', 'optimized'] = 'all'
+    proposed_station_ids: list[str] = Field(default_factory=list)
+    selection_finding_id: str | None = None
 
 
 class ShiftHandoverInput(ScopedInput):
@@ -2255,3 +2367,125 @@ class SecurityDossier(BaseModel):
     residual_risks: list[str]
     audit_id: str = ''
 
+
+class StrategyTarget(BaseModel):
+    id: str
+    name: str
+    kind: str
+    target_class: str
+    value: float
+    bayes: BayesEstimate
+    attempt_probability: float
+    attacker_uncovered: float
+    detection: float
+    coverage: float
+    attacker_utility: float
+    attack_probability: float
+    mandatory: bool = False
+    selected: bool = False
+
+
+class StrategyOutcome(BaseModel):
+    defender_expected: float
+    attacker_expected: float
+    attacker_max: float
+    expected_loss: float
+
+
+class StrategyConformity(BaseModel):
+    plans: int
+    chi_square: float
+    degrees_of_freedom: int
+    max_standardized_deviation: float
+
+
+class PatrolStrategy(BaseModel):
+    """Optimal randomized coverage with its full arithmetic; advisory only."""
+    model: Literal['stackelberg', 'quantal', 'weighted']
+    resources: float
+    horizon_hours: float
+    threat_profile: float
+    targets: list[StrategyTarget]
+    attacked_target_id: str | None
+    outcome: StrategyOutcome
+    baselines: dict[str, StrategyOutcome]
+    improvement_vs_uniform: float | None
+    improvement_vs_proportional: float | None
+    entropy: float
+    parameters_fingerprint: str
+    parameters_approved: bool
+    approved_by: str | None = None
+    approved_at: str | None = None
+    warnings: list[str]
+    conformity: StrategyConformity | None = None
+    can_execute: Literal[False] = False
+
+
+class PatrolGameApproval(BaseModel):
+    fingerprint: str
+    approved: bool
+    approved_by: str | None
+    approved_at: str | None
+
+
+class RiskEventInput(BaseModel):
+    """Historical or manual event for the Bayesian ledger; append-only and audited."""
+    model_config = ConfigDict(extra='forbid')
+    time: AwareDatetime
+    category: Literal['theft', 'sabotage', 'intrusion', 'tampering', 'vandalism', 'other']
+    lon: float | None = Field(default=None, ge=-180, le=180, allow_inf_nan=False)
+    lat: float | None = Field(default=None, ge=-85, le=85, allow_inf_nan=False)
+    target_id: str | None = Field(default=None, min_length=1, max_length=200)
+    weight: float = Field(default=1.0, gt=0, le=10, allow_inf_nan=False)
+    description: str = Field(min_length=3, max_length=1000)
+    source_ref: str = Field(min_length=1, max_length=120)
+
+    @model_validator(mode='after')
+    def located(self):
+        if (self.lon is None) != (self.lat is None):
+            raise ValueError('طول و عرض جغرافیایی باید با هم ارسال شوند')
+        if self.lon is None and self.target_id is None:
+            raise ValueError('محل رخداد یا شناسه هدف لازم است')
+        return self
+
+
+class RiskEventImport(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    events: list[RiskEventInput] = Field(min_length=1, max_length=2000)
+
+
+class RiskEvent(BaseModel):
+    model_config = ConfigDict(extra='ignore')
+    id: str
+    source: str
+    category: str
+    time: str
+    lon: float | None
+    lat: float | None
+    target_id: str | None
+    weight: float
+    source_ref: str
+    description: str = ''
+
+
+class RiskEventImportResult(BaseModel):
+    created: int
+    unchanged: int
+    events: list[RiskEvent]
+
+
+class RouteCoverageInput(BaseModel):
+    """Herasat's decision for one walking route: visit all stations or an optimized subset."""
+    model_config = ConfigDict(extra='forbid')
+    coverage_mode: Literal['all', 'optimized']
+    stations_per_tour: int | None = Field(default=None, ge=1, le=500)
+    subset_mode: Literal['shadow', 'active'] = 'shadow'
+
+    @model_validator(mode='after')
+    def subset_size(self):
+        if (self.coverage_mode == 'optimized') != (self.stations_per_tour is not None):
+            raise ValueError('تعداد ایستگاه هر دور فقط و الزاماً برای حالت بهینه تعیین می‌شود')
+        return self
+
+
+PatrolPlan.model_rebuild()

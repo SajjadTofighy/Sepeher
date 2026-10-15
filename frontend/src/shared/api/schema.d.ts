@@ -829,6 +829,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/intel/risk/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Risk Events */
+        get: operations["risk_events_api_v1_intel_risk_events_get"];
+        put?: never;
+        /** Import Risk Events */
+        post: operations["import_risk_events_api_v1_intel_risk_events_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intel/patrol-strategy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Patrol Strategy */
+        get: operations["patrol_strategy_api_v1_intel_patrol_strategy_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intel/patrol-game/approval": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Patrol Game Approval */
+        get: operations["patrol_game_approval_api_v1_intel_patrol_game_approval_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intel/patrol-game/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve Patrol Game */
+        post: operations["approve_patrol_game_api_v1_intel_patrol_game_approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/intel/patrol-plans": {
         parameters: {
             query?: never;
@@ -2111,6 +2180,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tour/routes/{id}/coverage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Route Coverage */
+        put: operations["route_coverage_api_v1_tour_routes__id__coverage_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tour/routes/{id}/strategy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Route Strategy
+         * @description Preview of per-station visit probabilities for a walking route; nothing is stored.
+         */
+        get: operations["route_strategy_api_v1_tour_routes__id__strategy_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tour": {
         parameters: {
             query?: never;
@@ -2705,6 +2811,35 @@ export interface components {
             admin_url: string;
             /** Idle Seconds */
             idle_seconds: number;
+        };
+        /** BayesEstimate */
+        BayesEstimate: {
+            /** Prior Rate */
+            prior_rate: number;
+            /** Prior Years */
+            prior_years: number;
+            /** Weighted Events */
+            weighted_events: number;
+            /** Exposure Years */
+            exposure_years: number;
+            /** Shape */
+            shape: number;
+            /** Rate */
+            rate: number;
+            /** Mean */
+            mean: number;
+            /** Lower */
+            lower: number;
+            /** Upper */
+            upper: number;
+            /** Planning Rate */
+            planning_rate: number;
+            /** Credible */
+            credible: number;
+            /** Quantile */
+            quantile: number;
+            /** Event Ids */
+            event_ids?: string[];
         };
         /** Bootstrap */
         Bootstrap: {
@@ -3359,6 +3494,92 @@ export interface components {
             code: string;
             /** Message */
             message: string;
+        };
+        /**
+         * EventWeights
+         * @description Evidence weight of each recorded event category in the Bayesian update.
+         */
+        EventWeights: {
+            /**
+             * Incident
+             * @default 1
+             */
+            incident: number;
+            /**
+             * Import Theft
+             * @default 1
+             */
+            import_theft: number;
+            /**
+             * Import Sabotage
+             * @default 1
+             */
+            import_sabotage: number;
+            /**
+             * Import Intrusion
+             * @default 0.8
+             */
+            import_intrusion: number;
+            /**
+             * Import Tampering
+             * @default 0.8
+             */
+            import_tampering: number;
+            /**
+             * Import Vandalism
+             * @default 0.6
+             */
+            import_vandalism: number;
+            /**
+             * Import Other
+             * @default 0.4
+             */
+            import_other: number;
+            /**
+             * Report Security
+             * @default 1
+             */
+            report_security: number;
+            /**
+             * Report Damage
+             * @default 1
+             */
+            report_damage: number;
+            /**
+             * Report Uxo
+             * @default 0.5
+             */
+            report_uxo: number;
+            /**
+             * Report Drone Sighting
+             * @default 0.5
+             */
+            report_drone_sighting: number;
+            /**
+             * Report Operations
+             * @default 0.2
+             */
+            report_operations: number;
+            /**
+             * Report Safety Hse
+             * @default 0.1
+             */
+            report_safety_hse: number;
+            /**
+             * Report Other
+             * @default 0.3
+             */
+            report_other: number;
+            /**
+             * Seal Anomaly
+             * @default 0.8
+             */
+            seal_anomaly: number;
+            /**
+             * Tag Replay
+             * @default 0.6
+             */
+            tag_replay: number;
         };
         /** ExceptionBoard */
         ExceptionBoard: {
@@ -4496,6 +4717,91 @@ export interface components {
              */
             notes: string;
         };
+        /** PatrolGameApproval */
+        PatrolGameApproval: {
+            /** Fingerprint */
+            fingerprint: string;
+            /** Approved */
+            approved: boolean;
+            /** Approved By */
+            approved_by: string | null;
+            /** Approved At */
+            approved_at: string | null;
+        };
+        /**
+         * PatrolGameSettings
+         * @description Every organisation-specific input of the patrol security game; edited in the UI, approved by Herasat.
+         */
+        PatrolGameSettings: {
+            /**
+             * Model
+             * @default stackelberg
+             * @enum {string}
+             */
+            model: "stackelberg" | "quantal" | "weighted";
+            /**
+             * Threat Profile
+             * @default 0.5
+             */
+            threat_profile: number;
+            /**
+             * Quantal Rationality
+             * @default 4
+             */
+            quantal_rationality: number;
+            /**
+             * Attack Minutes
+             * @default 90
+             */
+            attack_minutes: number;
+            /**
+             * Max Detection
+             * @default 0.9
+             */
+            max_detection: number;
+            /**
+             * Capture Penalty
+             * @default 0.5
+             */
+            capture_penalty: number;
+            /**
+             * Risk Quantile
+             * @default 0.5
+             */
+            risk_quantile: number;
+            /**
+             * Credible Level
+             * @default 0.9
+             */
+            credible_level: number;
+            /**
+             * Prior Strength Years
+             * @default 1
+             */
+            prior_strength_years: number;
+            /**
+             * Half Life Days
+             * @default 365
+             */
+            half_life_days: number;
+            /**
+             * Spatial Bandwidth M
+             * @default 300
+             */
+            spatial_bandwidth_m: number;
+            /** History Start */
+            history_start?: string | null;
+            /**
+             * Allow Subset Tours
+             * @default false
+             */
+            allow_subset_tours: boolean;
+            /** Classes */
+            classes?: components["schemas"]["TargetClassParameters"][];
+            /** Overrides */
+            overrides?: components["schemas"]["TargetOverride"][];
+            event_weights?: components["schemas"]["EventWeights"];
+        };
         /** PatrolPlan */
         PatrolPlan: {
             /** Id */
@@ -4527,6 +4833,7 @@ export interface components {
             warnings: string[];
             /** Finding Id */
             finding_id: string;
+            strategy?: components["schemas"]["PatrolStrategy"] | null;
             /**
              * Can Execute
              * @default false
@@ -4610,6 +4917,55 @@ export interface components {
             audit_chain: components["schemas"]["AuditChainHealth"];
             /** Audit Id */
             audit_id: string;
+        };
+        /**
+         * PatrolStrategy
+         * @description Optimal randomized coverage with its full arithmetic; advisory only.
+         */
+        PatrolStrategy: {
+            /**
+             * Model
+             * @enum {string}
+             */
+            model: "stackelberg" | "quantal" | "weighted";
+            /** Resources */
+            resources: number;
+            /** Horizon Hours */
+            horizon_hours: number;
+            /** Threat Profile */
+            threat_profile: number;
+            /** Targets */
+            targets: components["schemas"]["StrategyTarget"][];
+            /** Attacked Target Id */
+            attacked_target_id: string | null;
+            outcome: components["schemas"]["StrategyOutcome"];
+            /** Baselines */
+            baselines: {
+                [key: string]: components["schemas"]["StrategyOutcome"];
+            };
+            /** Improvement Vs Uniform */
+            improvement_vs_uniform: number | null;
+            /** Improvement Vs Proportional */
+            improvement_vs_proportional: number | null;
+            /** Entropy */
+            entropy: number;
+            /** Parameters Fingerprint */
+            parameters_fingerprint: string;
+            /** Parameters Approved */
+            parameters_approved: boolean;
+            /** Approved By */
+            approved_by?: string | null;
+            /** Approved At */
+            approved_at?: string | null;
+            /** Warnings */
+            warnings: string[];
+            conformity?: components["schemas"]["StrategyConformity"] | null;
+            /**
+             * Can Execute
+             * @default false
+             * @constant
+             */
+            can_execute: false;
         };
         /** PermissionMatrix */
         PermissionMatrix: {
@@ -5072,6 +5428,77 @@ export interface components {
             /** Other */
             other?: ("security" | "hse" | "operations")[];
         };
+        /** RiskEvent */
+        RiskEvent: {
+            /** Id */
+            id: string;
+            /** Source */
+            source: string;
+            /** Category */
+            category: string;
+            /** Time */
+            time: string;
+            /** Lon */
+            lon: number | null;
+            /** Lat */
+            lat: number | null;
+            /** Target Id */
+            target_id: string | null;
+            /** Weight */
+            weight: number;
+            /** Source Ref */
+            source_ref: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+        };
+        /** RiskEventImport */
+        RiskEventImport: {
+            /** Events */
+            events: components["schemas"]["RiskEventInput"][];
+        };
+        /** RiskEventImportResult */
+        RiskEventImportResult: {
+            /** Created */
+            created: number;
+            /** Unchanged */
+            unchanged: number;
+            /** Events */
+            events: components["schemas"]["RiskEvent"][];
+        };
+        /**
+         * RiskEventInput
+         * @description Historical or manual event for the Bayesian ledger; append-only and audited.
+         */
+        RiskEventInput: {
+            /**
+             * Time
+             * Format: date-time
+             */
+            time: string;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "theft" | "sabotage" | "intrusion" | "tampering" | "vandalism" | "other";
+            /** Lon */
+            lon?: number | null;
+            /** Lat */
+            lat?: number | null;
+            /** Target Id */
+            target_id?: string | null;
+            /**
+             * Weight
+             * @default 1
+             */
+            weight: number;
+            /** Description */
+            description: string;
+            /** Source Ref */
+            source_ref: string;
+        };
         /** RiskFactor */
         RiskFactor: {
             /**
@@ -5111,6 +5538,17 @@ export interface components {
             breakdown: components["schemas"]["RiskFactor"][];
             /** Finding Id */
             finding_id: string;
+            /**
+             * Target Class
+             * @default
+             */
+            target_class: string;
+            /**
+             * Value
+             * @default 0
+             */
+            value: number;
+            bayes?: components["schemas"]["BayesEstimate"] | null;
         };
         /** RiskStatus */
         RiskStatus: {
@@ -5155,8 +5593,28 @@ export interface components {
             /** Actor Id */
             actor_id?: string | null;
         };
+        /**
+         * RouteCoverageInput
+         * @description Herasat's decision for one walking route: visit all stations or an optimized subset.
+         */
+        RouteCoverageInput: {
+            /**
+             * Coverage Mode
+             * @enum {string}
+             */
+            coverage_mode: "all" | "optimized";
+            /** Stations Per Tour */
+            stations_per_tour?: number | null;
+            /**
+             * Subset Mode
+             * @default shadow
+             * @enum {string}
+             */
+            subset_mode: "shadow" | "active";
+        };
         /** RuntimeSettings */
         RuntimeSettings: {
+            patrol_game?: components["schemas"]["PatrolGameSettings"];
             rate_limit_per_minute?: components["schemas"]["RateLimits"];
             /**
              * Max Json Body Bytes
@@ -5678,6 +6136,16 @@ export interface components {
             handover_id?: string | null;
             /** Tour Id */
             tour_id?: string | null;
+            /**
+             * Selection Mode
+             * @default all
+             * @enum {string}
+             */
+            selection_mode: "all" | "optimized";
+            /** Proposed Station Ids */
+            proposed_station_ids?: string[];
+            /** Selection Finding Id */
+            selection_finding_id?: string | null;
         };
         /** ScopedInput */
         ScopedInput: {
@@ -6280,6 +6748,64 @@ export interface components {
             /** Tour Id */
             tour_id: string;
         };
+        /** StrategyConformity */
+        StrategyConformity: {
+            /** Plans */
+            plans: number;
+            /** Chi Square */
+            chi_square: number;
+            /** Degrees Of Freedom */
+            degrees_of_freedom: number;
+            /** Max Standardized Deviation */
+            max_standardized_deviation: number;
+        };
+        /** StrategyOutcome */
+        StrategyOutcome: {
+            /** Defender Expected */
+            defender_expected: number;
+            /** Attacker Expected */
+            attacker_expected: number;
+            /** Attacker Max */
+            attacker_max: number;
+            /** Expected Loss */
+            expected_loss: number;
+        };
+        /** StrategyTarget */
+        StrategyTarget: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Target Class */
+            target_class: string;
+            /** Value */
+            value: number;
+            bayes: components["schemas"]["BayesEstimate"];
+            /** Attempt Probability */
+            attempt_probability: number;
+            /** Attacker Uncovered */
+            attacker_uncovered: number;
+            /** Detection */
+            detection: number;
+            /** Coverage */
+            coverage: number;
+            /** Attacker Utility */
+            attacker_utility: number;
+            /** Attack Probability */
+            attack_probability: number;
+            /**
+             * Mandatory
+             * @default false
+             */
+            mandatory: boolean;
+            /**
+             * Selected
+             * @default false
+             */
+            selected: boolean;
+        };
         /** Summary */
         Summary: {
             /** Online */
@@ -6440,6 +6966,36 @@ export interface components {
             /** Counter */
             counter?: number | null;
         };
+        /**
+         * TargetClassParameters
+         * @description Organisation-defined consequence value and expert baseline rate for one class of target.
+         */
+        TargetClassParameters: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Value */
+            value: number;
+            /** Prior Rate Per Year */
+            prior_rate_per_year: number;
+        };
+        /** TargetOverride */
+        TargetOverride: {
+            /** Target Id */
+            target_id: string;
+            /** Value */
+            value?: number | null;
+            /** Prior Rate Per Year */
+            prior_rate_per_year?: number | null;
+            /**
+             * Always Visit
+             * @default false
+             */
+            always_visit: boolean;
+            /** Note */
+            note: string;
+        };
         /** TimelineEntry */
         TimelineEntry: {
             /** Time */
@@ -6528,6 +7084,20 @@ export interface components {
             id: string;
             /** Created At */
             created_at: string;
+            /**
+             * Coverage Mode
+             * @default all
+             * @enum {string}
+             */
+            coverage_mode: "all" | "optimized";
+            /** Stations Per Tour */
+            stations_per_tour?: number | null;
+            /**
+             * Subset Mode
+             * @default shadow
+             * @enum {string}
+             */
+            subset_mode: "shadow" | "active";
         };
         /** TourRouteInput */
         TourRouteInput: {
@@ -8174,6 +8744,131 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RiskStatus"];
+                };
+            };
+        };
+    };
+    risk_events_api_v1_intel_risk_events_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskEvent"][];
+                };
+            };
+        };
+    };
+    import_risk_events_api_v1_intel_risk_events_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RiskEventImport"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskEventImportResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patrol_strategy_api_v1_intel_patrol_strategy_get: {
+        parameters: {
+            query?: {
+                stops?: number;
+                horizon_hours?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatrolStrategy"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patrol_game_approval_api_v1_intel_patrol_game_approval_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatrolGameApproval"];
+                };
+            };
+        };
+    };
+    approve_patrol_game_api_v1_intel_patrol_game_approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatrolGameApproval"];
                 };
             };
         };
@@ -14558,6 +15253,165 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TourRoute"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+        };
+    };
+    route_coverage_api_v1_tour_routes__id__coverage_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RouteCoverageInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TourRoute"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+        };
+    };
+    route_strategy_api_v1_tour_routes__id__strategy_get: {
+        parameters: {
+            query?: {
+                horizon_hours?: number;
+                stations_per_tour?: number | null;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatrolStrategy"];
                 };
             };
             /** @description Unauthorized */

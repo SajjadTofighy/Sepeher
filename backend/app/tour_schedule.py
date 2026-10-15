@@ -91,6 +91,13 @@ def _slot(start, end, breaks, tour_number, total, jitter_percent, rng):
     raise AssertionError('unreachable slot')
 
 
+def subset_route(route, station_ids):
+    """The route restricted to this tour's stations; precedence only between selected stations."""
+    keep = set(station_ids)
+    return {**route, 'station_ids': [id for id in route['station_ids'] if id in keep],
+            'must_precede': [[a, b] for a, b in route.get('must_precede', []) if a in keep and b in keep]}
+
+
 def materialize(schedule, day, *, rng_factory=None):
     """Create only today/tomorrow, with stable keys and persisted random seeds."""
     today = local_day(store.now())
@@ -115,9 +122,19 @@ def materialize(schedule, day, *, rng_factory=None):
             rng = rng_factory(seed) if rng_factory else random.Random(int(seed, 16))
             due, slot_end = _slot(start, end, pattern['breaks'], number, schedule['tours_per_shift'],
                                   store.state['settings']['tour_time_jitter_percent'], rng)
-            stations = ordered_stations(route, rng)
+            warnings, selection = [], dict(selection_mode='all', proposed_station_ids=[], selection_finding_id=None)
+            visit = route
+            if route.get('coverage_mode') == 'optimized':
+                from .intel import patrol_game
+                horizon = segment['duration_minutes'] / 60 / schedule['tours_per_shift']
+                chosen, proposed, finding_id, blocked = patrol_game.select_route_stations(
+                    route, horizon, rng, store.now(), key)
+                visit = subset_route(route, chosen)
+                warnings.extend(blocked)
+                selection = dict(selection_mode='optimized' if not blocked else 'all', proposed_station_ids=proposed,
+                                 selection_finding_id=finding_id)
+            stations = ordered_stations(visit, rng)
             heat = store.state['settings']['heat_profile']
-            warnings = []
             if day.month in heat['months'] and engine.in_schedule(heat['restricted_hours'], due.strftime('%H:%M')):
                 warnings.append('برنامه در ساعات محدودیت گرما قرار دارد')
             if (slot_end - due).total_seconds() / 60 > heat['max_continuous_minutes']:
@@ -127,7 +144,8 @@ def materialize(schedule, day, *, rng_factory=None):
                        zone_id=schedule['zone_id'], contractor_id=schedule['contractor_id'],
                        service_date=day.isoformat(), segment_index=index, tour_number=number,
                        due_at=due.astimezone(timezone.utc).isoformat(), ends_at=slot_end.astimezone(timezone.utc).isoformat(),
-                       station_ids=stations, status='queued', warnings=warnings, handover_id=None, tour_id=None, seed=seed)
+                       station_ids=stations, status='queued', warnings=warnings, handover_id=None, tour_id=None, seed=seed,
+                       **selection)
             emergency = store.field.get('emergency_modes', schedule['zone_id'])
             if emergency and emergency['active']:
                 row.update(status='excused', warnings=[*warnings, 'وضعیت اضطرار'])
@@ -137,13 +155,16 @@ def materialize(schedule, day, *, rng_factory=None):
 
 
 def queue_rows(principal, rows):
-    if 'guard' not in principal.roles or store.state['settings']['queue_reveal'] == 'all':
+    if 'guard' not in principal.roles:
         return rows
+    if store.state['settings']['queue_reveal'] == 'all':
+        # A guard never sees the shadow proposal of a future unannounced subset.
+        return [{**row, 'proposed_station_ids': [], 'selection_finding_id': None} for row in rows]
     count = store.state['settings']['queue_reveal_count']
     result = []
     for row in rows:
         visited = {v['station_id'] for v in store.field.records('station_visits')
                    if v.get('tour_id') == row.get('tour_id') and v.get('status') == 'completed'}
         remaining = [id for id in row['station_ids'] if id not in visited]
-        result.append({**row, 'station_ids': remaining[:count]})
+        result.append({**row, 'station_ids': remaining[:count], 'proposed_station_ids': [], 'selection_finding_id': None})
     return result

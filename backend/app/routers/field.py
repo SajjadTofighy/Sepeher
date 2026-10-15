@@ -11,7 +11,7 @@ import sqlite3
 from urllib.parse import urlencode
 from urllib.request import Request as URLRequest, urlopen
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.security import HTTPBearer
 from fastapi.responses import HTMLResponse
 
@@ -24,6 +24,7 @@ from ..models import (
     GuardCredentialInput,
     GuardRecord, IdentityInput, PermissionMatrix, Principal, RoleChangeEvent, ScopedInput,
     PinUnlockInput, PinUnlockResult, SecurityDossier, TagInput, TagRecord, TourInput, TourRecord, TourReport, TourRoute, TourRouteInput,
+    PatrolStrategy, RouteCoverageInput,
 )
 from ..tracks import parse_timestamp
 
@@ -253,6 +254,23 @@ def create_route(payload: TourRouteInput):
     store.field.save("routes", item)
     store.audit("تعریف مسیر گشت", item["id"])
     return item
+
+
+@router.put("/api/v1/tour/routes/{id}/coverage", response_model=TourRoute)
+def route_coverage(id: str, payload: RouteCoverageInput):
+    from ..intel import patrol_game
+    return patrol_game.set_route_coverage(record("routes", id), payload)
+
+
+@router.get("/api/v1/tour/routes/{id}/strategy", response_model=PatrolStrategy)
+def route_strategy(id: str, horizon_hours: float = Query(default=2.0, gt=0, le=24), stations_per_tour: int | None = Query(default=None, ge=1, le=500)):
+    """Preview of per-station visit probabilities for a walking route; nothing is stored."""
+    authz.require("manage")
+    from ..intel import patrol_game
+    route = record("routes", id)
+    if stations_per_tour is not None:
+        route = {**route, "stations_per_tour": min(stations_per_tour, len(route["station_ids"]))}
+    return patrol_game.route_strategy(route, horizon_hours, store.now())[0]
 
 
 @router.get("/api/v1/tour", response_model=list[TourRecord])

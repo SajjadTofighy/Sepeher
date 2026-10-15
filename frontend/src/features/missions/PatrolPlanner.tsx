@@ -11,6 +11,7 @@ import type {
 } from "../../types";
 import { tehranLocalInput as localInput, tehranTime as when, tehranInputISO } from "../../shared/lib/time";
 import OperationalMap from "../command/OperationalMap";
+import StrategyView from "../patrol-game/StrategyView";
 
 const key = ["intel", "patrol-plans"] as const;
 const factors = {
@@ -88,7 +89,7 @@ export default function PatrolPlanner({
   };
   return (
     <section className="patrol-planner patrol-planner-console">
-      <header className="patrol-planner-head"><div><b>پیشنهاد برنامه گشت</b><small>مبتنی بر عوامل ثابت ریسک · نیازمند تأیید اپراتور</small></div><span>RULE-BASED PLANNER</span></header>
+      <header className="patrol-planner-head"><div><b>پیشنهاد برنامه گشت</b><small>راهبرد بهینه بازی امنیتی و برآورد بیزی ریسک · نیازمند تأیید اپراتور</small></div><span>GAME-THEORETIC PLANNER</span></header>
       <form
         onSubmit={async (event) => {
           event.preventDefault();
@@ -207,6 +208,12 @@ export default function PatrolPlanner({
             مسیرها خطوط مستقیم و شماتیک‌اند؛ تأیید برنامه فقط مأموریت ایجاد
             می‌کند.
           </p>
+          {selected.strategy && (
+            <details className="patrol-plan-strategy">
+              <summary>راهبرد بازی امنیتی و حساب احتمال انتخاب اهداف این برنامه</summary>
+              <StrategyView strategy={selected.strategy} />
+            </details>
+          )}
           <div className="patrol-plan-map">
             <OperationalMap
               data={data}

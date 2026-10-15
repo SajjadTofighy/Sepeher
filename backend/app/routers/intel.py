@@ -2,14 +2,15 @@
 
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
 from .. import store
-from ..intel import coverage, findings, safety, hazard, risk, patrol
+from ..intel import coverage, findings, safety, hazard, risk, patrol, patrol_game
 from ..intel import ingest
 from ..intel.geo import derive_segments
 from ..models import Coverage, Finding, HazardStatus, LayerImport, LayerImportResult, LineFeature, PatrolPlan, PatrolPlanInput, RiskStatus, SafetyConfirmation, SafetyEpisode, SafetyStatus, Segment
 from ..models import PipelinePressureInput, PipelinePressureResult, PlateReadInput, PlateReadResult
+from ..models import PatrolGameApproval, PatrolStrategy, RiskEvent, RiskEventImport, RiskEventImportResult
 
 router = APIRouter(route_class=store.StateRoute, tags=["intel"])
 
@@ -101,6 +102,31 @@ def incident_hazard(incident_id: str):
 @router.get("/api/v1/intel/risk", response_model=RiskStatus)
 def risk_scores():
     return risk.snapshot()
+
+
+@router.get("/api/v1/intel/risk/events", response_model=list[RiskEvent])
+def risk_events():
+    return patrol_game.list_events()
+
+
+@router.post("/api/v1/intel/risk/events", response_model=RiskEventImportResult, status_code=201)
+def import_risk_events(payload: RiskEventImport):
+    return patrol_game.import_events(payload)
+
+
+@router.get("/api/v1/intel/patrol-strategy", response_model=PatrolStrategy)
+def patrol_strategy(stops: int = Query(default=4, ge=1, le=200), horizon_hours: float = Query(default=8.0, gt=0, le=72)):
+    return patrol.preview(stops, horizon_hours)
+
+
+@router.get("/api/v1/intel/patrol-game/approval", response_model=PatrolGameApproval)
+def patrol_game_approval():
+    return patrol_game.approval()
+
+
+@router.post("/api/v1/intel/patrol-game/approve", response_model=PatrolGameApproval)
+def approve_patrol_game():
+    return patrol_game.approve()
 
 
 @router.get("/api/v1/intel/patrol-plans", response_model=list[PatrolPlan])

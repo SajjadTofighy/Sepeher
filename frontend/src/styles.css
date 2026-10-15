@@ -4294,3 +4294,25 @@ td small { display: block; color: var(--muted); }
 .guard-shell { min-height: 100vh; padding: 16px 16px 48px; }
 .profile-roles { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 14px; }
 .profile-roles span { border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; font-size: 11px; color: var(--muted); }
+
+/* Patrol security game */
+.patrol-game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; align-items: start; }
+.patrol-game-wide { grid-column: 1 / -1; }
+.patrol-game-grid h3, .patrol-game-routes h3 { margin: 0 0 10px; font-size: 15px; }
+.patrol-game-routes { display: grid; gap: 16px; }
+.patrol-game td input, .patrol-game td select { inline-size: 100%; min-inline-size: 90px; }
+.patrol-game textarea { inline-size: 100%; font-family: monospace; }
+.strategy-view { display: grid; gap: 12px; margin-top: 12px; }
+.strategy-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 10px; }
+.strategy-summary article { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; background: var(--panel); }
+.strategy-summary article small { color: var(--muted); display: block; }
+.strategy-summary article b { display: block; margin: 4px 0; font-size: 15px; }
+.strategy-summary article p { margin: 0; font-size: 12px; color: var(--muted); }
+.strategy-summary article.flag { border-color: var(--orange); }
+.strategy-table td small { display: block; color: var(--muted); }
+.strategy-table tr.strategy-selected td { background: color-mix(in srgb, var(--teal) 9%, transparent); }
+.strategy-bar { display: inline-block; inline-size: 64px; block-size: 6px; border-radius: 3px; background: var(--border); margin-inline-end: 6px; vertical-align: middle; overflow: hidden; }
+.strategy-bar i { display: block; block-size: 100%; background: var(--teal); }
+.patrol-plan-strategy { margin: 10px 0; }
+.patrol-plan-strategy summary { cursor: pointer; font-weight: 600; }
+.strategy-summary article code { overflow-wrap: anywhere; }
