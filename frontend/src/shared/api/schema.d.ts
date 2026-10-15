@@ -2368,6 +2368,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/audit/security-dossier": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Security Dossier
+         * @description Auditor-only evidence package for the AFTA security-assessment inquiry.
+         */
+        get: operations["security_dossier_api_v1_audit_security_dossier_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audit/security-dossier/letter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Security Letter
+         * @description Printable AFTA inquiry draft built from the same dossier; auditor-only and audited.
+         */
+        get: operations["security_letter_api_v1_audit_security_dossier_letter_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audit/role-changes": {
         parameters: {
             query?: never;
@@ -2656,6 +2696,11 @@ export interface components {
             issuer: string;
             /** Client Id */
             client_id: string;
+            /**
+             * Field Client Id
+             * @default sepehr-field
+             */
+            field_client_id: string;
             /** Admin Url */
             admin_url: string;
             /** Idle Seconds */
@@ -3172,6 +3217,62 @@ export interface components {
             registered_at: string;
             /** Last Seen */
             last_seen?: string | null;
+        };
+        /** DossierCrypto */
+        DossierCrypto: {
+            /** Purpose */
+            purpose: string;
+            /** Algorithm */
+            algorithm: string;
+            /** Implementation */
+            implementation: string;
+        };
+        /** DossierData */
+        DossierData: {
+            /** Store */
+            store: string;
+            /** Description */
+            description: string;
+            /** Personal */
+            personal: boolean;
+            /** Retention */
+            retention: string;
+            /** Records */
+            records: number;
+        };
+        /** DossierEndpoint */
+        DossierEndpoint: {
+            /** Method */
+            method: string;
+            /** Path */
+            path: string;
+            /**
+             * Authentication
+             * @enum {string}
+             */
+            authentication: "public" | "device_signature" | "required" | "optional_unless_enforce_all";
+            /** Permission */
+            permission: string;
+            /** Roles */
+            roles: string[];
+        };
+        /** DossierSystem */
+        DossierSystem: {
+            /** Name */
+            name: string;
+            /** Version */
+            version: string;
+            /** Hosting */
+            hosting: string;
+            /**
+             * Auth Mode
+             * @enum {string}
+             */
+            auth_mode: "keycloak" | "demo";
+            /** Enforce All */
+            enforce_all: boolean;
+            /** Oidc Issuer Configured */
+            oidc_issuer_configured: boolean;
         };
         /** EmergencyContact */
         EmergencyContact: {
@@ -5610,6 +5711,47 @@ export interface components {
             expected_value: string;
             /** Reason */
             reason: string;
+        };
+        /**
+         * SecurityDossier
+         * @description Facts for the AFTA security-assessment inquiry; not an assessment result.
+         */
+        SecurityDossier: {
+            /** Generated At */
+            generated_at: string;
+            /** Generated At Jalali */
+            generated_at_jalali: string;
+            /** Classification Label */
+            classification_label: string;
+            /** Organization */
+            organization: string;
+            system: components["schemas"]["DossierSystem"];
+            /** Endpoints */
+            endpoints: components["schemas"]["DossierEndpoint"][];
+            /** Permissions */
+            permissions: {
+                [key: string]: string[];
+            };
+            /** Response Headers */
+            response_headers: {
+                [key: string]: string;
+            };
+            /** Settings */
+            settings: {
+                [key: string]: unknown;
+            };
+            /** Cryptography */
+            cryptography: components["schemas"]["DossierCrypto"][];
+            /** Data Inventory */
+            data_inventory: components["schemas"]["DossierData"][];
+            audit_chain: components["schemas"]["AuditChainHealth"];
+            /** Residual Risks */
+            residual_risks: string[];
+            /**
+             * Audit Id
+             * @default
+             */
+            audit_id: string;
         };
         /** Segment */
         Segment: {
@@ -15699,6 +15841,136 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AccessError"];
+                };
+            };
+        };
+    };
+    security_dossier_api_v1_audit_security_dossier_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecurityDossier"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessError"];
+                };
+            };
+        };
+    };
+    security_letter_api_v1_audit_security_dossier_letter_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/html": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/html": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/html": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/html": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/html": components["schemas"]["AccessError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/html": components["schemas"]["AccessError"];
                 };
             };
         };

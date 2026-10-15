@@ -39,26 +39,31 @@ def require(permission, principal=None):
     return principal
 
 
-def authorize_path(principal, path, method):
+def path_permission(path, method):
+    """The coarse permission a path needs before its endpoint applies finer checks."""
     if not path.startswith("/api/v1/"):
-        return
+        return None
     if (path.startswith('/api/v1/assets/') and path.endswith('/positions:batch')
             and len(path.split('/')) == 6 and method == 'POST'):
-        require('read', principal)
-        return
-    if path in ("/api/v1/audit/verify", "/api/v1/audit/role-changes") or under(path, "/api/v1/audit"):
-        require("audit", principal)
-    elif under(path, "/api/v1/exports"):
-        require("export", principal)
-    elif under(path, "/api/v1/approvals"):
-        require("approval", principal)
-    elif under(path, "/api/v1/demo"):
-        require("admin", principal)
-    elif any(under(path, prefix) for prefix in MANDATORY):
-        require("read", principal)
-    else:
-        # Guard tokens may never expose unscopeable legacy operational data.
-        require("legacy_read" if method == "GET" else "legacy_write", principal)
+        return 'read'
+    if under(path, "/api/v1/audit"):
+        return "audit"
+    if under(path, "/api/v1/exports"):
+        return "export"
+    if under(path, "/api/v1/approvals"):
+        return "approval"
+    if under(path, "/api/v1/demo"):
+        return "admin"
+    if any(under(path, prefix) for prefix in MANDATORY):
+        return "read"
+    # Guard tokens may never expose unscopeable legacy operational data.
+    return "legacy_read" if method == "GET" else "legacy_write"
+
+
+def authorize_path(principal, path, method):
+    permission = path_permission(path, method)
+    if permission:
+        require(permission, principal)
 
 
 def visible(principal, record, *, own=True):

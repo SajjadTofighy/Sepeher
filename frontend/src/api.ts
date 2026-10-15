@@ -26,14 +26,18 @@ export async function parseResponse<T>(response: Response): Promise<T> {
             ? e.detail.message
             : "ورودی نامعتبر است";
     } catch {}
+    if (response.status === 401 && session.token) window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
     throw Object.assign(new Error(message), { status: response.status, code });
   }
   return response.json();
 }
-// In-memory field session only; tokens never touch localStorage or sessionStorage.
+// In-memory session only; tokens never touch localStorage or sessionStorage.
+export const UNAUTHORIZED_EVENT = "sepehr:unauthorized";
 const session: { token?: string; deviceId?: string } = {};
-export function setSession(token?: string, deviceId?: string) {
+export function setAuthToken(token?: string) {
   session.token = token;
+}
+export function setDeviceId(deviceId?: string) {
   session.deviceId = deviceId;
 }
 export function sessionHeaders(): Record<string, string> {
@@ -126,6 +130,10 @@ export const labels: Record<string, string> = {
   missed: "ازدست‌رفته",
   pending: "باز",
   suspended: "تعلیق اضطرار",
+  security_manager: "مدیر حراست",
+  admin: "مدیر سامانه",
+  auditor: "ممیز",
+  guard: "نگهبان",
 };
 
 export const policyConditions = [

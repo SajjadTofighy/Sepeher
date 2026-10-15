@@ -24,6 +24,9 @@ import {
   Smartphone,
   ListChecks,
   BookOpen,
+  FileCheck2,
+  LogOut,
+  KeyRound,
   MessagesSquare,
   SlidersHorizontal,
   Sparkles,
@@ -32,7 +35,7 @@ import {
   X,
 } from "lucide-react";
 import { Fragment, lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { api, fa, timeFa } from "./api";
+import { api, fa, labels, timeFa } from "./api";
 import Stats from "./features/analytics/Stats";
 import AssetPanel from "./features/assets/AssetPanel";
 import AssetsPage from "./features/assets/AssetsPage";
@@ -54,6 +57,8 @@ import SupervisionPage from "./features/supervision/SupervisionPage";
 import GuidesPage from "./features/guides/GuidesPage";
 import SettingsPage from "./features/settings/SettingsPage";
 import { useOperations } from "./shared/api/useOperations";
+import { useSession } from "./shared/auth/session";
+import AssessmentPage from "./features/assessment/AssessmentPage";
 import { download } from "./shared/lib/download";
 import { IconButton, Modal } from "./shared/ui/primitives";
 import type { Asset, Incident } from "./types";
@@ -73,9 +78,23 @@ const nav = [
   { id: "field", name: "اپ میدانی نگهبان", icon: Smartphone },
   { id: "guides", name: "راهنما و فرم پشتیبان", icon: BookOpen },
   { id: "audit", name: "گزارش‌ها و پایش", icon: ClipboardList },
+  { id: "assessment", name: "ارزیابی امنیتی (افتا)", icon: FileCheck2 },
   { id: "settings", name: "تنظیمات سامانه", icon: Settings },
 ];
+// Navigation convenience only: the server decides every permission.
+const NAV_ROLES: Record<string, string[]> = {
+  supervision: ["shift_supervisor", "security_officer", "security_manager", "admin"],
+  "field-comms": ["shift_supervisor", "security_officer", "security_manager", "admin"],
+  assessment: ["auditor"],
+  settings: ["admin", "security_manager", "security_officer", "shift_supervisor"],
+};
 export default function App() {
+  const session = useSession();
+  const roles = session.status === "demo" ? Object.values(NAV_ROLES).flat() : session.principal?.roles || [];
+  const visibleNav = nav.filter((n) => !NAV_ROLES[n.id] || NAV_ROLES[n.id].some((role) => roles.includes(role)));
+  const userName = session.principal?.username || (session.status === "demo" ? "اپراتور نمایشی" : "");
+  const userRoles = session.status === "demo" ? "حالت نمایشی" : roles.map((role) => labels[role] || role).join("، ");
+  const initials = userName.slice(0, 2) || "؟";
   const operations = useOperations();
   const searchInput = useRef<HTMLInputElement>(null);
   const headerMenuRef = useRef<HTMLDivElement>(null);
@@ -279,11 +298,11 @@ export default function App() {
           <span className="network-bars" aria-hidden="true"><i/><i/><i/></span>
         </div>
         <nav>
-          {nav.map((n, i) => (
+          {visibleNav.map((n, i) => (
             <Fragment key={n.id}>
-              {(i === 0 || i === 6 || i === 10) && (
+              {(n.id === "command" || n.id === "policies" || n.id === "supervision") && (
                 <div className="nav-section">
-                  <span>{i === 0 ? "عملیات زنده" : i === 6 ? "کنترل و تحلیل" : "سامانه"}</span>
+                  <span>{n.id === "command" ? "عملیات زنده" : n.id === "policies" ? "کنترل و تحلیل" : "گشت پیاده و سامانه"}</span>
                   <i />
                 </div>
               )}
@@ -293,7 +312,7 @@ export default function App() {
               >
                 <span className="nav-icon"><n.icon size={19} /></span>
                 <span>{n.name}</span>
-                {i === 1 && <em>{fa(data.summary.open_incidents)}</em>}
+                {n.id === "incidents" && <em>{fa(data.summary.open_incidents)}</em>}
                 {"roadmap" in n && <small className="nav-phase">فاز ۳</small>}
                 {page === n.id && <ChevronLeft className="nav-arrow" size={15} />}
               </button>
@@ -362,18 +381,25 @@ export default function App() {
             <span className="header-separator" />
             <div className="header-menu-anchor profile-anchor">
               <button className={`top-profile ${headerMenu === "profile" ? "active" : ""}`} aria-label="منوی کاربر" aria-expanded={headerMenu === "profile"} onClick={() => setHeaderMenu(headerMenu === "profile" ? null : "profile")}>
-                <div className="avatar">AH<span className="profile-online" /></div>
-                <span><b>مدیر سیستم</b><small>Super Admin</small></span>
+                <div className="avatar">{initials}<span className="profile-online" /></div>
+                <span><b>{userName}</b><small>{userRoles}</small></span>
                 <ChevronDown size={14}/>
               </button>
               {headerMenu === "profile" && (
                 <section className="header-popover profile-popover" aria-label="منوی حساب کاربری">
-                  <div className="profile-card"><div className="avatar">AH<span className="profile-online"/></div><div><b>مدیر سیستم</b><small>Super Admin · مرکز فرماندهی</small></div><span className="profile-access">دسترسی کامل</span></div>
+                  <div className="profile-card"><div className="avatar">{initials}<span className="profile-online"/></div><div><b>{userName}</b><small>{userRoles}</small></div><span className="profile-access">{session.principal?.zone_ids.length ? `محوطه ${session.principal.zone_ids.join("، ")}` : session.status === "demo" ? "نمایشی" : "بدون محوطه"}</span></div>
+                  {session.principal?.contractor_id && <div className="profile-roles"><span>پیمانکار {session.principal.contractor_id}</span></div>}
                   <div className="profile-menu">
                     <button onClick={() => { setHeaderMenu(null); go("settings"); }}><Settings size={16}/><span><b>تنظیمات سامانه</b><small>پیکربندی و وضعیت سرویس</small></span><ChevronLeft size={14}/></button>
                     <button onClick={() => { setHeaderMenu(null); go("audit"); }}><ClipboardList size={16}/><span><b>سوابق و گزارش‌ها</b><small>مشاهده فعالیت‌های ثبت‌شده</small></span><ChevronLeft size={14}/></button>
                   </div>
-                  <div className="profile-session"><span><i className={connected ? "live-dot" : "offline-dot"}/> نشست امن فعال</span><small>SECURE SESSION</small></div>
+                  {session.principal?.roles.includes("admin") && session.config?.admin_url && (
+                    <div className="profile-menu"><a href={session.config.admin_url} target="_blank" rel="noreferrer"><KeyRound size={16}/><span><b>کنسول کیکلاک</b><small>کاربران و نقش‌ها (شبکه مدیریت)</small></span></a></div>
+                  )}
+                  {session.status === "authenticated" && (
+                    <div className="profile-menu"><button onClick={() => { setHeaderMenu(null); session.logout(); }}><LogOut size={16}/><span><b>خروج</b><small>پایان نشست و خروج از کیکلاک</small></span></button></div>
+                  )}
+                  <div className="profile-session"><span><i className={connected ? "live-dot" : "offline-dot"}/> {session.status === "demo" ? "حالت نمایشی بدون هویت" : "نشست امن فعال"}</span><small>{session.status === "demo" ? "DEMO MODE" : "SECURE SESSION"}</small></div>
                 </section>
               )}
             </div>
@@ -595,6 +621,7 @@ export default function App() {
           {page === "field-comms" && <FieldCommsPage data={data} act={act} busy={busy} />}
           {page === "field" && <FieldApp />}
           {page === "guides" && <GuidesPage />}
+          {page === "assessment" && <AssessmentPage />}
           {page === "audit" && (
             <AuditPage data={data} act={act} setToast={setToast} />
           )}

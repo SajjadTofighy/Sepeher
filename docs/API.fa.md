@@ -417,3 +417,12 @@ Cache Storage پوسته، IndexedDB رمز‌شده با AES-GCM/PBKDF2، نگ�
 
 `ScanRecord.method` یکی از `tag`، `manual` یا `paper` است.
 
+## ورود کنسول و پرونده ارزیابی امنیتی
+
+`GET /auth/config` افزون بر `client_id` کنسول وب، `field_client_id` اپ میدانی (`SEPEHR_OIDC_FIELD_CLIENT`، پیش‌فرض `sepehr-field`) را برمی‌گرداند.
+
+| Method | Path | قرارداد و مجوز |
+|---|---|---|
+| GET | `/audit/security-dossier` | فقط `auditor`؛ `SecurityDossier` شامل سامانه و حالت احراز، همه مسیرهای `/api/v1` با `authentication` (`public`، `device_signature`، `required`، `optional_unless_enforce_all`)، مجوز و نقش‌ها، سربرگ‌های امنیتی، تنظیمات امنیتی، رمزنگاری، مخازن داده با شخصی‌بودن و نگهداری و تعداد، سلامت زنجیره ممیزی و ریسک‌های باقی‌مانده؛ با `audit_id` ممیزی می‌شود. |
+| GET | `/audit/security-dossier/letter` | فقط `auditor`؛ HTML قابل چاپ پیش‌نویس نامه استعلام الزام و دامنه ارزیابی افتا بدون منبع بیرونی، `Cache-Control: no-store`؛ ممیزی می‌شود. |
+

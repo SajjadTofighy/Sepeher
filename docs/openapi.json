@@ -11950,6 +11950,160 @@
         ]
       }
     },
+    "/api/v1/audit/security-dossier": {
+      "get": {
+        "tags": [
+          "identity"
+        ],
+        "summary": "Security Dossier",
+        "description": "Auditor-only evidence package for the AFTA security-assessment inquiry.",
+        "operationId": "security_dossier_api_v1_audit_security_dossier_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityDossier"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/audit/security-dossier/letter": {
+      "get": {
+        "tags": [
+          "identity"
+        ],
+        "summary": "Security Letter",
+        "description": "Printable AFTA inquiry draft built from the same dossier; auditor-only and audited.",
+        "operationId": "security_letter_api_v1_audit_security_dossier_letter_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/audit/role-changes": {
       "get": {
         "tags": [
@@ -12810,6 +12964,11 @@
           "client_id": {
             "type": "string",
             "title": "Client Id"
+          },
+          "field_client_id": {
+            "type": "string",
+            "title": "Field Client Id",
+            "default": "sepehr-field"
           },
           "admin_url": {
             "type": "string",
@@ -14187,6 +14346,146 @@
           "registered_at"
         ],
         "title": "DeviceRecord"
+      },
+      "DossierCrypto": {
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "title": "Purpose"
+          },
+          "algorithm": {
+            "type": "string",
+            "title": "Algorithm"
+          },
+          "implementation": {
+            "type": "string",
+            "title": "Implementation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "purpose",
+          "algorithm",
+          "implementation"
+        ],
+        "title": "DossierCrypto"
+      },
+      "DossierData": {
+        "properties": {
+          "store": {
+            "type": "string",
+            "title": "Store"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "personal": {
+            "type": "boolean",
+            "title": "Personal"
+          },
+          "retention": {
+            "type": "string",
+            "title": "Retention"
+          },
+          "records": {
+            "type": "integer",
+            "title": "Records"
+          }
+        },
+        "type": "object",
+        "required": [
+          "store",
+          "description",
+          "personal",
+          "retention",
+          "records"
+        ],
+        "title": "DossierData"
+      },
+      "DossierEndpoint": {
+        "properties": {
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "authentication": {
+            "type": "string",
+            "enum": [
+              "public",
+              "device_signature",
+              "required",
+              "optional_unless_enforce_all"
+            ],
+            "title": "Authentication"
+          },
+          "permission": {
+            "type": "string",
+            "title": "Permission"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Roles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "method",
+          "path",
+          "authentication",
+          "permission",
+          "roles"
+        ],
+        "title": "DossierEndpoint"
+      },
+      "DossierSystem": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "hosting": {
+            "type": "string",
+            "title": "Hosting"
+          },
+          "auth_mode": {
+            "type": "string",
+            "enum": [
+              "keycloak",
+              "demo"
+            ],
+            "title": "Auth Mode"
+          },
+          "enforce_all": {
+            "type": "boolean",
+            "title": "Enforce All"
+          },
+          "oidc_issuer_configured": {
+            "type": "boolean",
+            "title": "Oidc Issuer Configured"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "version",
+          "hosting",
+          "auth_mode",
+          "enforce_all",
+          "oidc_issuer_configured"
+        ],
+        "title": "DossierSystem"
       },
       "EmergencyContact": {
         "properties": {
@@ -20728,6 +21027,105 @@
           "reason"
         ],
         "title": "SealReplacement"
+      },
+      "SecurityDossier": {
+        "properties": {
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At"
+          },
+          "generated_at_jalali": {
+            "type": "string",
+            "title": "Generated At Jalali"
+          },
+          "classification_label": {
+            "type": "string",
+            "title": "Classification Label"
+          },
+          "organization": {
+            "type": "string",
+            "title": "Organization"
+          },
+          "system": {
+            "$ref": "#/components/schemas/DossierSystem"
+          },
+          "endpoints": {
+            "items": {
+              "$ref": "#/components/schemas/DossierEndpoint"
+            },
+            "type": "array",
+            "title": "Endpoints"
+          },
+          "permissions": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Permissions"
+          },
+          "response_headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Response Headers"
+          },
+          "settings": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Settings"
+          },
+          "cryptography": {
+            "items": {
+              "$ref": "#/components/schemas/DossierCrypto"
+            },
+            "type": "array",
+            "title": "Cryptography"
+          },
+          "data_inventory": {
+            "items": {
+              "$ref": "#/components/schemas/DossierData"
+            },
+            "type": "array",
+            "title": "Data Inventory"
+          },
+          "audit_chain": {
+            "$ref": "#/components/schemas/AuditChainHealth"
+          },
+          "residual_risks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Residual Risks"
+          },
+          "audit_id": {
+            "type": "string",
+            "title": "Audit Id",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "generated_at",
+          "generated_at_jalali",
+          "classification_label",
+          "organization",
+          "system",
+          "endpoints",
+          "permissions",
+          "response_headers",
+          "settings",
+          "cryptography",
+          "data_inventory",
+          "audit_chain",
+          "residual_risks"
+        ],
+        "title": "SecurityDossier",
+        "description": "Facts for the AFTA security-assessment inquiry; not an assessment result."
       },
       "Segment": {
         "properties": {

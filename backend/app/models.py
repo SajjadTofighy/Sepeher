@@ -1162,6 +1162,7 @@ class AuthConfiguration(BaseModel):
     mode: Literal["keycloak", "demo"]
     issuer: str
     client_id: str
+    field_client_id: str = "sepehr-field"
     admin_url: str
     idle_seconds: int
 
@@ -2204,4 +2205,53 @@ class PilotMetrics(BaseModel):
     metrics: list[PilotMetric]
     manual_measurements: list[str]
     audit_id: str
+
+
+class DossierEndpoint(BaseModel):
+    method: str
+    path: str
+    authentication: Literal['public', 'device_signature', 'required', 'optional_unless_enforce_all']
+    permission: str
+    roles: list[str]
+
+
+class DossierCrypto(BaseModel):
+    purpose: str
+    algorithm: str
+    implementation: str
+
+
+class DossierData(BaseModel):
+    store: str
+    description: str
+    personal: bool
+    retention: str
+    records: int
+
+
+class DossierSystem(BaseModel):
+    name: str
+    version: str
+    hosting: str
+    auth_mode: Literal['keycloak', 'demo']
+    enforce_all: bool
+    oidc_issuer_configured: bool
+
+
+class SecurityDossier(BaseModel):
+    """Facts for the AFTA security-assessment inquiry; not an assessment result."""
+    generated_at: str
+    generated_at_jalali: str
+    classification_label: str
+    organization: str
+    system: DossierSystem
+    endpoints: list[DossierEndpoint]
+    permissions: dict[str, list[str]]
+    response_headers: dict[str, str]
+    settings: dict[str, Any]
+    cryptography: list[DossierCrypto]
+    data_inventory: list[DossierData]
+    audit_chain: AuditChainHealth
+    residual_risks: list[str]
+    audit_id: str = ''
 

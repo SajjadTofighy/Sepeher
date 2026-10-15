@@ -1,19 +1,16 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BellRing, Camera, CheckCheck, LogIn, LogOut, Mic, Send, ShieldAlert, Smartphone, Square, Trash2, Upload, Video } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { api, fa, labels, setSession, timeFa } from "../../api";
-import { completeLogin, login, logout, refresh, type Tokens } from "../../shared/auth/oidc";
+import { api, fa, labels, setDeviceId as setDeviceHeader, timeFa } from "../../api";
+import { refreshCounters, useSession } from "../../shared/auth/session";
 import type {
-  AuthConfiguration, CapturePolicy, EnrolledDevice, FieldMessage, FieldReport, Principal, ReportCategory, TourRecord,
+  CapturePolicy, EnrolledDevice, FieldMessage, FieldReport, ReportCategory, TourRecord,
 } from "../../types";
 import { pickMimeType, recordMedia, takePhoto } from "./capture";
 import { uploadMedia } from "./upload";
 
-const FIELD_CLIENT = "sepehr-field";
 // Only the non-secret device identifier is remembered; the server binds it to the token's subject.
 const DEVICE_KEY = "sepehr-field-device-id";
-// Pilot evidence: token refreshes since the last capability report, in memory only.
-const refreshCounters = { ok: 0, failed: 0 };
 const REPORT_INTERVAL_MS = 30 * 60 * 1000;
 const CATEGORIES: ReportCategory[] = ["security", "safety_hse", "operations", "damage", "uxo", "drone_sighting", "other"];
 const RESTRICTED: ReportCategory[] = ["damage", "uxo", "drone_sighting"];
@@ -25,46 +22,31 @@ const readDevice = () => {
 
 export default function FieldApp() {
   const client = useQueryClient();
-  const [tokens, setTokens] = useState<Tokens | null>(null);
+  const session = useSession();
   const [deviceId, setDeviceId] = useState(readDevice);
-  const [error, setError] = useState("");
-  const config = useQuery({ queryKey: ["field-app", "config"], queryFn: () => api<AuthConfiguration>("/auth/config") });
   useEffect(() => {
-    completeLogin().then((result) => result && setTokens(result.tokens)).catch((e) => setError((e as Error).message));
-  }, []);
-  useEffect(() => {
-    setSession(tokens?.access_token, deviceId || undefined);
-    if (tokens) client.invalidateQueries({ queryKey: ["field-app"] });
-    return () => setSession();
-  }, [tokens, deviceId, client]);
-  useEffect(() => {
-    if (!tokens?.refresh_token || !config.data?.issuer) return;
-    const timer = setTimeout(() => {
-      refresh(config.data!.issuer, FIELD_CLIENT, tokens.refresh_token!)
-        .then((next) => { refreshCounters.ok += 1; setTokens(next); })
-        .catch((e) => { refreshCounters.failed += 1; setTokens(null); setError((e as Error).message); });
-    }, Math.max(15, (tokens.expires_in || 300) - 30) * 1000);
-    return () => clearTimeout(timer);
-  }, [tokens, config.data]);
-  const principal = useQuery({ queryKey: ["field-app", "me", tokens?.access_token], queryFn: () => api<Principal>("/auth/me"), enabled: !!tokens });
-  if (config.data?.mode === "demo" && !tokens)
-    return <Notice title="اپ میدانی نگهبان" text="حالت نمایشی نقش نگهبان ندارد. اپ میدانی فقط با ورود کیکلاک از کلاینت sepehr-field و دستگاه ثبت‌شده کار می‌کند. API و قرارداد این فاز در حالت کیکلاک قابل استفاده است." />;
-  if (!tokens)
+    setDeviceHeader(deviceId || undefined);
+    if (session.status === "authenticated") client.invalidateQueries({ queryKey: ["field-app"] });
+    return () => setDeviceHeader(undefined);
+  }, [deviceId, session.status, client]);
+  if (session.status === "demo")
+    return <Notice title="اپ میدانی نگهبان" text="حالت نمایشی نقش نگهبان ندارد. اپ میدانی فقط با ورود کیکلاک از کلاینت sepehr-field و دستگاه ثبت‌شده کار می‌کند." />;
+  if (session.status !== "authenticated")
     return (
-      <Notice title="ورود نگهبان" text={error || "ورود با حساب سازمانی کیکلاک؛ توکن فقط در حافظه همین صفحه می‌ماند."}>
-        <button className="primary field-touch" disabled={!config.data?.issuer} onClick={() => login(config.data!.issuer, FIELD_CLIENT, "#field").catch((e) => setError((e as Error).message))}>
+      <Notice title="ورود نگهبان" text={session.error || "ورود با حساب سازمانی کیکلاک؛ توکن فقط در حافظه همین صفحه می‌ماند."}>
+        <button className="primary field-touch" disabled={!session.config?.issuer} onClick={() => session.login("field")}>
           <LogIn size={20} />ورود با کیکلاک
         </button>
       </Notice>
     );
-  if (principal.data && !principal.data.roles.includes("guard"))
+  if (!session.principal?.roles.includes("guard"))
     return <Notice title="اپ میدانی نگهبان" text="این حساب نقش نگهبان ندارد؛ برای نظارت از صفحه «پیام، رسانه و گزارش میدانی» استفاده کنید." />;
   if (!deviceId) return <Enroll onEnrolled={(id) => { try { localStorage.setItem(DEVICE_KEY, id); } catch {} setDeviceId(id); }} />;
   return (
     <FieldWorkspace
       deviceId={deviceId}
-      username={principal.data?.username || ""}
-      onLogout={() => { setSession(); const id = tokens.id_token; setTokens(null); if (config.data?.issuer) logout(config.data.issuer, FIELD_CLIENT, id); }}
+      username={session.principal.username}
+      onLogout={session.logout}
       onDeviceRejected={() => { try { localStorage.removeItem(DEVICE_KEY); } catch {} setDeviceId(""); }}
     />
   );

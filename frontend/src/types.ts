@@ -92,3 +92,4 @@ export type PaperScanInput = Schemas["PaperScanInput"];
 export type ScheduledTour = Schemas["ScheduledTour"];
 export type ScanRecord = Schemas["ScanRecord"];
 export type DeviceCapabilityInput = Schemas["DeviceCapabilityInput"];
+export type SecurityDossier = Schemas["SecurityDossier"];

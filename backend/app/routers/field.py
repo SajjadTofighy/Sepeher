@@ -13,6 +13,7 @@ from urllib.request import Request as URLRequest, urlopen
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import HTTPBearer
+from fastapi.responses import HTMLResponse
 
 from .. import auth, authz, store, tour_schedule
 from ..fieldstore import canonical, pin_hash, pin_matches
@@ -22,7 +23,7 @@ from ..models import (
     EnrollmentCode, EnrollmentCodeInput, ExportAuthorization, ExportInput,
     GuardCredentialInput,
     GuardRecord, IdentityInput, PermissionMatrix, Principal, RoleChangeEvent, ScopedInput,
-    PinUnlockInput, PinUnlockResult, TagInput, TagRecord, TourInput, TourRecord, TourReport, TourRoute, TourRouteInput,
+    PinUnlockInput, PinUnlockResult, SecurityDossier, TagInput, TagRecord, TourInput, TourRecord, TourReport, TourRoute, TourRouteInput,
 )
 from ..tracks import parse_timestamp
 
@@ -96,6 +97,7 @@ def configuration():
     return dict(mode=auth.auth_mode(), issuer=issuer,
                 classification_label=store.state["settings"]["classification_label"],
                 client_id=os.environ.get("SEPEHR_OIDC_WEB_CLIENT", "sepehr-web"),
+                field_client_id=os.environ.get("SEPEHR_OIDC_FIELD_CLIENT", "sepehr-field"),
                 admin_url=os.environ.get("SEPEHR_KEYCLOAK_ADMIN_URL", ""),
                 idle_seconds=int(os.environ.get("SEPEHR_AUTH_IDLE_SECONDS", "900")))
 
@@ -519,6 +521,27 @@ def authorize_export(payload: ExportInput):
             raise HTTPException(403, {"code": "media_export_denied", "message": "رسانه خسارت، مهمات و پهپاد قابل خروجی نیست"})
     item = store.audit("مجوز خروجی طبقه‌بندی‌شده", payload.name)
     return dict(classification_label=store.state["settings"]["classification_label"], audit_id=item["id"], generated_at=item["time"])
+
+
+@auth_router.get("/api/v1/audit/security-dossier", response_model=SecurityDossier)
+def security_dossier():
+    """Auditor-only evidence package for the AFTA security-assessment inquiry."""
+    authz.require("audit")
+    from .. import security_dossier as dossier
+    result = dossier.build()
+    entry = store.audit("دریافت پرونده شواهد ارزیابی امنیتی (افتا)", "SECURITY-DOSSIER")
+    return dict(result, audit_id=entry["id"])
+
+
+@auth_router.get("/api/v1/audit/security-dossier/letter", response_class=HTMLResponse,
+                 responses={200: {"content": {"text/html": {"schema": {"type": "string"}}}}})
+def security_letter():
+    """Printable AFTA inquiry draft built from the same dossier; auditor-only and audited."""
+    authz.require("audit")
+    from .. import afta_letter, security_dossier as dossier
+    html = afta_letter.render_letter(dossier.build())
+    store.audit("تولید پیش‌نویس استعلام افتا", "SECURITY-DOSSIER")
+    return HTMLResponse(html, headers={"Cache-Control": "no-store"})
 
 
 @auth_router.get("/api/v1/audit/role-changes", response_model=list[RoleChangeEvent])
