@@ -7,8 +7,9 @@ audit-chain health and the documented residual risks. It changes nothing.
 """
 import os
 
-from . import auth, authz, store
-from .field_media import jalali_stamp
+from . import auth, authz
+from .. import store
+from ..field.media import jalali_stamp
 
 CRYPTOGRAPHY = (
     ('اعتبارسنجی توکن OIDC', 'RS256 (RSA-SHA256) با JWKS کش‌شده؛ هر الگوریتم دیگر رد می‌شود', 'PyJWT + cryptography'),
@@ -51,7 +52,7 @@ SECURITY_SETTINGS = ('classification_label', 'rate_limit_per_minute', 'max_json_
 
 def endpoints():
     from fastapi.routing import APIRoute
-    from .main import app
+    from ..main import app
     public = {'/api/v1/health', '/api/v1/auth/config'}
     rows = []
     for route in app.routes:

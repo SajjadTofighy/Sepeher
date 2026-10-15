@@ -5,7 +5,8 @@ import random
 import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
-from app import store, tour_schedule
+from app import store
+from app.tour import schedule as tour_schedule
 from app.fieldstore import FieldStore
 from app.main import app
 from test_auth_access import bearer, link_and_enroll

@@ -5,7 +5,8 @@ import logging
 import os
 from contextlib import asynccontextmanager, suppress
 
-from .. import field_media, field_safety, store
+from .. import store
+from ..field import media as field_media, safety as field_safety
 from ..models import RuntimeSettings
 from . import coverage, safety, hazard, integrity
 from . import shift_report
@@ -55,7 +56,7 @@ async def run():
 async def lifespan(app):
     from datetime import datetime, timedelta
     from zoneinfo import ZoneInfo
-    from ..auth import auth_mode
+    from ..security.auth import auth_mode
     auth_mode()
     for year in (2023, 2024, 2026):
         if datetime(year, 7, 1, tzinfo=ZoneInfo("Asia/Tehran")).utcoffset() != timedelta(hours=3, minutes=30):

@@ -4,7 +4,7 @@ from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query
 
-from .. import device_profiles
+from ..field import device_profiles
 from ..models import Command, CommandInput, CommandPreview, DeviceProfile
 from ..store import audit, lookup, now, refresh_commands, state, StateRoute
 

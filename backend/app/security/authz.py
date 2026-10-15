@@ -85,7 +85,7 @@ def check_scope(record, principal=None, *, own=True):
 
 
 def linked_guard(principal=None):
-    from . import store
+    from .. import store
     principal = principal or require("read")
     guards = store.field.records("guards")
     found = next((g for g in guards if g.get("keycloak_sub") == principal.sub), None)

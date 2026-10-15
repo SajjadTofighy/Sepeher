@@ -15,7 +15,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.security import HTTPBearer
 from fastapi.responses import HTMLResponse
 
-from .. import auth, authz, store, tour_schedule
+from .. import store
+from ..security import auth, authz
+from ..tour import schedule as tour_schedule
 from ..fieldstore import canonical, pin_hash, pin_matches
 from ..models import (
     AccessError, ApprovalInput, ApprovalRecord, AuthConfiguration, CheckInInput, CheckInRecord,
@@ -247,7 +249,7 @@ def create_route(payload: TourRouteInput):
         station = store.field.get('stations', station_id)
         if not station or (station['zone_id'], station['contractor_id']) != (payload.zone_id, payload.contractor_id):
             raise HTTPException(422, 'ایستگاه مسیر باید در همان حوزه باشد')
-    from ..tour_schedule import ordered_stations
+    from ..tour.schedule import ordered_stations
     import random
     ordered_stations(payload.model_dump(), random.Random(0))
     item = dict(**payload.model_dump(), id=new_id("ROUTE"), created_at=store.now())
@@ -361,7 +363,7 @@ def check_in(id: str, payload: CheckInInput, request: Request):
         from starlette.responses import JSONResponse
         return JSONResponse({"detail": {"code": "invalid_pin", "message": "رمز معتبر نیست"}}, status_code=403)
     if pin_status == 'duress':
-        from .. import field_safety
+        from ..field import safety as field_safety
         field_safety.record_duress(item, device, stamp)
     result = dict(id=new_id("CHECK"), tour_id=id, guard_id=item["guard_id"], owner_sub=principal.sub,
                   device_id=device["id"], time=stamp, zone_id=item["zone_id"], contractor_id=item["contractor_id"])
@@ -406,7 +408,7 @@ def unlock(payload: PinUnlockInput, request: Request):
         from starlette.responses import JSONResponse
         return JSONResponse({"detail": {"code": "invalid_pin", "message": "رمز معتبر نیست"}}, status_code=403)
     if status == 'duress':
-        from .. import field_safety
+        from ..field import safety as field_safety
         field_safety.record_duress(item, device, stamp)
     store.audit('بازکردن قفل اپ میدانی', item['id'])
     return dict(unlocked=True, checked_at=stamp)
@@ -512,7 +514,7 @@ def decide(id, accepted):
             store.field.save("settings", dict(id="classification", classification_label=payload.classification_label))
             store.state["settings"]["classification_label"] = payload.classification_label
         elif "tag_status" in target:
-            from ..tour_tags import change_station_tag
+            from ..tour.tags import change_station_tag
             change_station_tag(target, payload.action)
         else:
             if payload.action == "revoke_tag":
@@ -530,7 +532,7 @@ def decide(id, accepted):
 def authorize_export(payload: ExportInput):
     principal = authz.require("export")
     if payload.media_id is not None:
-        from .. import field_media
+        from ..field import media as field_media
         media = store.field.get("media", payload.media_id)
         if media is None or not field_media.may_view(principal, media):
             raise HTTPException(404, "رسانه پیدا نشد")
@@ -545,7 +547,7 @@ def authorize_export(payload: ExportInput):
 def security_dossier():
     """Auditor-only evidence package for the AFTA security-assessment inquiry."""
     authz.require("audit")
-    from .. import security_dossier as dossier
+    from ..security import dossier
     result = dossier.build()
     entry = store.audit("دریافت پرونده شواهد ارزیابی امنیتی (افتا)", "SECURITY-DOSSIER")
     return dict(result, audit_id=entry["id"])
@@ -556,7 +558,7 @@ def security_dossier():
 def security_letter():
     """Printable AFTA inquiry draft built from the same dossier; auditor-only and audited."""
     authz.require("audit")
-    from .. import afta_letter, security_dossier as dossier
+    from ..security import afta_letter, dossier
     html = afta_letter.render_letter(dossier.build())
     store.audit("تولید پیش‌نویس استعلام افتا", "SECURITY-DOSSIER")
     return HTMLResponse(html, headers={"Cache-Control": "no-store"})

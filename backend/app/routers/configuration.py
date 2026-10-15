@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException
 
 from ..models import Asset, CameraEventInput, PlateReadInput, PlateReadResult, RuntimeSettings, Zone, ZoneInput, AssetSettings, Camera
 from ..store import audit, lookup, state, StateRoute
-from ..authz import legacy_asset
+from ..security.authz import legacy_asset
 
 router = APIRouter(route_class=StateRoute, tags=["configuration"])
 
@@ -75,7 +75,8 @@ def save_settings(p: RuntimeSettings):
         p.gis_layers = p.gis_layers.strip()
     if any(state["settings"].get(key) != getattr(p, key) for key in ("intel_coverage_buffer_m", "intel_coverage_backfill_hours")):
         state["intel"].pop("coverage", None)
-    from .. import store, authz
+    from .. import store
+    from ..security import authz
     if p.station_sensitivity_labels != state["settings"]["station_sensitivity_labels"]:
         authz.require("admin")
     if p.patrol_game.model_dump() != state["settings"]["patrol_game"]:

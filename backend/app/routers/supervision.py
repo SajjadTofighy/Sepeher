@@ -7,8 +7,10 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import AwareDatetime
 from starlette.responses import Response
 
-from .. import authz, store, supervision
-from ..field_media import jalali_stamp
+from .. import store
+from ..security import authz
+from ..tour import supervision
+from ..field.media import jalali_stamp
 from ..models import (DeviceCapabilityInput, DeviceCapabilityReport, ExceptionBoard, GuardDetailReport, PaperScanInput,
                       PatrolReport, PilotMetrics, ScanRecord, StationStatus)
 from ..tracks import parse_timestamp
@@ -200,7 +202,7 @@ def paper_scan(payload: PaperScanInput):
            for v in store.field.records('station_visits')):
         raise HTTPException(409, 'برای این ایستگاه در این دور بازدید ثبت شده است')
     evidence = dict(tag='paper', location='unavailable', sequence='in_order', dwell='ok', clock='unknown')
-    from ..tour import trust
+    from ..tour.evidence import trust
     level = trust(evidence)
     visit = dict(id=new_id('VISIT'), station_id=payload.station_id, tour_id=tour_id, owner_sub=owner, device_id='PAPER',
                  zone_id=scheduled['zone_id'], contractor_id=scheduled['contractor_id'], arrived_at=recorded,

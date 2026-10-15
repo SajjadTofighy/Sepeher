@@ -14,7 +14,7 @@ import jwt
 from fastapi import HTTPException
 from starlette.responses import JSONResponse
 
-from .models import Principal
+from ..models import Principal
 
 logger = logging.getLogger(__name__)
 current_principal: ContextVar[Principal | None] = ContextVar("sepehr_principal", default=None)
@@ -143,7 +143,7 @@ def authenticate(authorization):
 
 
 def response_metadata(path):
-    from . import store
+    from .. import store
     from urllib.parse import quote, urlsplit
     with store.locked_state():
         label = store.state["settings"]["classification_label"]

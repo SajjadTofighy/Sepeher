@@ -10,7 +10,8 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
-from app import auth, store
+from app import store
+from app.security import auth
 from app.fieldstore import FieldStore, pin_matches
 from app.main import app
 

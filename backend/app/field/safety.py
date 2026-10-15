@@ -1,14 +1,14 @@
 """Explicit guard safety reports and timed operator acknowledgement escalation."""
 from fastapi import HTTPException
 
-from . import store
-from .tracks import parse_timestamp
+from .. import store
+from ..tracks import parse_timestamp
 
 SECURITY_ROLES = {'shift_supervisor', 'security_officer', 'security_manager', 'admin'}
 
 
 def _finding(tour, event, stamp):
-    from .intel import findings
+    from ..intel import findings
     return findings.raise_finding(
         rule_id='intel.field_' + event['type'], kind='patrol_safety',
         subject_ids=[tour['guard_id']], severity='critical',
@@ -22,7 +22,7 @@ def _finding(tour, event, stamp):
 
 
 def _base(tour, device, kind, stamp, client_id=None):
-    from .routers.field import new_id
+    from ..routers.field import new_id
     return dict(id=new_id('SAFE'), tour_id=tour['id'], guard_id=tour['guard_id'], owner_sub=tour['owner_sub'],
                 device_id=device['id'], zone_id=tour['zone_id'], contractor_id=tour['contractor_id'],
                 type=kind, client_id=client_id, created_at=stamp, incident_id=None, operator_ack_at=None,
@@ -30,7 +30,7 @@ def _base(tour, device, kind, stamp, client_id=None):
 
 
 def rate_flagged():
-    from .auth import current_scope
+    from ..security.auth import current_scope
     scope = current_scope.get()
     return bool(scope and scope.get('state', {}).get('rate_flagged'))
 
@@ -52,7 +52,7 @@ def record_duress(tour, device, stamp, *, client_id=None, auth_expired=False, cl
 
 
 def report(tour, device, payload, stamp, *, auth_expired=False, clock_regressed=False):
-    from .tour import request_hash
+    from ..tour.evidence import request_hash
     payload_hash = request_hash(payload)
     prior = next((e for e in store.field.records('field_safety_events') if e['owner_sub'] == tour['owner_sub']
                   and e.get('client_id') == payload.client_id), None)
@@ -133,7 +133,7 @@ def acknowledge_event(event, principal, stamp):
 
 @store.state_locked
 def tick(now):
-    from .intel import findings
+    from ..intel import findings
     active_guard_ids = set()
     for tour in store.field.records('tour'):
         if tour['status'] != 'active':

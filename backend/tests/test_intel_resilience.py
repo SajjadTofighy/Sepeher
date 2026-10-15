@@ -8,7 +8,8 @@ import sys
 import pytest
 from fastapi.testclient import TestClient
 
-from app import field_media, store
+from app import store
+from app.field import media as field_media
 from app.fieldstore import FieldStore
 from app.main import app
 from test_intel_field_media import put, start

@@ -1,7 +1,9 @@
 """GPS ingestion for local device adapters; history survives server restarts."""
 from datetime import timezone
 from fastapi import APIRouter, HTTPException, Request
-from .. import authz, engine, offline, store
+from .. import engine, store
+from ..security import authz
+from ..field import offline
 from ..models import DeviceEventInput, DeviceEventResult, TrackPoint, PositionInput, PositionBatchInput, PositionBatchResult
 from ..store import StateRoute
 from ..tracks import TrackConflict

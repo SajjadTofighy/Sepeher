@@ -210,7 +210,7 @@ def lookup(collection, id):
 
 @state_locked
 def audit(action, target, detail="", actor="اپراتور نمایشی"):
-    from .auth import current_principal
+    from .security.auth import current_principal
     principal = current_principal.get()
     item = field.append_audit(dict(
         time=now(),

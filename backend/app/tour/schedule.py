@@ -5,8 +5,8 @@ import secrets
 
 from fastapi import HTTPException
 
-from . import engine, store
-from .tracks import parse_timestamp
+from .. import engine, store
+from ..tracks import parse_timestamp
 
 
 def default_pattern():
@@ -125,7 +125,7 @@ def materialize(schedule, day, *, rng_factory=None):
             warnings, selection = [], dict(selection_mode='all', proposed_station_ids=[], selection_finding_id=None)
             visit = route
             if route.get('coverage_mode') == 'optimized':
-                from .intel import patrol_game
+                from ..intel import patrol_game
                 horizon = segment['duration_minutes'] / 60 / schedule['tours_per_shift']
                 chosen, proposed, finding_id, blocked = patrol_game.select_route_stations(
                     route, horizon, rng, store.now(), key)

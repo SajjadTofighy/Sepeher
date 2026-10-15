@@ -17,8 +17,8 @@ from .seed import seed
 from .intel import worker
 from .intel.worker import lifespan
 from .store import StateRoute
-from .auth import IdentityMiddleware, current_principal
-from . import authz
+from .security.auth import IdentityMiddleware, current_principal
+from .security import authz
 
 app = FastAPI(
     lifespan=lifespan,

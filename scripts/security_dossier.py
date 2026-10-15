@@ -21,7 +21,7 @@ from urllib.request import Request, urlopen
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "backend"))
-from app.afta_letter import _table, render_letter, render_summary  # noqa: E402
+from app.security.afta_letter import _table, render_letter, render_summary  # noqa: E402
 from backup import sha256  # noqa: E402
 import check_keycloak_realm  # noqa: E402
 import dependency_inventory  # noqa: E402

@@ -4,7 +4,8 @@ import hmac
 
 from fastapi.testclient import TestClient
 
-from app import store, tour
+from app import store
+from app.tour import evidence as tour
 from app.fieldstore import canonical
 from app.main import app
 from app.models import SignedQueueRecord

@@ -3,7 +3,9 @@ import math
 import os
 from urllib.parse import urlsplit
 from fastapi import APIRouter, HTTPException, Request, Response
-from .. import authz, engine, qr, store, tour as tour_evidence, tour_tags
+from .. import engine, store
+from ..security import authz
+from ..tour import evidence as tour_evidence, qr, tags as tour_tags
 from ..models import (FieldZone, FieldZoneInput, SealChange, SealReplacement, Station,
     ManualReviewInput, ManualScanInput, ScanRecord, StationInput, StationScan, StationTagSheet, StationTagStatusInput, StationTask,
     StationTaskAnswer, StationTaskInput, StationTaskResult, StationVisit, StationVisitCancel, StationVisitInput,

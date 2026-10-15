@@ -1,7 +1,8 @@
 """SMS command rendering for tracker protocol families; no gateway, password never recorded."""
 from fastapi.testclient import TestClient
 
-from app import device_profiles, store
+from app import store
+from app.field import device_profiles
 from app.main import app
 
 

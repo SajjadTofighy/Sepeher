@@ -46,7 +46,7 @@ def authenticated_client(monkeypatch, signing_key, token_factory):
     import json
     import jwt
     from fastapi.testclient import TestClient
-    from app import auth
+    from app.security import auth
     jwk = json.loads(jwt.algorithms.RSAAlgorithm.to_jwk(signing_key.public_key()))
     jwk.update(kid="fixture-key", alg="RS256", use="sig")
     verifier = auth.TokenVerifier("https://identity.test/realms/sepehr", fetch=lambda url: {"keys": [jwk]})
@@ -64,7 +64,8 @@ def authenticated_client(monkeypatch, signing_key, token_factory):
 
 @pytest.fixture(autouse=True)
 def field_database(tmp_path, monkeypatch, track_database):
-    from app import hardening, store
+    from app import store
+    from app.security import hardening
     from app.fieldstore import FieldStore
     from app.seed import seed
     hardening.limiter.reset()

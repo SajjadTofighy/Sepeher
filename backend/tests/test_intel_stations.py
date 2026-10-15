@@ -5,10 +5,11 @@ from urllib.parse import urlencode, urlsplit
 import pytest
 from fastapi.testclient import TestClient
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from app import qr, store, tour_tags
+from app import store
+from app.tour import qr, tags as tour_tags
 from app.fieldstore import FieldStore
 from app.main import app
-from app.tour_sun import cmac, verify_sun
+from app.tour.sun import cmac, verify_sun
 from test_auth_access import bearer, create_route, link_and_enroll
 
 

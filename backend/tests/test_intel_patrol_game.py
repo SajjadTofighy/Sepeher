@@ -10,7 +10,8 @@ from types import SimpleNamespace
 import pytest
 from fastapi.testclient import TestClient
 
-from app import sim, store, tour_schedule
+from app import sim, store
+from app.tour import schedule as tour_schedule
 from app.intel import bayes, game, patrol, patrol_game, risk
 from app.main import app
 from app.models import PatrolGameSettings, PatrolPlan, PatrolPlanInput, PatrolStrategy

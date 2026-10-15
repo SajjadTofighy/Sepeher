@@ -5,8 +5,8 @@ import re
 import secrets
 from urllib.parse import parse_qs, urlsplit
 from fastapi import HTTPException
-from . import store
-from .tour_sun import verify_sun
+from .. import store
+from .sun import verify_sun
 
 
 def denied(code, message, status=403):

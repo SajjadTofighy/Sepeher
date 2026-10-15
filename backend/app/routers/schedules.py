@@ -2,7 +2,9 @@
 from datetime import date, timedelta
 
 from fastapi import APIRouter, HTTPException
-from .. import authz, engine, store, tour_schedule
+from .. import engine, store
+from ..security import authz
+from ..tour import schedule as tour_schedule
 from ..models import (DailyTourView, EmergencyMode, EmergencyModeInput, ScheduledTour,
     ShiftHandover, ShiftHandoverInput, ShiftPattern, ShiftPatternInput,
     TourSchedule, TourScheduleInput)
